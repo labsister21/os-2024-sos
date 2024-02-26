@@ -2,10 +2,8 @@
 #define _FRAMEBUFFER_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
-#define FRAMEBUFFER_MEMORY_OFFSET ((uint8_t *)0xB8000)
 #define CURSOR_PORT_CMD 0x03D4
 #define CURSOR_PORT_DATA 0x03D5
 

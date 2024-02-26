@@ -1,8 +1,6 @@
 #ifndef _BUFFER_COLOR_H
 #define _BUFFER_COLOR_H
 
-#include "header/text/framebuffer.h"
-
 #define BLACK 0x0
 #define BLUE 0x1
 #define GREEN 0x2

@@ -10,5 +10,6 @@ void kernel_setup(void) {
       framebuffer_write(i, j, (j % 10) + '0', WHITE, BLACK);
     }
   }
+  framebuffer_set_cursor(10, 10);
   while (1) continue;
 }

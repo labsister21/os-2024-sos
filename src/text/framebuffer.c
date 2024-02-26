@@ -1,14 +1,18 @@
 #include "header/text/framebuffer.h"
 #include "header/cpu/portio.h"
-#include "header/stdlib/string.h"
 #include "header/text/buffercolor.h"
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
-// void framebuffer_set_cursor(uint8_t r, uint8_t c) {
-//   // TODO : Implement
-// }
+void framebuffer_set_cursor(uint8_t r, uint8_t c) {
+  uint16_t pos = r * BUFFER_WIDTH + c;
+
+  out(CURSOR_PORT_CMD, 0x0F);
+  out(CURSOR_PORT_DATA, pos & 0xFF);
+
+  out(CURSOR_PORT_CMD, 0x0E);
+  out(CURSOR_PORT_DATA, (pos >> 8) & 0xFF);
+}
 
 void framebuffer_write(
     uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg
