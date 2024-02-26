@@ -1,3 +1,5 @@
+# TODO: Automatically scan directory
+
 # Compiler & linker
 ASM           = nasm
 LIN           = ld
@@ -11,8 +13,8 @@ ISO_NAME      = os2024
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
 DEBUG_CFLAG   = -fshort-wchar -g
-SYTEM_INCLUDE_CFLAG	= -isystem src/include
-STRIP_CFLAG   = -nostdlib -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
+SYSTEM_INCLUDE_CFLAG	= -isystem src/include
+STRIP_CFLAG   = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
 CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(SYSTEM_INCLUDE_CFLAG) -m32 -c -I$(SOURCE_FOLDER)
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
@@ -24,12 +26,14 @@ run: all
 all: build
 build: iso
 clean:
-	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
+	rm -rf $(OUTPUT_FOLDER)
 
 kernel:
-	@mkdir -p bin
+	@mkdir -p $(OUTPUT_FOLDER)
+	@mkdir -p $(OUTPUT_FOLDER)/cpu
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
-	@$(CC) $(CFLAGS) src/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
+	$(CC) $(CFLAGS) src/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
+	@$(CC) $(CFLAGS) src/cpu/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 
 iso: kernel
