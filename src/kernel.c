@@ -11,5 +11,6 @@ void kernel_setup(void) {
     }
   }
   framebuffer_set_cursor(10, 10);
+  framebuffer_clear();
   while (1) continue;
 }
