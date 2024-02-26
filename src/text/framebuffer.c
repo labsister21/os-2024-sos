@@ -1,6 +1,7 @@
 #include "header/text/framebuffer.h"
 #include "header/cpu/portio.h"
 #include "header/stdlib/string.h"
+#include "header/text/buffercolor.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -18,6 +19,10 @@ void framebuffer_write(
   *target = c | (attrib << 8);
 }
 
-// void framebuffer_clear(void) {
-//   // TODO : Implement
-// }
+void framebuffer_clear(void) {
+  for (int i = 0; i < BUFFER_HEIGHT; ++i) {
+    for (int j = 0; j < BUFFER_WIDTH; ++j) {
+      framebuffer_write(i, j, ' ', BLACK, BLACK);
+    }
+  }
+}
