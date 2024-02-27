@@ -5,33 +5,46 @@
 #include "header/kernel-entrypoint.h"
 #include "header/text/buffercolor.h"
 #include "header/text/framebuffer.h"
+#include <stdbool.h>
 
 void kernel_setup(void) {
   load_gdt(&_gdt_gdtr);
   pic_remap();
   activate_keyboard_interrupt();
+  keyboard_state_activate();
   initialize_idt();
 
-  int col = 0;
-  int row = 0;
-  keyboard_state_activate();
+  framebuffer_clear();
+  framebuffer_set_cursor(0, 0);
+  int pos = 0;
   while (true) {
     char c;
     get_keyboard_buffer(&c);
+
     if (c == 0) continue;
 
+    bool printable = true;
     if (c == '\n') {
-      row += 1;
-      col = 0;
-      framebuffer_set_cursor(row, col);
-      continue;
+      pos = ((pos / BUFFER_WIDTH) + 1) * BUFFER_WIDTH;
+      printable = false;
     }
 
-    framebuffer_write(row, col++, c, BLACK, WHITE);
-    framebuffer_set_cursor(row, col);
-    if (col % 80 == 0) {
-      col = 0;
-      ++row;
+    if (c == '\b') {
+      if (pos == 0) continue;
+      pos = pos - 1;
+      printable = false;
+      framebuffer_write(
+          pos / BUFFER_WIDTH, pos % BUFFER_WIDTH, ' ', WHITE, BLACK
+      );
     }
+
+    if (printable) {
+      framebuffer_write(
+          pos / BUFFER_WIDTH, pos % BUFFER_WIDTH, c, WHITE, BLACK
+      );
+      pos = pos + 1;
+    }
+
+    framebuffer_set_cursor(pos / BUFFER_WIDTH, pos % BUFFER_WIDTH);
   }
 }
