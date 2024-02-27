@@ -8,8 +8,16 @@
 #define EXT_SCANCODE_LEFT 0x4B
 #define EXT_SCANCODE_RIGHT 0x4D
 
+#define EXT_SCANCODE_ALT 0x38
+#define EXT_SCANCODE_RIGHT_SHIFT 0x2A
+#define EXT_SCANCODE_LEFT_SHIFT 0x36
+#define EXT_SCANCODE_CTRL 0x1D
+
 #define KEYBOARD_DATA_PORT 0x60
 #define EXTENDED_SCANCODE_BYTE 0xE0
+
+#define MAKE_OFFSET 0x00
+#define BREAK_OFFSET 0x80
 
 /**
  * keyboard_scancode_1_to_ascii_map[256], Convert scancode values that
@@ -19,6 +27,7 @@
  * By default, QEMU using scancode set 1 (from empirical testing)
  */
 extern const char keyboard_scancode_1_to_ascii_map[256];
+extern const char keyboard_scancode_1_to_ascii_map_shifted[256];
 
 /**
  * KeyboardDriverState - Contain all driver states
@@ -32,6 +41,10 @@ struct KeyboardDriverState {
   bool read_extended_mode;
   bool keyboard_input_on;
   char keyboard_buffer;
+
+  bool shift_modifier;
+  bool alt_modifier;
+  bool ctrl_modifier;
 } __attribute((packed));
 
 extern struct KeyboardDriverState keyboard_state;

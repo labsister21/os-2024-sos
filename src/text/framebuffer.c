@@ -26,7 +26,7 @@ void framebuffer_write(
 void framebuffer_clear(void) {
   for (int i = 0; i < BUFFER_HEIGHT; ++i) {
     for (int j = 0; j < BUFFER_WIDTH; ++j) {
-      framebuffer_write(i, j, '\0', BLACK, BLACK);
+      framebuffer_write(i, j, '\0', WHITE, BLACK);
     }
   }
 }
