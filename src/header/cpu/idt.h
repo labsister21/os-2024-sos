@@ -8,9 +8,9 @@
 // IDT hard limit, see Intel x86 manual 3a - 6.10 Interrupt Descriptor Table
 #define IDT_MAX_ENTRY_COUNT 256
 #define ISR_STUB_TABLE_LIMIT 64
-#define INTERRUPT_GATE_R_BIT_1 0b000
-#define INTERRUPT_GATE_R_BIT_2 0b110
-#define INTERRUPT_GATE_R_BIT_3 0b0
+
+#define INTERRUPT_AND_TRAP_TYPE_ID 0b000
+#define INTERRUPT_GATE_TYPE_AND_SIZE 0b01110
 
 // Interrupt Handler / ISR stub for reducing code duplication, this array can be
 // iterated in initialize_idt()
@@ -37,16 +37,16 @@ struct IDTGate {
   uint16_t segment_selector;
 
   /* Bit 32 to 47 */
-  uint8_t : 5;                   // Reserved
-  uint8_t type_identifier_1 : 3; // Fill with 0b000 for Interrupt or Trap gate
+  uint8_t : 5;                 // Reserved
+  uint8_t type_identifier : 3; // Fill with 0b000 for Interrupt or Trap gate
 
   // 0b00101 for task gate
   // 0b0D110 for interrupt gate
   // 0b0D111 for trap gate
   // where D is size of gate
-  uint8_t gate_size : 5;
+  uint8_t gate_type_and_size : 5;
   uint8_t dpl : 2; // Privilege Level
-  uint8_t privilege_level : 1;
+  uint8_t segment_present : 1;
 
   /* Bit 48 to 63 */
   uint16_t offset_hi;
@@ -83,10 +83,8 @@ struct IDTR {
  * GDT_KERNEL_CODE_SEGMENT_SELECTOR
  * @param privilege        Descriptor privilege level
  */
-void set_interrupt_gate(
-    uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector,
-    uint8_t privilege
-);
+void set_interrupt_gate(uint8_t int_vector, void *handler_address,
+                        uint16_t gdt_seg_selector, uint8_t privilege);
 
 /**
  * Set IDT with proper values and load with lidt
