@@ -1,14 +1,28 @@
-# TODO: Automatically scan directory
-
 # Compiler & linker
 ASM           = nasm
 LIN           = ld
 CC            = gcc
+MKISO					= genisoimage
+QEMU_i386		  = qemu-system-i386
+QEMU_img		  = qemu-img
 
 # Directory
 SOURCE_FOLDER = src
 OUTPUT_FOLDER = bin
+C_FOLDER			= code
+A_FOLDER			= asm
+CCODE_FOLDER 	= $(SOURCE_FOLDER)/$(C_FOLDER)
+ACODE_FOLDER	= $(SOURCE_FOLDER)/$(A_FOLDER)
+OBJ_FOLDER		= $(OUTPUT_FOLDER)/obj
+COBJ_FOLDER		= $(OBJ_FOLDER)/$(C_FOLDER)
+AOBJ_FOLDER		= $(OBJ_FOLDER)/$(A_FOLDER)
+
+# File
+CCODE = $(call RECUR_WILDCARD,$(CCODE_FOLDER),*.c)
+ACODE = $(call RECUR_WILDCARD,$(ACODE_FOLDER),*.s)
+KERNEL_NAME		= kernel
 ISO_NAME      = os2024
+DISK_NAME			= storage
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -19,35 +33,55 @@ CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(SYSTEM_INCLUDE_
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
+# Helper functions
+RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCARD,$d/,$2))
+C_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.c,%.o,$1))
+A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
+
+
+.PHONY: run rerun all build rebuild disk clean 
 
 # Qemu debug flag: -s and -S
 run: all
-	@qemu-system-i386 -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
-all: build
-build: iso
+	@$(QEMU_i386) \
+		-drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk \
+		-cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso 
+rerun:
+	@make clean
+	@make run
+
+all: build disk
+
+build: $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+rebuild:
+	@make clean
+	@make build
+
+disk: $(OUTPUT_FOLDER)/$(DISK_NAME).bin
+
 clean:
 	rm -rf $(OUTPUT_FOLDER)
 
-kernel:
-	@mkdir -p $(OUTPUT_FOLDER)
-	@mkdir -p $(OUTPUT_FOLDER)/cpu
-	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
-	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
-	@$(CC) $(CFLAGS) src/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
-	@$(CC) $(CFLAGS) src/cpu/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
-	@$(CC) $(CFLAGS) src/cpu/portio.c -o $(OUTPUT_FOLDER)/portio.o
-	@$(CC) $(CFLAGS) src/cpu/idt.c -o $(OUTPUT_FOLDER)/idt.o
-	@$(CC) $(CFLAGS) src/cpu/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
-	@$(CC) $(CFLAGS) src/driver/keyboard.c -o $(OUTPUT_FOLDER)/keyboard.o
-	@$(CC) $(CFLAGS) src/text/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
+$(COBJ_FOLDER)/%.o : $(CCODE_FOLDER)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-iso: kernel
+$(AOBJ_FOLDER)/%.o : $(ACODE_FOLDER)/%.s
+	@mkdir -p $(@D)
+	$(ASM) $(AFLAGS) $< -o $@
+
+$(OUTPUT_FOLDER)/$(KERNEL_NAME): $(call C_TO_O,$(CCODE)) $(call A_TO_O,$(ACODE))
+	$(LIN) $(LFLAGS) $^ -o $(OUTPUT_FOLDER)/kernel
+
+$(OUTPUT_FOLDER)/$(DISK_NAME).bin:
+	@$(QEMU_img) create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
+
+$(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
 	@cp $(OUTPUT_FOLDER)/kernel     $(OUTPUT_FOLDER)/iso/boot/
 	@cp other/grub1                 $(OUTPUT_FOLDER)/iso/boot/grub/
 	@cp $(SOURCE_FOLDER)/menu.lst   $(OUTPUT_FOLDER)/iso/boot/grub/
-	@genisoimage -R \
+	$(MKISO) -R \
 		-b boot/grub/grub1 \
 		-no-emul-boot \
 		-boot-load-size 4 \
