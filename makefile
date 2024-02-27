@@ -32,7 +32,7 @@ kernel:
 	@mkdir -p $(OUTPUT_FOLDER)
 	@mkdir -p $(OUTPUT_FOLDER)/cpu
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
-	$(CC) $(CFLAGS) src/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
+	@$(CC) $(CFLAGS) src/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
 	@$(CC) $(CFLAGS) src/cpu/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(CC) $(CFLAGS) src/cpu/portio.c -o $(OUTPUT_FOLDER)/portio.o
 	@$(CC) $(CFLAGS) src/text/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
