@@ -1,7 +1,7 @@
 #include "header/driver/disk.h"
 #include "header/cpu/portio.h"
+#include "header/driver/disk.h"
 #include <stdint.h>
-
 static void ATA_busy_wait() {
 	while (in(0x1F7) & ATA_STATUS_BSY)
 		;
@@ -39,6 +39,6 @@ void write_blocks(const void *ptr, uint32_t logical_block_address, uint8_t block
 		ATA_busy_wait();
 		ATA_DRQ_wait();
 		for (uint32_t j = 0; j < HALF_BLOCK_SIZE; j++)
+			out16(0x1F0, ((uint16_t *)ptr)[HALF_BLOCK_SIZE * i + j]);
 	}
 }
-out16(0x1F0, ((uint16_t *)ptr)[HALF_BLOCK_SIZE * i + j]);
