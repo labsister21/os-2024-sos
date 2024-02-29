@@ -31,13 +31,14 @@
 /* -- FAT32 DirectoryEntry constants -- */
 #define ATTR_SUBDIRECTORY 0b00010000
 #define UATTR_NOT_EMPTY 0b10101010
+#define RESERVED_ENTRY 2
 
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
 extern const uint8_t fs_signature[BLOCK_SIZE];
 
 // Cluster buffer data type - @param buf Byte buffer with size of CLUSTER_SIZE
 struct ClusterBuffer {
-	uint8_t buf[CLUSTER_SIZE];
+  uint8_t buf[CLUSTER_SIZE];
 } __attribute__((packed));
 
 /* -- FAT32 Data Structures -- */
@@ -48,7 +49,7 @@ struct ClusterBuffer {
  * @param cluster_map Containing cluster map of FAT32
  */
 struct FAT32FileAllocationTable {
-	uint32_t cluster_map[CLUSTER_MAP_SIZE];
+  uint32_t cluster_map[CLUSTER_MAP_SIZE];
 } __attribute__((packed));
 
 /**
@@ -77,30 +78,30 @@ struct FAT32FileAllocationTable {
  * filesize is 0
  */
 struct FAT32DirectoryEntry {
-	char name[8];
-	char ext[3];
-	uint8_t attribute;
-	uint8_t user_attribute;
+  char name[8];
+  char ext[3];
+  uint8_t attribute;
+  uint8_t user_attribute;
 
-	bool undelete;
-	uint16_t create_time;
-	uint16_t create_date;
-	uint16_t access_date;
-	uint16_t cluster_high;
+  bool undelete;
+  uint16_t create_time;
+  uint16_t create_date;
+  uint16_t access_date;
+  uint16_t cluster_high;
 
-	uint16_t modified_time;
-	uint16_t modified_date;
-	uint16_t cluster_low;
-	uint32_t filesize;
+  uint16_t modified_time;
+  uint16_t modified_date;
+  uint16_t cluster_low;
+  uint32_t filesize;
 } __attribute__((packed));
 
-#define MAX_DIR_TABLE_ENTRY \
-	(int)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry))
+#define MAX_DIR_TABLE_ENTRY                                                    \
+  (int)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry))
 
 // FAT32 DirectoryTable, containing directory entry table - @param table Table
 // of DirectoryEntry that span within 1 cluster
 struct FAT32DirectoryTable {
-	struct FAT32DirectoryEntry table[MAX_DIR_TABLE_ENTRY];
+  struct FAT32DirectoryEntry table[MAX_DIR_TABLE_ENTRY];
 } __attribute__((packed));
 
 /* -- FAT32 Driver -- */
@@ -114,9 +115,9 @@ struct FAT32DirectoryTable {
  * @param cluster_buf   Buffer for cluster, can be used for temp var
  */
 struct FAT32DriverState {
-	struct FAT32FileAllocationTable fat_table;
-	struct FAT32DirectoryTable dir_table_buf;
-	struct ClusterBuffer cluster_buf;
+  struct FAT32FileAllocationTable fat_table;
+  struct FAT32DirectoryTable dir_table_buf;
+  struct ClusterBuffer cluster_buf;
 } __attribute__((packed));
 extern struct FAT32DriverState fat32_driver_state;
 
@@ -132,11 +133,11 @@ extern struct FAT32DriverState fat32_driver_state;
  * behaviour with this attribute
  */
 struct FAT32DriverRequest {
-	void *buf;
-	char name[8];
-	char ext[3];
-	uint32_t parent_cluster_number;
-	uint32_t buffer_size;
+  void *buf;
+  char name[8];
+  char ext[3];
+  uint32_t parent_cluster_number;
+  uint32_t buffer_size;
 } __attribute__((packed));
 
 /* -- Driver Interfaces -- */
@@ -159,8 +160,8 @@ uint32_t cluster_to_lba(uint32_t cluster);
  * @param parent_dir_cluster Parent directory cluster number
  */
 void init_directory_table(
-		struct FAT32DirectoryTable *dir_table, char *name,
-		uint32_t parent_dir_cluster
+    struct FAT32DirectoryTable *dir_table, char *name,
+    uint32_t parent_dir_cluster
 );
 
 /**
@@ -194,7 +195,7 @@ void initialize_filesystem_fat32(void);
  * block_count 255 => max cluster_count = 63
  */
 void write_clusters(
-		const void *ptr, uint32_t cluster_number, uint8_t cluster_count
+    const void *ptr, uint32_t cluster_number, uint8_t cluster_count
 );
 
 /**
