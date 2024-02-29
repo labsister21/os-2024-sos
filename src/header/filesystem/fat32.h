@@ -94,12 +94,13 @@ struct FAT32DirectoryEntry {
 	uint32_t filesize;
 } __attribute__((packed));
 
-#define MAX_DIR_TABLE (int)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry))
+#define MAX_DIR_TABLE_ENTRY \
+	(int)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry))
 
 // FAT32 DirectoryTable, containing directory entry table - @param table Table
 // of DirectoryEntry that span within 1 cluster
 struct FAT32DirectoryTable {
-	struct FAT32DirectoryEntry table[MAX_DIR_TABLE];
+	struct FAT32DirectoryEntry table[MAX_DIR_TABLE_ENTRY];
 } __attribute__((packed));
 
 /* -- FAT32 Driver -- */
@@ -219,7 +220,7 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count);
  *                buffer_size must be exactly sizeof(struct FAT32DirectoryTable)
  * @return Error code: 0 success - 1 not a folder - 2 not found - -1 unknown
  */
-int8_t read_directory(struct FAT32DriverRequest request);
+int8_t read_directory(struct FAT32DriverRequest *request);
 
 /**
  * FAT32 read, read a file from file system.
@@ -229,7 +230,7 @@ int8_t read_directory(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 not a file - 2 not enough buffer - 3 not
  * found - -1 unknown
  */
-int8_t read(struct FAT32DriverRequest request);
+int8_t read(struct FAT32DriverRequest *request);
 
 /**
  * FAT32 write, write a file or folder to file system.
@@ -239,7 +240,7 @@ int8_t read(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 file/folder already exist - 2 invalid
  * parent cluster - -1 unknown
  */
-int8_t write(struct FAT32DriverRequest request);
+int8_t write(struct FAT32DriverRequest *request);
 
 /**
  * FAT32 delete, delete a file or empty directory (only 1 DirectoryEntry) in
@@ -249,10 +250,7 @@ int8_t write(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 not found - 2 folder is not empty - -1
  * unknown
  */
-int8_t delete(struct FAT32DriverRequest request);
+int8_t delete(struct FAT32DriverRequest *request);
 
-void create_empty_directory_table(
-		struct FAT32DirectoryTable *dir_table, uint32_t current, uint32_t parent
-);
-
+uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *dir_entry);
 #endif
