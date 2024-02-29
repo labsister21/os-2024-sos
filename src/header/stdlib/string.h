@@ -51,8 +51,8 @@ int memcmp(const void *s1, const void *s2, size_t n);
  */
 void *memmove(void *dest, const void *src, size_t n);
 
-int strcmp(char *str1, char *str2);
-int strlen(char *str);
-void strcpy(char *dst, char *src, int size);
+int str_cmp(char *str1, char *str2);
+int str_len(char *str);
+void str_cpy(char *dst, char *src, int size);
 
 #endif

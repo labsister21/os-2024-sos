@@ -21,14 +21,14 @@ void kernel_setup(void) {
 
   struct FAT32DriverRequest req;
   req.buf = "Afif";
-  req.buffer_size = strlen(req.buf);
-  strcpy(req.name, "test", 8);
-  strcpy(req.ext, "x", 3);
+  req.buffer_size = str_len(req.buf);
+  str_cpy(req.name, "test", 8);
+  str_cpy(req.ext, "x", 3);
   req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 
   write(&req);
 
-  strcpy(req.name, "dir", 8);
+  str_cpy(req.name, "dir", 8);
   req.buffer_size = 0;
   write(&req);
 
@@ -39,16 +39,16 @@ void kernel_setup(void) {
 
   uint32_t dir_cluster = get_cluster_from_dir_entry(&dir_table.table[0]);
   req.parent_cluster_number = dir_cluster;
-  strcpy(req.name, "hello", 8);
-  strcpy(req.ext, "o", 3);
+  str_cpy(req.name, "hello", 8);
+  str_cpy(req.ext, "o", 3);
   req.buf = "HELLO, WORLD!";
-  req.buffer_size = strlen(req.buf);
+  req.buffer_size = str_len(req.buf);
   write(&req);
 
   delete (&req);
 
   req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-  strcpy(req.name, "dir", 8);
+  str_cpy(req.name, "dir", 8);
   int res = delete (&req);
   framebuffer_write(0, 0, '0' + res, WHITE, BLACK);
 
