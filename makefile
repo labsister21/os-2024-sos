@@ -32,6 +32,9 @@ STRIP_CFLAG   = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaul
 CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(SYSTEM_INCLUDE_CFLAG) -m32 -c -I$(SOURCE_FOLDER)
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
+QFLAGS_DRIVE	= -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk
+QFLAGS_ISO		= -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso 
+QFLAGS_DBG		= -s -S
 
 # Helper functions
 RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCARD,$d/,$2))
@@ -39,16 +42,18 @@ C_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.c,%.o,$1))
 A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
 
 
-.PHONY: run rerun all build rebuild disk clean 
+.PHONY: run rerun dbg all build rebuild disk clean 
 
 # Qemu debug flag: -s and -S
 run: all
-	@$(QEMU_i386) \
-		-drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk \
-		-cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso 
+	@$(QEMU_i386) $(QFLAGS_DRIVE) $(QFLAGS_ISO)
 rerun:
 	@make clean
 	@make run
+
+# gdb $(OUTPUT_FOLDER)/$(KERNEL_NAME) 
+dbg: 
+	@($(QEMU_i386) $(QFLAGS_DBG) $(QFLAGS_DRIVE) $(QFLAGS_ISO) &)
 
 all: build disk
 
@@ -71,10 +76,10 @@ $(AOBJ_FOLDER)/%.o : $(ACODE_FOLDER)/%.s
 	$(ASM) $(AFLAGS) $< -o $@
 
 $(OUTPUT_FOLDER)/$(KERNEL_NAME): $(call C_TO_O,$(CCODE)) $(call A_TO_O,$(ACODE))
-	$(LIN) $(LFLAGS) $^ -o $(OUTPUT_FOLDER)/kernel
+	$(LIN) $(LFLAGS) $^ -o $@
 
 $(OUTPUT_FOLDER)/$(DISK_NAME).bin:
-	@$(QEMU_img) create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
+	@$(QEMU_img) create -f raw $@ 4M
 
 $(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
