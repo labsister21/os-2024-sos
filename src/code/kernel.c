@@ -4,8 +4,7 @@
 #include "header/driver/keyboard.h"
 #include "header/filesystem/fat32.h"
 #include "header/kernel-entrypoint.h"
-#include "header/stdlib/string.h"
-#include "header/text/buffercolor.h"
+#include "header/memory/paging.h"
 #include "header/text/framebuffer.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -19,38 +18,12 @@ void kernel_setup(void) {
   initialize_filesystem_fat32();
   framebuffer_clear();
 
-  struct FAT32DriverRequest req;
-  req.buf = "Afif";
-  req.buffer_size = str_len(req.buf);
-  str_cpy(req.name, "test", 8);
-  str_cpy(req.ext, "x", 3);
-  req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-
-  write(&req);
-
-  str_cpy(req.name, "dir", 8);
-  req.buffer_size = 0;
-  write(&req);
-
-  struct FAT32DirectoryTable dir_table;
-  req.buffer_size = CLUSTER_SIZE;
-  req.buf = &dir_table;
-  read_directory(&req);
-
-  uint32_t dir_cluster = get_cluster_from_dir_entry(&dir_table.table[0]);
-  req.parent_cluster_number = dir_cluster;
-  str_cpy(req.name, "hello", 8);
-  str_cpy(req.ext, "o", 3);
-  req.buf = "HELLO, WORLD!";
-  req.buffer_size = str_len(req.buf);
-  write(&req);
-
-  delete (&req);
-
-  req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-  str_cpy(req.name, "dir", 8);
-  int res = delete (&req);
-  framebuffer_write(0, 0, '0' + res, WHITE, BLACK);
+  paging_allocate_user_page_frame(
+      &_paging_kernel_page_directory, (void *)0x500000
+  );
+  // paging_free_user_page_frame(&_paging_kernel_page_directory, (void
+  // *)0x500000);
+  *((uint8_t *)0x500000) = 1;
 
   while (1) continue;
 }

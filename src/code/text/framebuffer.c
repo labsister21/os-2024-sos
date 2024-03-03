@@ -18,7 +18,8 @@ void framebuffer_write(
     uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg
 ) {
   uint16_t flatten = (row * BUFFER_WIDTH) + col;
-  uint16_t *target = (uint16_t *)(BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
+  uint16_t *target =
+      (uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
   uint16_t attrib = (bg << 4) | (fg & 0x0F);
   *target = c | (attrib << 8);
 }

@@ -2,7 +2,6 @@
 #define _PAGING_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #define PAGE_ENTRY_COUNT 1024
@@ -25,7 +24,8 @@ extern struct PageDirectory _paging_kernel_page_directory;
 struct PageDirectoryEntryFlag {
   uint8_t present_bit : 1;
   uint8_t write_bit : 1;
-  uint8_t : 5;
+  uint8_t user : 1;
+  uint8_t : 4;
   uint8_t use_pagesize_4_mb : 1;
 } __attribute__((packed));
 
@@ -47,9 +47,9 @@ struct PageDirectoryEntry {
   uint16_t global_page : 1;
   uint16_t : 3;
   uint16_t pat : 1;
-  uint16_t lower_address : 4;
+  uint16_t higher_address : 4;
   uint16_t : 5;
-  uint16_t higher_address : 10;
+  uint16_t lower_address : 10;
 } __attribute__((packed));
 
 /**
@@ -76,9 +76,9 @@ struct PageDirectory {
  * ...
  */
 struct PageManagerState {
-  bool page_frame_map[PAGE_FRAME_MAX_COUNT];
+  bool mapped[PAGE_FRAME_MAX_COUNT];
+  void *mapped_address[PAGE_FRAME_MAX_COUNT];
   uint32_t free_page_frame_count;
-  // TODO: Add if needed ...
 } __attribute__((packed));
 
 /**

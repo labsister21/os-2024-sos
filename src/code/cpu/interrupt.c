@@ -1,6 +1,8 @@
 #include "header/cpu/interrupt.h"
 #include "header/cpu/portio.h"
 #include "header/driver/keyboard.h"
+#include "header/text/buffercolor.h"
+#include "header/text/framebuffer.h"
 
 void activate_keyboard_interrupt(void) {
   out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
@@ -46,7 +48,12 @@ void pic_remap(void) {
   out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
+int c = 0;
 void main_interrupt_handler(struct InterruptFrame frame) {
+  int p = frame.int_number;
+  framebuffer_write(10, c++, (p / 10) + '0', WHITE, BLACK);
+  framebuffer_write(10, c++, (p % 10) + '0', WHITE, BLACK);
+  framebuffer_write(10, c++, ' ', WHITE, BLACK);
   switch (frame.int_number) {
   case PIC1_OFFSET + IRQ_KEYBOARD:
     keyboard_isr();
