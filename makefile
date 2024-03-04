@@ -46,7 +46,7 @@ A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
 
 .SECONDARY:
 .SECONDEXPANSION:
-.PHONY: run rerun dbg inserter program.% all build rebuild disk clean 
+.PHONY: run rerun dbg inserter program.% bear-all bear all build rebuild disk clean 
 
 # Qemu debug flag: -s and -S
 run: all
@@ -60,8 +60,14 @@ dbg:
 
 inserter: $(OUTPUT_FOLDER)/$(INSERTER_NAME)
 
+# TODO: Generate for user program
+bear-all: all inserter
+bear:
+	make clean
+	rm -rf compile_commands.json
+	bear -- make bear-all
 
-all: build inserter disk
+all: build disk
 
 build: $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 rebuild:
