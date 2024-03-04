@@ -10,12 +10,9 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 
 int main(void) {
   char n = '_';
-  syscall(0x4, (uint32_t)&n, 0, 0);
-
-  char *c = "Hello, .!";
-  c[7] = n;
-  for (int i = 0; i < 9; ++i) {
-    syscall(0x5, (uint32_t) & (c[i]), 0xF, 0);
+  while (1) {
+    syscall(0x4, (uint32_t)&n, 0, 0);
+    syscall(0x5, (uint32_t)&n, 0xF, 0);
   }
   return 0;
 }

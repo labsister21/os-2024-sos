@@ -74,13 +74,6 @@ void keyboard_isr() {
   pic_ack(PIC1_OFFSET + IRQ_KEYBOARD);
 
   if (!keyboard_state.keyboard_input_on) return;
-  char c;
-  if (keyboard_state.shift_modifier)
-    c = keyboard_scancode_1_to_ascii_map_shifted[scancode];
-  else c = keyboard_scancode_1_to_ascii_map[scancode];
-  keyboard_state.buffer_filled = true;
-  keyboard_state.keyboard_buffer = c;
-
   switch (scancode) {
 
   case EXT_SCANCODE_RIGHT_SHIFT + MAKE_OFFSET:
@@ -108,5 +101,16 @@ void keyboard_isr() {
   case EXT_SCANCODE_CTRL + BREAK_OFFSET:
     keyboard_state.ctrl_modifier = false;
     break;
+
+  default: {
+    char c;
+    if (keyboard_state.shift_modifier)
+      c = keyboard_scancode_1_to_ascii_map_shifted[scancode];
+    else c = keyboard_scancode_1_to_ascii_map[scancode];
+
+    if (scancode & BREAK_OFFSET) return;
+    keyboard_state.buffer_filled = true;
+    keyboard_state.keyboard_buffer = c;
+  }
   }
 }
