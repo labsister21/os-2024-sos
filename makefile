@@ -23,13 +23,15 @@ ACODE = $(call RECUR_WILDCARD,$(ACODE_FOLDER),*.s)
 KERNEL_NAME		= kernel
 ISO_NAME      = os2024
 DISK_NAME			= storage
+INSERTER_NAME = inserter
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
 DEBUG_CFLAG   = -fshort-wchar -g
+INCLUDE_CFLAG = -I$(SOURCE_FOLDER)
 SYSTEM_INCLUDE_CFLAG	= -isystem src/include
 STRIP_CFLAG   = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
-CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(SYSTEM_INCLUDE_CFLAG) -m32 -c -I$(SOURCE_FOLDER)
+CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SYSTEM_INCLUDE_CFLAG) -m32 -c
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 QFLAGS_DRIVE	= -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk
@@ -42,7 +44,7 @@ C_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.c,%.o,$1))
 A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
 
 
-.PHONY: run rerun dbg all build rebuild disk clean 
+.PHONY: run rerun dbg inserter all build rebuild disk clean 
 
 # Qemu debug flag: -s and -S
 run: all
@@ -55,7 +57,9 @@ rerun:
 dbg: 
 	@($(QEMU_i386) $(QFLAGS_DBG) $(QFLAGS_DRIVE) $(QFLAGS_ISO) &)
 
-all: build disk
+inserter: $(OUTPUT_FOLDER)/$(INSERTER_NAME)
+
+all: build disk inserter
 
 build: $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 rebuild:
@@ -97,3 +101,12 @@ $(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
 		-o bin/$(ISO_NAME).iso \
 		bin/iso
 	@rm -r $(OUTPUT_FOLDER)/iso/
+
+$(OUTPUT_FOLDER)/$(INSERTER_NAME): 
+	@mkdir -p $(@D)
+	$(CC) $(INCLUDE_CFLAG) $(WARNING_CFLAG) \
+		-Wno-builtin-declaration-mismatch -g -o $@ \
+		$(SOURCE_FOLDER)/code/stdlib/string.c \
+		$(SOURCE_FOLDER)/code/filesystem/fat32.c \
+		$(SOURCE_FOLDER)/inserter/inserter.c \
+
