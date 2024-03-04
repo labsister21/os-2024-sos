@@ -12,7 +12,8 @@ void activate_keyboard_interrupt(void) {
 void io_wait(void) { out(0x80, 0); }
 
 void pic_ack(uint8_t irq) {
-  if (irq >= 8) out(PIC2_COMMAND, PIC_ACK);
+  if (irq >= 8)
+    out(PIC2_COMMAND, PIC_ACK);
   out(PIC1_COMMAND, PIC_ACK);
 }
 
@@ -52,9 +53,9 @@ void pic_remap(void) {
 int c = 0;
 void main_interrupt_handler(struct InterruptFrame frame) {
   int p = frame.int_number;
-  framebuffer_write(10, c++, (p / 10) + '0', WHITE, BLACK);
-  framebuffer_write(10, c++, (p % 10) + '0', WHITE, BLACK);
-  framebuffer_write(10, c++, ' ', WHITE, BLACK);
+  framebuffer_write(10, 0, (p / 10) + '0', WHITE, BLACK);
+  framebuffer_write(10, 1, (p % 10) + '0', WHITE, BLACK);
+  // framebuffer_write(10, c++, ' ', WHITE, BLACK);
   switch (frame.int_number) {
   case PIC1_OFFSET + IRQ_KEYBOARD:
     keyboard_isr();

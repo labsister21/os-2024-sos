@@ -5,6 +5,7 @@
 #include "header/filesystem/fat32.h"
 #include "header/kernel-entrypoint.h"
 #include "header/memory/paging.h"
+#include "header/stdlib/string.h"
 #include "header/text/framebuffer.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -12,18 +13,30 @@
 void kernel_setup(void) {
   load_gdt(&_gdt_gdtr);
   pic_remap();
-  activate_keyboard_interrupt();
-  keyboard_state_activate();
   initialize_idt();
-  initialize_filesystem_fat32();
+  activate_keyboard_interrupt();
   framebuffer_clear();
+  framebuffer_set_cursor(0, 0);
+  initialize_filesystem_fat32();
 
-  paging_allocate_user_page_frame(
-      &_paging_kernel_page_directory, (void *)0x500000
-  );
-  // paging_free_user_page_frame(&_paging_kernel_page_directory, (void
-  // *)0x500000);
-  *((uint8_t *)0x500000) = 1;
+  gdt_install_tss();
+  set_tss_register();
 
-  while (1) continue;
+  void *mem = 0;
+  paging_allocate_user_page_frame(&_paging_kernel_page_directory, mem);
+
+  struct FAT32DriverRequest req;
+  req.buf = mem;
+  req.buffer_size = PAGE_FRAME_SIZE;
+  req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+  str_cpy(req.name, "shell", 8);
+  str_cpy(req.ext, "", 3);
+  read(&req);
+
+  set_tss_kernel_current_stack();
+  kernel_execute_user_program(mem);
+  framebuffer_write(0, 0, 'k', WHITE, BLACK);
+
+  while (1)
+    continue;
 }

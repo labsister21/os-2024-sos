@@ -5,39 +5,34 @@
 #include "header/driver/disk.h"
 #include "header/filesystem/fat32.h"
 #include "header/stdlib/string.h"
+#include "header/text/framebuffer.h"
 
 // Global variable
 uint8_t *image_storage;
 uint8_t *file_buffer;
 
-void read_blocks(
-    void *ptr, uint32_t logical_block_address, uint8_t block_count
-) {
+void read_blocks(void *ptr, uint32_t logical_block_address,
+                 uint8_t block_count) {
   for (int i = 0; i < block_count; i++) {
-    memcpy(
-        (uint8_t *)ptr + BLOCK_SIZE * i,
-        image_storage + BLOCK_SIZE * (logical_block_address + i), BLOCK_SIZE
-    );
+    memcpy((uint8_t *)ptr + BLOCK_SIZE * i,
+           image_storage + BLOCK_SIZE * (logical_block_address + i),
+           BLOCK_SIZE);
   }
 }
 
-void write_blocks(
-    const void *ptr, uint32_t logical_block_address, uint8_t block_count
-) {
+void write_blocks(const void *ptr, uint32_t logical_block_address,
+                  uint8_t block_count) {
   for (int i = 0; i < block_count; i++) {
-    memcpy(
-        image_storage + BLOCK_SIZE * (logical_block_address + i),
-        (uint8_t *)ptr + BLOCK_SIZE * i, BLOCK_SIZE
-    );
+    memcpy(image_storage + BLOCK_SIZE * (logical_block_address + i),
+           (uint8_t *)ptr + BLOCK_SIZE * i, BLOCK_SIZE);
   }
 }
 
 int main(int argc, char *argv[]) {
   if (argc < 4) {
-    fprintf(
-        stderr, "inserter: ./inserter <file to insert> <parent cluster index> "
-                "<storage>\n"
-    );
+    fprintf(stderr,
+            "inserter: ./inserter <file to insert> <parent cluster index> "
+            "<storage>\n");
     exit(1);
   }
 
@@ -51,7 +46,8 @@ int main(int argc, char *argv[]) {
   // Read target file, assuming file is less than 4 MiB
   FILE *fptr_target = fopen(argv[1], "r");
   size_t filesize = 0;
-  if (fptr_target == NULL) filesize = 0;
+  if (fptr_target == NULL)
+    filesize = 0;
   else {
     fread(file_buffer, 4 * 1024 * 1024, 1, fptr_target);
     fseek(fptr_target, 0, SEEK_END);

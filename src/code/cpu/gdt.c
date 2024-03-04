@@ -109,9 +109,9 @@ const struct SegmentDescriptor tss_segment = {
     .segment_present = 1,
     .param_flag = 1,
     .contains_64 = 0,
-    .granularity = 0
-};
+    .granularity = 0};
 
+// clang-format off
 /**
  * global_descriptor_table, predefined GDT.
  * Initial SegmentDescriptor already set properly according to Intel Manual &
@@ -119,8 +119,16 @@ const struct SegmentDescriptor tss_segment = {
  * (variable, etc)}, ...].
  */
 struct GlobalDescriptorTable global_descriptor_table = {
-    .table = {null_segment, kernel_code_segment, kernel_data_segment}
+  .table = {
+		null_segment, 
+		kernel_code_segment, 
+		kernel_data_segment,
+		user_code_segment,
+		user_data_segment, 
+		tss_segment
+	}
 };
+// clang-format on
 
 /**
  * _gdt_gdtr, predefined system GDTR.
@@ -128,9 +136,8 @@ struct GlobalDescriptorTable global_descriptor_table = {
  * above. From: https://wiki.osdev.org/Global_Descriptor_Table, GDTR.size is
  * GDT size minus 1.
  */
-struct GDTR _gdt_gdtr = {
-    .size = sizeof(global_descriptor_table), .address = &global_descriptor_table
-};
+struct GDTR _gdt_gdtr = {.size = sizeof(global_descriptor_table),
+                         .address = &global_descriptor_table};
 
 void gdt_install_tss(void) {
   uint32_t base = (uint32_t)&_interrupt_tss_entry;

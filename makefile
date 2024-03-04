@@ -74,6 +74,10 @@ rebuild:
 	@make clean
 	@make build
 
+redisk:
+	@rm -rf $(OUTPUT_FOLDER)/$(DISK_NAME).bin
+	@make disk
+
 disk: $(OUTPUT_FOLDER)/$(DISK_NAME).bin
 
 clean:
@@ -91,6 +95,7 @@ $(OUTPUT_FOLDER)/$(KERNEL_NAME): $(call C_TO_O,$(CCODE)) $(call A_TO_O,$(ACODE))
 	$(LIN) $(LFLAGS) $^ -o $@
 
 $(OUTPUT_FOLDER)/$(DISK_NAME).bin:
+	@mkdir -p $(@D)
 	@$(QEMU_img) create -f raw $@ 4M
 
 $(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
@@ -134,6 +139,9 @@ PCODE_FN 		= $(call C_TO_O,$(call RECUR_WILDCARD,$(PCODE_FOLDER)/$1,*.c))
 
 program.%: $(OUTPUT_FOLDER)/$(P_FOLDER)/%
 	@
+
+insprog.%: $(OUTPUT_FOLDER)/$(P_FOLDER)/% $(OUTPUT_FOLDER)/$(DISK_NAME).bin $(OUTPUT_FOLDER)/$(INSERTER_NAME)
+	cd $(OUTPUT_FOLDER)/$(P_FOLDER); ../$(INSERTER_NAME) shell 2 ../$(DISK_NAME).bin
 
 # Program entry points
 $(POBJ_SHARED)/crt0.o: $(PCODE_SHARED)/crt0.s
