@@ -59,7 +59,7 @@ dbg:
 
 inserter: $(OUTPUT_FOLDER)/$(INSERTER_NAME)
 
-all: build disk inserter
+all: build inserter disk
 
 build: $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 rebuild:
@@ -108,5 +108,5 @@ $(OUTPUT_FOLDER)/$(INSERTER_NAME):
 		-Wno-builtin-declaration-mismatch -g -o $@ \
 		$(SOURCE_FOLDER)/code/stdlib/string.c \
 		$(SOURCE_FOLDER)/code/filesystem/fat32.c \
-		$(SOURCE_FOLDER)/inserter/inserter.c \
+		$(SOURCE_FOLDER)/other/inserter.c \
 
