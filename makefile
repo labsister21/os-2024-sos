@@ -31,7 +31,8 @@ DEBUG_CFLAG   = -fshort-wchar -g
 INCLUDE_CFLAG = -I$(SOURCE_FOLDER)
 SYSTEM_INCLUDE_CFLAG	= -isystem src/include
 STRIP_CFLAG   = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
-CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SYSTEM_INCLUDE_CFLAG) -m32 -c
+TARGET_CFLAG	= -m32
+CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SYSTEM_INCLUDE_CFLAG) $(TARGET_CFLAG) -c
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 QFLAGS_DRIVE	= -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk
@@ -43,8 +44,9 @@ RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCAR
 C_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.c,%.o,$1))
 A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
 
-
-.PHONY: run rerun dbg inserter all build rebuild disk clean 
+.SECONDARY:
+.SECONDEXPANSION:
+.PHONY: run rerun dbg inserter program.% all build rebuild disk clean 
 
 # Qemu debug flag: -s and -S
 run: all
@@ -53,11 +55,11 @@ rerun:
 	@make clean
 	@make run
 
-# gdb $(OUTPUT_FOLDER)/$(KERNEL_NAME) 
 dbg: 
 	@($(QEMU_i386) $(QFLAGS_DBG) $(QFLAGS_DRIVE) $(QFLAGS_ISO) &)
 
 inserter: $(OUTPUT_FOLDER)/$(INSERTER_NAME)
+
 
 all: build inserter disk
 
@@ -104,9 +106,38 @@ $(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
 
 $(OUTPUT_FOLDER)/$(INSERTER_NAME): 
 	@mkdir -p $(@D)
-	$(CC) $(INCLUDE_CFLAG) $(WARNING_CFLAG) \
+	$(CC) $(WARNING_CFLAG) \
+		-I$(SOURCE_FOLDER) \
 		-Wno-builtin-declaration-mismatch -g -o $@ \
 		$(SOURCE_FOLDER)/code/stdlib/string.c \
 		$(SOURCE_FOLDER)/code/filesystem/fat32.c \
 		$(SOURCE_FOLDER)/other/inserter.c \
+	
+# User Program Recipe
+P_FOLDER			= program
+PCODE_FOLDER	= $(SOURCE_FOLDER)/$(P_FOLDER)
+POBJ_FOLDER	  = $(OBJ_FOLDER)/$(P_FOLDER)
 
+PSHARED 			= __shared__
+PCODE_SHARED 	= $(PCODE_FOLDER)/$(PSHARED)
+POBJ_SHARED 	= $(POBJ_FOLDER)/$(PSHARED)
+
+PFLAGS			= $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(TARGET_CFLAG) -fno-pie
+PLFLAGS    	= -T $(PCODE_SHARED)/user-linker.ld -melf_i386
+PCODE_FN 		= $(call C_TO_O,$(call RECUR_WILDCARD,$(PCODE_FOLDER)/$1,*.c))
+
+program.%: $(OUTPUT_FOLDER)/$(P_FOLDER)/%
+	@
+
+# Program entry points
+$(POBJ_SHARED)/crt0.o: $(PCODE_SHARED)/crt0.s
+	@mkdir -p $(@D)
+	$(ASM) $(AFLAGS) $< -o $@
+
+$(POBJ_FOLDER)/%.o : $(PCODE_FOLDER)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(PFLAGS) -c -o $@ $<
+
+$(OUTPUT_FOLDER)/$(P_FOLDER)/% : $$(call PCODE_FN,$$*) $(POBJ_SHARED)/crt0.o
+	@mkdir -p $(@D)
+	$(LIN) $(PLFLAGS) $^ -o $@
