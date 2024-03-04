@@ -37,3 +37,8 @@ void set_interrupt_gate(
   idt_int_gate->segment_present = 1;
   idt_int_gate->offset_hi = (uint16_t)((addr >> 16) & 0xFFFF);
 };
+
+// void set_trap_gate(
+//     uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector,
+//     uint8_t privilege
+// ) {}

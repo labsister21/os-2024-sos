@@ -83,8 +83,10 @@ struct IDTR {
  * GDT_KERNEL_CODE_SEGMENT_SELECTOR
  * @param privilege        Descriptor privilege level
  */
-void set_interrupt_gate(uint8_t int_vector, void *handler_address,
-                        uint16_t gdt_seg_selector, uint8_t privilege);
+void set_interrupt_gate(
+    uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector,
+    uint8_t privilege
+);
 
 /**
  * Set IDT with proper values and load with lidt

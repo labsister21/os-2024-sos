@@ -55,6 +55,7 @@ struct KeyboardDriverState keyboard_state = {
     .keyboard_input_on = false,
     .keyboard_buffer = '\0',
     .shift_modifier = false,
+    .buffer_filled = false,
     .alt_modifier = false,
     .ctrl_modifier = false
 };
@@ -65,16 +66,19 @@ void keyboard_state_deactivate() { keyboard_state.keyboard_input_on = false; }
 
 void get_keyboard_buffer(char *buff) {
   *buff = keyboard_state.keyboard_buffer;
-  keyboard_state.keyboard_buffer = '\0';
+  keyboard_state.buffer_filled = false;
 }
 
 void keyboard_isr() {
-  if (!keyboard_state.keyboard_input_on) return;
   uint8_t scancode = in(KEYBOARD_DATA_PORT);
+  pic_ack(PIC1_OFFSET + IRQ_KEYBOARD);
+
+  if (!keyboard_state.keyboard_input_on) return;
   char c;
   if (keyboard_state.shift_modifier)
     c = keyboard_scancode_1_to_ascii_map_shifted[scancode];
   else c = keyboard_scancode_1_to_ascii_map[scancode];
+  keyboard_state.buffer_filled = true;
   keyboard_state.keyboard_buffer = c;
 
   switch (scancode) {
@@ -105,6 +109,4 @@ void keyboard_isr() {
     keyboard_state.ctrl_modifier = false;
     break;
   }
-
-  pic_ack(PIC1_OFFSET + IRQ_KEYBOARD);
 }

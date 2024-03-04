@@ -40,6 +40,7 @@ extern const char keyboard_scancode_1_to_ascii_map_shifted[256];
 struct KeyboardDriverState {
   bool read_extended_mode;
   bool keyboard_input_on;
+  bool buffer_filled;
   char keyboard_buffer;
 
   bool shift_modifier;

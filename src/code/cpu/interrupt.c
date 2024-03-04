@@ -1,5 +1,6 @@
 #include "header/cpu/interrupt.h"
 #include "header/cpu/gdt.h"
+#include "header/cpu/idt.h"
 #include "header/cpu/portio.h"
 #include "header/driver/keyboard.h"
 #include "header/filesystem/fat32.h"
@@ -59,9 +60,14 @@ void syscall(struct InterruptFrame *frame) {
 
   case 4:
     keyboard_state_activate();
-    char res = '\0';
-    while (res == '\0') get_keyboard_buffer(&res);
-    *(char *)frame->cpu.general.ebx = res;
+    __asm__ volatile("sti"); // Allow hardware interrupt
+    while (true) {
+      __asm__ volatile("hlt");
+      if (keyboard_state.buffer_filled) {
+        get_keyboard_buffer((char *)frame->cpu.general.ebx);
+        break;
+      }
+    }
     keyboard_state_deactivate();
     break;
 
@@ -72,12 +78,13 @@ void syscall(struct InterruptFrame *frame) {
   }
 }
 
-// int c = 0;
 void main_interrupt_handler(struct InterruptFrame frame) {
-  // int p = frame.int_number;
-  // framebuffer_write(10, 0, (p / 10) + '0', WHITE, BLACK);
-  // framebuffer_write(10, 1, (p % 10) + '0', WHITE, BLACK);
-  // framebuffer_write(10, c++, ' ', WHITE, BLACK);
+  if (false) { // Debug
+    int n = frame.int_number;
+    framebuffer_put((n / 10) + '0');
+    framebuffer_put((n % 10) + '0');
+    framebuffer_put(' ');
+  }
   switch (frame.int_number) {
   case PIC1_OFFSET + IRQ_KEYBOARD:
     keyboard_isr();
