@@ -2,8 +2,9 @@
 #define _INTERRUPT_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
+
+#define SYSCALL_INT 0x30
 
 /* -- PIC constants -- */
 

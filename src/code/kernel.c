@@ -35,8 +35,6 @@ void kernel_setup(void) {
 
   set_tss_kernel_current_stack();
   kernel_execute_user_program(mem);
-  framebuffer_write(0, 0, 'k', WHITE, BLACK);
 
-  while (1)
-    continue;
+  while (1) continue;
 }

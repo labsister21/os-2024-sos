@@ -2,6 +2,7 @@
 #include "header/cpu/gdt.h"
 #include "header/cpu/portio.h"
 #include "header/driver/keyboard.h"
+#include "header/filesystem/fat32.h"
 #include "header/text/buffercolor.h"
 #include "header/text/framebuffer.h"
 
@@ -12,8 +13,7 @@ void activate_keyboard_interrupt(void) {
 void io_wait(void) { out(0x80, 0); }
 
 void pic_ack(uint8_t irq) {
-  if (irq >= 8)
-    out(PIC2_COMMAND, PIC_ACK);
+  if (irq >= 8) out(PIC2_COMMAND, PIC_ACK);
   out(PIC1_COMMAND, PIC_ACK);
 }
 
@@ -50,15 +50,40 @@ void pic_remap(void) {
   out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
-int c = 0;
+void syscall(struct InterruptFrame *frame) {
+  switch (frame->cpu.general.eax) {
+  case 0:
+    *((int8_t *)frame->cpu.general.ecx) =
+        read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
+    break;
+
+  case 4:
+    keyboard_state_activate();
+    char res = '\0';
+    while (res == '\0') get_keyboard_buffer(&res);
+    *(char *)frame->cpu.general.ebx = res;
+    keyboard_state_deactivate();
+    break;
+
+  case 5:
+    framebuffer_state.fg = frame->cpu.general.ecx;
+    framebuffer_put(*(char *)frame->cpu.general.ebx);
+    break;
+  }
+}
+
+// int c = 0;
 void main_interrupt_handler(struct InterruptFrame frame) {
-  int p = frame.int_number;
-  framebuffer_write(10, 0, (p / 10) + '0', WHITE, BLACK);
-  framebuffer_write(10, 1, (p % 10) + '0', WHITE, BLACK);
+  // int p = frame.int_number;
+  // framebuffer_write(10, 0, (p / 10) + '0', WHITE, BLACK);
+  // framebuffer_write(10, 1, (p % 10) + '0', WHITE, BLACK);
   // framebuffer_write(10, c++, ' ', WHITE, BLACK);
   switch (frame.int_number) {
   case PIC1_OFFSET + IRQ_KEYBOARD:
     keyboard_isr();
+    break;
+  case SYSCALL_INT:
+    syscall(&frame);
     break;
   }
 };

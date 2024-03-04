@@ -13,6 +13,15 @@
 #define BUFFER_HEIGHT 25
 #define CHAR_PRINTER_SIZE 2
 
+struct FramebufferState {
+  int row;
+  int col;
+  uint8_t fg;
+  uint8_t bg;
+} __attribute((packed));
+
+extern struct FramebufferState framebuffer_state;
+
 /**
  * Terminal framebuffer
  * Resolution: 80x25
@@ -52,4 +61,5 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+void framebuffer_put(char c);
 #endif

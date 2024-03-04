@@ -4,14 +4,42 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct FramebufferState framebuffer_state = {
+    .row = 0, .col = 0, .fg = WHITE, .bg = BLACK
+};
+
 void framebuffer_set_cursor(uint8_t r, uint8_t c) {
   uint16_t pos = r * BUFFER_WIDTH + c;
-
   out(CURSOR_PORT_CMD, 0x0F);
   out(CURSOR_PORT_DATA, pos & 0xFF);
 
   out(CURSOR_PORT_CMD, 0x0E);
   out(CURSOR_PORT_DATA, (pos >> 8) & 0xFF);
+
+  framebuffer_state.row = r;
+  framebuffer_state.col = c;
+}
+
+void framebuffer_put(char c) {
+  framebuffer_write(
+      framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,
+      framebuffer_state.bg
+  );
+
+  uint8_t next_col = framebuffer_state.col;
+  uint8_t next_row = framebuffer_state.row;
+
+  next_col += 1;
+  if (next_col == BUFFER_WIDTH) {
+    next_col = 0;
+    next_row += 1;
+  }
+
+  if (next_row == BUFFER_HEIGHT) {
+    next_row = 0;
+  }
+
+  framebuffer_set_cursor(next_row, next_col);
 }
 
 void framebuffer_write(
