@@ -2,6 +2,7 @@
 ASM           = nasm
 LIN           = ld
 CC            = gcc
+NATIVE_CC			= gcc
 MKISO					= genisoimage
 QEMU_i386		  = qemu-system-i386
 QEMU_img		  = qemu-img
@@ -58,14 +59,16 @@ rerun:
 dbg: 
 	@($(QEMU_i386) $(QFLAGS_DBG) $(QFLAGS_DRIVE) $(QFLAGS_ISO) &)
 
-inserter: $(OUTPUT_FOLDER)/$(INSERTER_NAME)
+inserter: 
+	make $(OUTPUT_FOLDER)/$(INSERTER_NAME) CC=$(NATIVE_CC)
 
 # TODO: Generate for user program
 bear-all: all inserter
 bear:
 	make clean
 	rm -rf compile_commands.json
-	bear -- make bear-all
+	CC=$(CC) bear --append -- make bin/$(KERNEL_NAME) CC=cc LIN=$(LIN)
+	CC=$(NATIVE_CC) bear --append -- make bin/$(INSERTER_NAME) CC=cc
 
 all: build disk
 
@@ -119,10 +122,11 @@ $(OUTPUT_FOLDER)/$(INSERTER_NAME):
 	@mkdir -p $(@D)
 	$(CC) $(WARNING_CFLAG) \
 		-I$(SOURCE_FOLDER) \
-		-Wno-builtin-declaration-mismatch -g -o $@ \
+		-Wno-builtin-declaration-mismatch -g \
 		$(SOURCE_FOLDER)/code/stdlib/string.c \
 		$(SOURCE_FOLDER)/code/filesystem/fat32.c \
 		$(SOURCE_FOLDER)/other/inserter.c \
+		-o $@
 	
 # User Program Recipe
 P_FOLDER			= program
