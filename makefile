@@ -52,6 +52,9 @@ RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCAR
 PROGRAM_CODE = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/program/$1,*.c))
 
 # Object file recipe
+$(OBJECT_PATH)/program/%.o: $(SOURCE_PATH)/program/%.c
+	@mkdir -p $(@D)
+	$(CC) $(filter-out $(INCLUDE_CFLAG),$(C_FLAGS)) -c -o $@ $<
 $(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.s
 	@mkdir -p $(@D)
 	$(ASM) $(ASM_FLAGS) $< -o $@
