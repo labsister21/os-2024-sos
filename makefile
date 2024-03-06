@@ -76,7 +76,7 @@ $(OBJECT_PATH)/program/crt0.o: $(SOURCE_PATH)/program/crt0.s
 	$(ASM) $(ASM_FLAGS) $< -o $@
 
 PROGRAM_LINKER_FLAGS = -T $(SOURCE_PATH)/program/user-linker.ld -melf_i386
-$(OUTPUT_PATH)/program/%: $$(call PROGRAM_CODE,$$*) $(OBJECT_PATH)/program/crt0.o
+$(OUTPUT_PATH)/program/%: $$(call PROGRAM_CODE,$$*) $(OBJECT_PATH)/program/crt0.o $(SHARED_C)
 	@mkdir -p $(@D)
 	$(LIN) $(PROGRAM_LINKER_FLAGS) $^ -o $@
 prog.%: $(OUTPUT_PATH)/program/%
