@@ -1,66 +1,113 @@
-# Compiler & linker
-ASM           = nasm
-LIN           = ld
-CC            = gcc
-NATIVE_CC			= gcc
-MKISO					= genisoimage
-QEMU_i386		  = qemu-system-i386
-QEMU_img		  = qemu-img
+# Compiler & Linker
+ASM = nasm
+LIN = ld
+CC = gcc
+NATIVE_CC = gcc
+MKISO = genisoimage
+QEMU_i386 = qemu-system-i386
+QEMU_img = qemu-img
 
-# Directory
-SOURCE_FOLDER = src
-OUTPUT_FOLDER = bin
-C_FOLDER			= code
-A_FOLDER			= asm
-CCODE_FOLDER 	= $(SOURCE_FOLDER)/$(C_FOLDER)
-ACODE_FOLDER	= $(SOURCE_FOLDER)/$(A_FOLDER)
-OBJ_FOLDER		= $(OUTPUT_FOLDER)/obj
-COBJ_FOLDER		= $(OBJ_FOLDER)/$(C_FOLDER)
-AOBJ_FOLDER		= $(OBJ_FOLDER)/$(A_FOLDER)
-
-# File
-CCODE = $(call RECUR_WILDCARD,$(CCODE_FOLDER),*.c)
-ACODE = $(call RECUR_WILDCARD,$(ACODE_FOLDER),*.s)
-KERNEL_NAME		= kernel
-ISO_NAME      = os2024
-DISK_NAME			= storage
+# Name
+KERNEL_NAME = kernel
+DISK_NAME = storage.bin
 INSERTER_NAME = inserter
+ISO_NAME = os2024.iso
+
+SOURCE_PATH = src
+OUTPUT_PATH = bin
+OBJECT_PATH = $(OUTPUT_PATH)/obj
+
+# C Flags
+WARNING_CFLAG = -Wall -Wextra -Werror
+DEBUG_CFLAG = -fshort-wchar -g
+TARGET_CFLAG = -m32
+SHARED_INCLUDE_CFLAG	= -idirafter $(SOURCE_PATH)/shared/header
+INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel
+STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
 
 # Flags
-WARNING_CFLAG = -Wall -Wextra -Werror
-DEBUG_CFLAG   = -fshort-wchar -g
-INCLUDE_CFLAG = -I$(SOURCE_FOLDER)
-SYSTEM_INCLUDE_CFLAG	= -isystem src/include
-STRIP_CFLAG   = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
-TARGET_CFLAG	= -m32
-CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SYSTEM_INCLUDE_CFLAG) $(TARGET_CFLAG) -c
-AFLAGS        = -f elf32 -g -F dwarf
-LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
-QFLAGS_DRIVE	= -drive file=$(OUTPUT_FOLDER)/$(DISK_NAME).bin,format=raw,if=ide,index=0,media=disk
-QFLAGS_ISO		= -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso 
-QFLAGS_DBG		= -s -S
-
-# Helper functions
-RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCARD,$d/,$2))
-C_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.c,%.o,$1))
-A_TO_O = $(patsubst $(SOURCE_FOLDER)%,$(OBJ_FOLDER)%,$(patsubst %.s,%.o,$1))
+ASM_FLAGS = -f elf32 -g -F dwarf
+C_FLAGS = $(WARNING_CFLAG) $(DEBUG_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SHARED_INCLUDE_CFLAG) $(TARGET_CFLAG) -c
+LINKER_FLAGS = -T $(SOURCE_PATH)/kernel/linker.ld -melf_i386
 
 .SECONDARY:
 .SECONDEXPANSION:
-.PHONY: run rerun dbg inserter program.% bear-all bear all build rebuild disk clean 
+.PHONY: 
 
-# Qemu debug flag: -s and -S
+clean:
+	rm -rf bin
+
+all: iso disk
+
 run: all
-	@$(QEMU_i386) $(QFLAGS_DRIVE) $(QFLAGS_ISO)
-rerun:
-	@make clean
-	@make run
+	@$(QEMU_i386) \
+		-drive file=$(OUTPUT_PATH)/$(DISK_NAME),format=raw,if=ide,index=0,media=disk \
+		-cdrom $(OUTPUT_PATH)/$(ISO_NAME)
 
-dbg: 
-	@($(QEMU_i386) $(QFLAGS_DBG) $(QFLAGS_DRIVE) $(QFLAGS_ISO) &)
+# Fn
+SOURCE_TO_OBJECT = $(patsubst $(SOURCE_PATH)%,$(OBJECT_PATH)%,$1)
+C_TO_O = $(call SOURCE_TO_OBJECT,$(patsubst %.c,%.o,$1))
+ASM_TO_O = $(call SOURCE_TO_OBJECT,$(patsubst %.s,%.o,$1))
+RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCARD,$d/,$2))
+PROGRAM_CODE = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/program/$1,*.c))
 
-inserter: 
-	make $(OUTPUT_FOLDER)/$(INSERTER_NAME) CC=$(NATIVE_CC)
+# Object file recipe
+$(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.s
+	@mkdir -p $(@D)
+	$(ASM) $(ASM_FLAGS) $< -o $@
+$(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(C_FLAGS) -c -o $@ $<
+
+SHARED_C = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/shared/code,*.c))
+KERNEL_C = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/kernel/c,*.c))
+KERNEL_ASM = $(call ASM_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/kernel/asm,*.s))
+$(OUTPUT_PATH)/$(KERNEL_NAME): $(KERNEL_C) $(KERNEL_ASM) $(SHARED_C)
+	@mkdir -p $(@D)
+	$(LIN) $(LINKER_FLAGS) $^ -o $@
+kernel: $(OUTPUT_PATH)/$(KERNEL_NAME)
+
+# User program recipe
+$(OBJECT_PATH)/program/crt0.o: $(SOURCE_PATH)/program/crt0.s
+	@mkdir -p $(@D)
+	$(ASM) $(ASM_FLAGS) $< -o $@
+
+PROGRAM_LINKER_FLAGS = -T $(SOURCE_PATH)/program/user-linker.ld -melf_i386
+$(OUTPUT_PATH)/program/%: $$(call PROGRAM_CODE,$$*) $(OBJECT_PATH)/program/crt0.o
+	@mkdir -p $(@D)
+	$(LIN) $(PROGRAM_LINKER_FLAGS) $^ -o $@
+prog.%: $(OUTPUT_PATH)/program/%
+	@
+insprog.%: disk inserter prog.%
+	cd $(OUTPUT_PATH)/program; ../$(INSERTER_NAME) $(patsubst insprog.%,%,$@) 2 ../$(DISK_NAME)
+
+# ISO
+$(OUTPUT_PATH)/$(ISO_NAME): $(OUTPUT_PATH)/$(KERNEL_NAME)
+	@mkdir -p $(OUTPUT_PATH)/iso/boot/grub
+	@cp $(OUTPUT_PATH)/kernel $(OUTPUT_PATH)/iso/boot/
+	@cp other/grub1 $(OUTPUT_PATH)/iso/boot/grub/
+	@cp $(SOURCE_PATH)/menu.lst $(OUTPUT_PATH)/iso/boot/grub/
+	$(MKISO) -R \
+		-b boot/grub/grub1 \
+		-no-emul-boot \
+		-boot-load-size 4 \
+		-A os \
+		-input-charset utf8 \
+		-quiet \
+		-boot-info-table \
+		-o bin/$(ISO_NAME) \
+		bin/iso
+	@rm -r $(OUTPUT_PATH)/iso/
+iso: $(OUTPUT_PATH)/$(ISO_NAME)
+
+# Disk
+$(OUTPUT_PATH)/$(DISK_NAME):
+	@mkdir -p $(@D)
+	@$(QEMU_img) create -f raw $@ 4M
+disk: $(OUTPUT_PATH)/$(DISK_NAME)
+redisk:
+	rm -rf $(OUTPUT_PATH)/$(DISK_NAME)
+	make disk
 
 # TODO: Generate for user program
 bear-all: all inserter
@@ -70,92 +117,16 @@ bear:
 	CC=$(CC) bear --append -- make bin/$(KERNEL_NAME) CC=cc LIN=$(LIN)
 	CC=$(NATIVE_CC) bear --append -- make bin/$(INSERTER_NAME) CC=cc
 
-all: build disk
-
-build: $(OUTPUT_FOLDER)/$(ISO_NAME).iso
-rebuild:
-	@make clean
-	@make build
-
-redisk:
-	@rm -rf $(OUTPUT_FOLDER)/$(DISK_NAME).bin
-	@make disk
-
-disk: $(OUTPUT_FOLDER)/$(DISK_NAME).bin
-
-clean:
-	rm -rf $(OUTPUT_FOLDER)
-
-$(COBJ_FOLDER)/%.o : $(CCODE_FOLDER)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(AOBJ_FOLDER)/%.o : $(ACODE_FOLDER)/%.s
-	@mkdir -p $(@D)
-	$(ASM) $(AFLAGS) $< -o $@
-
-$(OUTPUT_FOLDER)/$(KERNEL_NAME): $(call C_TO_O,$(CCODE)) $(call A_TO_O,$(ACODE))
-	$(LIN) $(LFLAGS) $^ -o $@
-
-$(OUTPUT_FOLDER)/$(DISK_NAME).bin:
-	@mkdir -p $(@D)
-	@$(QEMU_img) create -f raw $@ 4M
-
-$(OUTPUT_FOLDER)/$(ISO_NAME).iso: $(OUTPUT_FOLDER)/$(KERNEL_NAME)
-	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
-	@cp $(OUTPUT_FOLDER)/kernel     $(OUTPUT_FOLDER)/iso/boot/
-	@cp other/grub1                 $(OUTPUT_FOLDER)/iso/boot/grub/
-	@cp $(SOURCE_FOLDER)/menu.lst   $(OUTPUT_FOLDER)/iso/boot/grub/
-	$(MKISO) -R \
-		-b boot/grub/grub1 \
-		-no-emul-boot \
-		-boot-load-size 4 \
-		-A os \
-		-input-charset utf8 \
-		-quiet \
-		-boot-info-table \
-		-o bin/$(ISO_NAME).iso \
-		bin/iso
-	@rm -r $(OUTPUT_FOLDER)/iso/
-
-$(OUTPUT_FOLDER)/$(INSERTER_NAME): 
+# Inserter
+KERNEL_CODE = $(SOURCE_PATH)/kernel/c
+$(OUTPUT_PATH)/$(INSERTER_NAME): 
 	@mkdir -p $(@D)
 	$(CC) $(WARNING_CFLAG) \
-		-I$(SOURCE_FOLDER) \
+		$(SHARED_INCLUDE_CFLAG) -I$(SOURCE_PATH)/kernel \
 		-Wno-builtin-declaration-mismatch -g \
-		$(SOURCE_FOLDER)/code/stdlib/string.c \
-		$(SOURCE_FOLDER)/code/filesystem/fat32.c \
-		$(SOURCE_FOLDER)/other/inserter.c \
+		$(KERNEL_CODE)/stdlib/string.c \
+		$(KERNEL_CODE)/filesystem/fat32.c \
+		$(SOURCE_PATH)/helper/inserter.c \
 		-o $@
-	
-# User Program Recipe
-P_FOLDER			= program
-PCODE_FOLDER	= $(SOURCE_FOLDER)/$(P_FOLDER)
-POBJ_FOLDER	  = $(OBJ_FOLDER)/$(P_FOLDER)
-
-PSHARED 			= __shared__
-PCODE_SHARED 	= $(PCODE_FOLDER)/$(PSHARED)
-POBJ_SHARED 	= $(POBJ_FOLDER)/$(PSHARED)
-
-PFLAGS			= $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) $(TARGET_CFLAG) -fno-pie
-PLFLAGS    	= -T $(PCODE_SHARED)/user-linker.ld -melf_i386
-PCODE_FN 		= $(call C_TO_O,$(call RECUR_WILDCARD,$(PCODE_FOLDER)/$1,*.c))
-
-program.%: $(OUTPUT_FOLDER)/$(P_FOLDER)/%
-	@
-
-insprog.%: $(OUTPUT_FOLDER)/$(P_FOLDER)/% $(OUTPUT_FOLDER)/$(DISK_NAME).bin $(OUTPUT_FOLDER)/$(INSERTER_NAME)
-	cd $(OUTPUT_FOLDER)/$(P_FOLDER); ../$(INSERTER_NAME) shell 2 ../$(DISK_NAME).bin
-
-# Program entry points
-$(POBJ_SHARED)/crt0.o: $(PCODE_SHARED)/crt0.s
-	@mkdir -p $(@D)
-	$(ASM) $(AFLAGS) $< -o $@
-
-$(POBJ_FOLDER)/%.o : $(PCODE_FOLDER)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(PFLAGS) -c -o $@ $<
-
-$(OUTPUT_FOLDER)/$(P_FOLDER)/% : $$(call PCODE_FN,$$*) $(POBJ_SHARED)/crt0.o
-	@mkdir -p $(@D)
-	$(LIN) $(PLFLAGS) $^ -o $@
+inserter:
+	@make $(OUTPUT_PATH)/$(INSERTER_NAME) CC=$(NATIVE_CC)

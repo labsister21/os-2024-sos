@@ -6,7 +6,7 @@ SECTIONS {
 
 	.text ALIGN(4):
 	{
-		bin/obj/program/__shared__/crt0.o(.text)
+		bin/obj/program/crt0.o(.text)
 		*(.text)
 	}
 

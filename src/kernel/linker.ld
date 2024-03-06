@@ -32,7 +32,7 @@ SECTIONS {
 	{
 		*(COMMON)
 		*(.bss)
-		bin/obj/asm/kernel-entrypoint.o(.bss)
+		bin/obj/kernel/asm/kernel-entrypoint.o(.bss)
 		_linker_kernel_stack_top = .;
 	}
 
