@@ -23,7 +23,7 @@ DEBUG_CFLAG = -fshort-wchar -g
 TARGET_CFLAG = -m32
 SHARED_INCLUDE_CFLAG = -isystem $(SOURCE_PATH)/shared/header
 INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel
-STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
+STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding -fno-pie
 
 # Flags
 ASM_FLAGS = -f elf32 -g -F dwarf
