@@ -1,7 +1,7 @@
 #ifndef _GDT_H
 #define _GDT_H
 
-#include <stdint.h>
+#include <std/stdint.h>
 
 // Some GDT Constant
 #define GDT_MAX_ENTRY_COUNT 32
@@ -30,40 +30,40 @@ extern struct GDTR _gdt_gdtr;
  * @param non_system   1-bit contain system
  */
 struct SegmentDescriptor {
-  /* First 32-bit (Bit 0 to 31) */
+	/* First 32-bit (Bit 0 to 31) */
 
-  // First segment limit
-  uint16_t segment_low;
-  // First base address
-  uint16_t base_low;
+	// First segment limit
+	uint16_t segment_low;
+	// First base address
+	uint16_t base_low;
 
-  /* Next 16-bit (Bit 32 to 47) */
+	/* Next 16-bit (Bit 32 to 47) */
 
-  // Second base address
-  uint8_t base_mid;
-  // Type field
-  uint8_t type_bit : 4;
-  // S (descriptor type) flag
-  uint8_t non_system : 1;
-  // DPL (descriptor privilege level) field
-  uint8_t privilege_level : 2;
-  // P (segment-present) flag
-  uint8_t segment_present : 1;
+	// Second base address
+	uint8_t base_mid;
+	// Type field
+	uint8_t type_bit : 4;
+	// S (descriptor type) flag
+	uint8_t non_system : 1;
+	// DPL (descriptor privilege level) field
+	uint8_t privilege_level : 2;
+	// P (segment-present) flag
+	uint8_t segment_present : 1;
 
-  /* Last 16-bit (Bit 48 to 63) */
+	/* Last 16-bit (Bit 48 to 63) */
 
-  // Second segment limit
-  uint8_t segment_high : 4;
-  // AVL Reserved bits
-  uint8_t system_reserved : 1;
-  // L (64-bit code segment) flag
-  uint8_t contains_64 : 1;
-  // D/B (default operation size/default stack pointer size/upper bound) flag
-  uint8_t param_flag : 1;
-  // G (granularity) flag
-  uint8_t granularity : 1;
-  // Third base address
-  uint8_t base_high;
+	// Second segment limit
+	uint8_t segment_high : 4;
+	// AVL Reserved bits
+	uint8_t system_reserved : 1;
+	// L (64-bit code segment) flag
+	uint8_t contains_64 : 1;
+	// D/B (default operation size/default stack pointer size/upper bound) flag
+	uint8_t param_flag : 1;
+	// G (granularity) flag
+	uint8_t granularity : 1;
+	// Third base address
+	uint8_t base_high;
 
 } __attribute__((packed));
 
@@ -75,7 +75,7 @@ struct SegmentDescriptor {
  * GDT_MAX_ENTRY_COUNT
  */
 struct GlobalDescriptorTable {
-  struct SegmentDescriptor table[GDT_MAX_ENTRY_COUNT];
+	struct SegmentDescriptor table[GDT_MAX_ENTRY_COUNT];
 } __attribute__((packed));
 
 /**
@@ -86,8 +86,8 @@ struct GlobalDescriptorTable {
  * @param address GDT address, GDT should already defined properly
  */
 struct GDTR {
-  uint16_t size;
-  struct GlobalDescriptorTable *address;
+	uint16_t size;
+	struct GlobalDescriptorTable *address;
 } __attribute__((packed));
 
 /**

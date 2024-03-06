@@ -1,9 +1,9 @@
 #ifndef _IDT_H
 #define _IDT_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <std/stdbool.h>
+#include <std/stddef.h>
+#include <std/stdint.h>
 
 // IDT hard limit, see Intel x86 manual 3a - 6.10 Interrupt Descriptor Table
 #define IDT_MAX_ENTRY_COUNT 256
@@ -32,24 +32,24 @@ extern struct IDTR _idt_idtr;
  * ...
  */
 struct IDTGate {
-  /* Bit 0 to 31 */
-  uint16_t offset_low;
-  uint16_t segment_selector;
+	/* Bit 0 to 31 */
+	uint16_t offset_low;
+	uint16_t segment_selector;
 
-  /* Bit 32 to 47 */
-  uint8_t : 5;                 // Reserved
-  uint8_t type_identifier : 3; // Fill with 0b000 for Interrupt or Trap gate
+	/* Bit 32 to 47 */
+	uint8_t : 5;								 // Reserved
+	uint8_t type_identifier : 3; // Fill with 0b000 for Interrupt or Trap gate
 
-  // 0b00101 for task gate
-  // 0b0D110 for interrupt gate
-  // 0b0D111 for trap gate
-  // where D is size of gate
-  uint8_t gate_type_and_size : 5;
-  uint8_t dpl : 2; // Privilege Level
-  uint8_t segment_present : 1;
+	// 0b00101 for task gate
+	// 0b0D110 for interrupt gate
+	// 0b0D111 for trap gate
+	// where D is size of gate
+	uint8_t gate_type_and_size : 5;
+	uint8_t dpl : 2; // Privilege Level
+	uint8_t segment_present : 1;
 
-  /* Bit 48 to 63 */
-  uint16_t offset_hi;
+	/* Bit 48 to 63 */
+	uint16_t offset_hi;
 } __attribute__((packed));
 
 /**
@@ -59,7 +59,7 @@ struct IDTGate {
  * ...
  */
 struct InterruptDescriptorTable {
-  struct IDTGate table[IDT_MAX_ENTRY_COUNT];
+	struct IDTGate table[IDT_MAX_ENTRY_COUNT];
 } __attribute__((packed));
 
 /**
@@ -69,8 +69,8 @@ struct InterruptDescriptorTable {
  * ...
  */
 struct IDTR {
-  uint16_t size;
-  struct InterruptDescriptorTable *address;
+	uint16_t size;
+	struct InterruptDescriptorTable *address;
 } __attribute__((packed));
 
 /**
@@ -84,8 +84,8 @@ struct IDTR {
  * @param privilege        Descriptor privilege level
  */
 void set_interrupt_gate(
-    uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector,
-    uint8_t privilege
+		uint8_t int_vector, void *handler_address, uint16_t gdt_seg_selector,
+		uint8_t privilege
 );
 
 /**

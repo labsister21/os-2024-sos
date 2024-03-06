@@ -1,7 +1,7 @@
 #ifndef _KEYBOARD_H
 #define _KEYBOARD_H
 
-#include <stdbool.h>
+#include <std/stdbool.h>
 
 #define EXT_SCANCODE_UP 0x48
 #define EXT_SCANCODE_DOWN 0x50
@@ -38,14 +38,14 @@ extern const char keyboard_scancode_1_to_ascii_map_shifted[256];
  * @param keyboard_buffer    Storing keyboard input values in ASCII
  */
 struct KeyboardDriverState {
-  bool read_extended_mode;
-  bool keyboard_input_on;
-  bool buffer_filled;
-  char keyboard_buffer;
+	bool read_extended_mode;
+	bool keyboard_input_on;
+	bool buffer_filled;
+	char keyboard_buffer;
 
-  bool shift_modifier;
-  bool alt_modifier;
-  bool ctrl_modifier;
+	bool shift_modifier;
+	bool alt_modifier;
+	bool ctrl_modifier;
 } __attribute((packed));
 
 extern struct KeyboardDriverState keyboard_state;

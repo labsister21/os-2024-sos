@@ -1,9 +1,9 @@
 #ifndef _PORTIO_H
 #define _PORTIO_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <std/stdbool.h>
+#include <std/stddef.h>
+#include <std/stdint.h>
 
 /** out:
  *  Sends the given data to the given I/O port

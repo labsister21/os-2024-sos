@@ -1,8 +1,8 @@
 #ifndef _PAGING_H
 #define _PAGING_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <std/stdbool.h>
+#include <std/stdint.h>
 
 #define PAGE_ENTRY_COUNT 1024
 // PF Size: (1 << 22) B = 4*1024*1024 B = 4 MiB. PF memory total: 4*32 = 128 MB
@@ -22,11 +22,11 @@ extern struct PageDirectory _paging_kernel_page_directory;
  * ...
  */
 struct PageDirectoryEntryFlag {
-  uint8_t present_bit : 1;
-  uint8_t write_bit : 1;
-  uint8_t user : 1;
-  uint8_t : 4;
-  uint8_t use_pagesize_4_mb : 1;
+	uint8_t present_bit : 1;
+	uint8_t write_bit : 1;
+	uint8_t user : 1;
+	uint8_t : 4;
+	uint8_t use_pagesize_4_mb : 1;
 } __attribute__((packed));
 
 /**
@@ -43,13 +43,13 @@ struct PageDirectoryEntryFlag {
  * - "Bits 31:22 of address" is called lower_address in kit
  */
 struct PageDirectoryEntry {
-  struct PageDirectoryEntryFlag flag;
-  uint16_t global_page : 1;
-  uint16_t : 3;
-  uint16_t pat : 1;
-  uint16_t higher_address : 4;
-  uint16_t : 5;
-  uint16_t lower_address : 10;
+	struct PageDirectoryEntryFlag flag;
+	uint16_t global_page : 1;
+	uint16_t : 3;
+	uint16_t pat : 1;
+	uint16_t higher_address : 4;
+	uint16_t : 5;
+	uint16_t lower_address : 10;
 } __attribute__((packed));
 
 /**
@@ -66,7 +66,7 @@ struct PageDirectoryEntry {
  * PAGE_ENTRY_COUNT
  */
 struct PageDirectory {
-  struct PageDirectoryEntry table[PAGE_ENTRY_COUNT];
+	struct PageDirectoryEntry table[PAGE_ENTRY_COUNT];
 } __attribute__((packed));
 
 /**
@@ -76,9 +76,9 @@ struct PageDirectory {
  * ...
  */
 struct PageManagerState {
-  bool mapped[PAGE_FRAME_MAX_COUNT];
-  void *mapped_address[PAGE_FRAME_MAX_COUNT];
-  uint32_t free_page_frame_count;
+	bool mapped[PAGE_FRAME_MAX_COUNT];
+	void *mapped_address[PAGE_FRAME_MAX_COUNT];
+	uint32_t free_page_frame_count;
 } __attribute__((packed));
 
 /**
@@ -90,8 +90,8 @@ struct PageManagerState {
  * @param flag          Page entry flags
  */
 void update_page_directory_entry(
-    struct PageDirectory *page_dir, void *physical_addr, void *virtual_addr,
-    struct PageDirectoryEntryFlag flag
+		struct PageDirectory *page_dir, void *physical_addr, void *virtual_addr,
+		struct PageDirectoryEntryFlag flag
 );
 
 /**
@@ -118,7 +118,7 @@ bool paging_allocate_check(uint32_t amount);
  * @return             Physical address of allocated frame
  */
 bool paging_allocate_user_page_frame(
-    struct PageDirectory *page_dir, void *virtual_addr
+		struct PageDirectory *page_dir, void *virtual_addr
 );
 
 /**
@@ -129,7 +129,7 @@ bool paging_allocate_user_page_frame(
  * @return              Will return true if success, false otherwise
  */
 bool paging_free_user_page_frame(
-    struct PageDirectory *page_dir, void *virtual_addr
+		struct PageDirectory *page_dir, void *virtual_addr
 );
 
 #endif

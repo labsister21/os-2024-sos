@@ -2,8 +2,8 @@
 #define _FRAMEBUFFER_H
 
 #include "header/text/buffercolor.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include <std/stdbool.h>
+#include <std/stdint.h>
 
 #define CURSOR_PORT_CMD 0x03D4
 #define CURSOR_PORT_DATA 0x03D5
@@ -14,10 +14,10 @@
 #define CHAR_PRINTER_SIZE 2
 
 struct FramebufferState {
-  int row;
-  int col;
-  uint8_t fg;
-  uint8_t bg;
+	int row;
+	int col;
+	uint8_t fg;
+	uint8_t bg;
 } __attribute((packed));
 
 extern struct FramebufferState framebuffer_state;
@@ -42,7 +42,7 @@ extern struct FramebufferState framebuffer_state;
  * @param bg  Background color
  */
 void framebuffer_write(
-    uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg
+		uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg
 );
 
 /**

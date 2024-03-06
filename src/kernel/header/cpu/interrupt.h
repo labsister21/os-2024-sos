@@ -1,8 +1,8 @@
 #ifndef _INTERRUPT_H
 #define _INTERRUPT_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <std/stdbool.h>
+#include <std/stdint.h>
 
 #define SYSCALL_INT 0x30
 
@@ -25,17 +25,17 @@
 #define PIC_DISABLE_ALL_MASK 0xFF
 
 // PIC remap constants
-#define ICW1_ICW4 0x01      /* ICW4 (not) needed */
-#define ICW1_SINGLE 0x02    /* Single (cascade) mode */
+#define ICW1_ICW4 0x01			/* ICW4 (not) needed */
+#define ICW1_SINGLE 0x02		/* Single (cascade) mode */
 #define ICW1_INTERVAL4 0x04 /* Call address interval 4 (8) */
-#define ICW1_LEVEL 0x08     /* Level triggered (edge) mode */
-#define ICW1_INIT 0x10      /* Initialization - required! */
+#define ICW1_LEVEL 0x08			/* Level triggered (edge) mode */
+#define ICW1_INIT 0x10			/* Initialization - required! */
 
-#define ICW4_8086 0x01       /* 8086/88 (MCS-80/85) mode */
-#define ICW4_AUTO 0x02       /* Auto (normal) EOI */
-#define ICW4_BUF_SLAVE 0x08  /* Buffered mode/slave */
+#define ICW4_8086 0x01			 /* 8086/88 (MCS-80/85) mode */
+#define ICW4_AUTO 0x02			 /* Auto (normal) EOI */
+#define ICW4_BUF_SLAVE 0x08	 /* Buffered mode/slave */
 #define ICW4_BUF_MASTER 0x0C /* Buffered mode/master */
-#define ICW4_SFNM 0x10       /* Special fully nested (not) */
+#define ICW4_SFNM 0x10			 /* Special fully nested (not) */
 
 /* -- PICs IRQ list -- */
 
@@ -68,26 +68,26 @@
  * @param segment CPU extra segment register (gs, fs, es, ds)
  */
 struct CPURegister {
-  struct {
-    uint32_t edi;
-    uint32_t esi;
-  } __attribute__((packed)) index;
-  struct {
-    uint32_t esp;
-    uint32_t ebp;
-  } __attribute__((packed)) stack;
-  struct {
-    uint32_t ebx;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t eax;
-  } __attribute__((packed)) general;
-  struct {
-    uint32_t gs;
-    uint32_t fs;
-    uint32_t es;
-    uint32_t ds;
-  } __attribute__((packed)) segment;
+	struct {
+		uint32_t edi;
+		uint32_t esi;
+	} __attribute__((packed)) index;
+	struct {
+		uint32_t esp;
+		uint32_t ebp;
+	} __attribute__((packed)) stack;
+	struct {
+		uint32_t ebx;
+		uint32_t edx;
+		uint32_t ecx;
+		uint32_t eax;
+	} __attribute__((packed)) general;
+	struct {
+		uint32_t gs;
+		uint32_t fs;
+		uint32_t es;
+		uint32_t ds;
+	} __attribute__((packed)) segment;
 } __attribute__((packed));
 
 /**
@@ -104,10 +104,10 @@ struct CPURegister {
  * @param eflags     CPU eflags register when interrupt is raised
  */
 struct InterruptStack {
-  uint32_t error_code;
-  uint32_t eip;
-  uint32_t cs;
-  uint32_t eflags;
+	uint32_t error_code;
+	uint32_t eip;
+	uint32_t cs;
+	uint32_t eflags;
 } __attribute__((packed));
 
 /**
@@ -122,9 +122,9 @@ struct InterruptStack {
  * interprivilege ss and esp
  */
 struct InterruptFrame {
-  struct CPURegister cpu;
-  uint32_t int_number;
-  struct InterruptStack int_stack;
+	struct CPURegister cpu;
+	uint32_t int_number;
+	struct InterruptStack int_stack;
 } __attribute__((packed));
 
 // Activate PIC mask for keyboard only
@@ -162,11 +162,11 @@ extern struct TSSEntry _interrupt_tss_entry;
  * TSSEntry, Task State Segment. Used when jumping back to ring 0 / kernel
  */
 struct TSSEntry {
-  uint32_t prev_tss; // Previous TSS
-  uint32_t esp0;     // Stack pointer to load when changing to kernel mode
-  uint32_t ss0;      // Stack segment to load when changing to kernel mode
-  // Unused variables
-  uint32_t unused_register[23];
+	uint32_t prev_tss; // Previous TSS
+	uint32_t esp0;		 // Stack pointer to load when changing to kernel mode
+	uint32_t ss0;			 // Stack segment to load when changing to kernel mode
+	// Unused variables
+	uint32_t unused_register[23];
 } __attribute__((packed));
 
 // Set kernel stack in TSS

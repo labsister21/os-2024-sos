@@ -21,7 +21,7 @@ OBJECT_PATH = $(OUTPUT_PATH)/obj
 WARNING_CFLAG = -Wall -Wextra -Werror
 DEBUG_CFLAG = -fshort-wchar -g
 TARGET_CFLAG = -m32
-SHARED_INCLUDE_CFLAG	= -idirafter $(SOURCE_PATH)/shared/header
+SHARED_INCLUDE_CFLAG = -isystem $(SOURCE_PATH)/shared/header
 INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel
 STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding
 
@@ -114,23 +114,25 @@ redisk:
 	rm -rf $(OUTPUT_PATH)/$(DISK_NAME)
 	make disk
 
+# TODO: Fix all-program side-effect
 bear-all: all inserter
 bear:
 	make clean
 	rm -rf compile_commands.json
 	CC=$(CC) bear --append -- make kernel CC=cc LIN=$(LIN)
+	CC=$(NATIVE_CC) bear --append -- make inserter NATIVE_CC=cc
 	CC=$(CC) bear --append -- make all-program CC=cc LIN=$(LIN)
-	CC=$(NATIVE_CC) bear --append -- make inserter CC=cc
 
 # Inserter
 KERNEL_CODE = $(SOURCE_PATH)/kernel/c
 $(OUTPUT_PATH)/$(INSERTER_NAME): 
 	@mkdir -p $(@D)
 	$(CC) $(WARNING_CFLAG) \
-		$(SHARED_INCLUDE_CFLAG) -I$(SOURCE_PATH)/kernel \
+		-I$(SOURCE_PATH)/kernel \
+		$(SHARED_INCLUDE_CFLAG) \
 		-Wno-builtin-declaration-mismatch -g \
-		$(KERNEL_CODE)/stdlib/string.c \
-		$(KERNEL_CODE)/filesystem/fat32.c \
+		$(SOURCE_PATH)/kernel/c/filesystem/fat32.c \
+		$(SOURCE_PATH)/shared/code/string.c \
 		$(SOURCE_PATH)/helper/inserter.c \
 		-o $@
 inserter:
