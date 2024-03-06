@@ -81,6 +81,11 @@ prog.%: $(OUTPUT_PATH)/program/%
 insprog.%: disk inserter prog.%
 	cd $(OUTPUT_PATH)/program; ../$(INSERTER_NAME) $(patsubst insprog.%,%,$@) 2 ../$(DISK_NAME)
 
+PROGRAM_PATH = $(SOURCE_PATH)/program
+PROGRAM_LIST = $(patsubst $(PROGRAM_PATH)/%,%,$(foreach d,$(wildcard $(PROGRAM_PATH)/*),$(if $(wildcard $(d)/*),$(d),)))
+
+all-program: $(addprefix insprog.,$(PROGRAM_LIST))
+
 # ISO
 $(OUTPUT_PATH)/$(ISO_NAME): $(OUTPUT_PATH)/$(KERNEL_NAME)
 	@mkdir -p $(OUTPUT_PATH)/iso/boot/grub
@@ -109,13 +114,13 @@ redisk:
 	rm -rf $(OUTPUT_PATH)/$(DISK_NAME)
 	make disk
 
-# TODO: Generate for user program
 bear-all: all inserter
 bear:
 	make clean
 	rm -rf compile_commands.json
-	CC=$(CC) bear --append -- make bin/$(KERNEL_NAME) CC=cc LIN=$(LIN)
-	CC=$(NATIVE_CC) bear --append -- make bin/$(INSERTER_NAME) CC=cc
+	CC=$(CC) bear --append -- make kernel CC=cc LIN=$(LIN)
+	CC=$(CC) bear --append -- make all-program CC=cc LIN=$(LIN)
+	CC=$(NATIVE_CC) bear --append -- make inserter CC=cc
 
 # Inserter
 KERNEL_CODE = $(SOURCE_PATH)/kernel/c
