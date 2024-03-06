@@ -84,7 +84,8 @@ insprog.%: disk inserter prog.%
 PROGRAM_PATH = $(SOURCE_PATH)/program
 PROGRAM_LIST = $(patsubst $(PROGRAM_PATH)/%,%,$(foreach d,$(wildcard $(PROGRAM_PATH)/*),$(if $(wildcard $(d)/*),$(d),)))
 
-all-program: $(addprefix insprog.,$(PROGRAM_LIST))
+all-program: $(addprefix prog.,$(PROGRAM_LIST))
+insert-all-program: $(addprefix insprog.,$(PROGRAM_LIST))
 
 # ISO
 $(OUTPUT_PATH)/$(ISO_NAME): $(OUTPUT_PATH)/$(KERNEL_NAME)
