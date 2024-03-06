@@ -115,14 +115,13 @@ redisk:
 	rm -rf $(OUTPUT_PATH)/$(DISK_NAME)
 	make disk
 
-# TODO: Fix all-program side-effect
 bear-all: all inserter
 bear:
 	make clean
 	rm -rf compile_commands.json
-	CC=$(CC) bear --append -- make kernel CC=cc LIN=$(LIN)
 	CC=$(NATIVE_CC) bear --append -- make inserter NATIVE_CC=cc
 	CC=$(CC) bear --append -- make all-program CC=cc LIN=$(LIN)
+	CC=$(CC) bear --append -- make kernel CC=cc LIN=$(LIN)
 
 # Inserter
 KERNEL_CODE = $(SOURCE_PATH)/kernel/c
