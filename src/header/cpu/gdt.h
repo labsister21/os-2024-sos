@@ -35,12 +35,22 @@ struct SegmentDescriptor {
     uint8_t type_bit   : 4;
     uint8_t non_system : 1;
     // TODO : Continue SegmentDescriptor definition
+    uint8_t privilege_level : 2;    // ring 2
+    uint8_t present : 1;
+
+    uint8_t segment_high : 4;
+    uint8_t system_reserved : 1;
+    uint8_t long_mode : 1;
+    uint8_t operation_size : 1;
+    uint8_t granularity : 1;
+
+    uint8_t base_high;
 
 } __attribute__((packed));
 
 /**
  * Global Descriptor Table containing list of segment descriptor. One GDT already defined in memory.c.
- * More details at https://wiki.osdev.org/GDT_Tutorial
+ * More details at https://wiki.oesdev.org/GDT_Tutorial
  * @param table Fixed-width array of SegmentDescriptor with size GDT_MAX_ENTRY_COUNT
  */
 struct GlobalDescriptorTable {
