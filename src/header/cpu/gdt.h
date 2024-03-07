@@ -39,7 +39,7 @@ struct SegmentDescriptor {
     uint8_t present : 1;
 
     uint8_t segment_high : 4;
-    uint8_t available : 1;
+    uint8_t system_reserved : 1;
     uint8_t long_mode : 1;
     uint8_t operation_size : 1;
     uint8_t granularity : 1;
