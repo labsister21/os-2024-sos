@@ -2,40 +2,69 @@
 #define __SYSCALL_H
 
 #include <std/stdint.h>
-void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
-#define SYSCALL(syscall_number, ...) \
-	void syscall_##syscall_number(__VA_ARGS__)
+static inline void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
+	__asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
+	__asm__ volatile("mov %0, %%ecx" : /* <Empty> */ : "r"(ecx));
+	__asm__ volatile("mov %0, %%edx" : /* <Empty> */ : "r"(edx));
+	__asm__ volatile("mov %0, %%eax" : /* <Empty> */ : "r"(eax));
+	__asm__ volatile("int $0x30");
+}
+
+#define SYSCALL(syscall_number, ...)                         \
+	static inline void syscall_##syscall_number(__VA_ARGS__) { \
+		syscall(__VA_ARGS__)                                     \
+	}
+
+#define SYSCALL_0(syscall_number)                 \
+	static inline void syscall_##syscall_number() { \
+		syscall(syscall_number, 0, 0, 0);             \
+	}
+
+#define SYSCALL_1(syscall_number, first_type, first_param)              \
+	static inline void syscall_##syscall_number(first_type first_param) { \
+		syscall(syscall_number, (uint32_t)first_param, 0, 0);               \
+	}
+
+#define SYSCALL_2(syscall_number, first_type, first_param, second_type, second_param)             \
+	static inline void syscall_##syscall_number(first_type first_param, second_type second_param) { \
+		syscall(syscall_number, (uint32_t)first_param, (uint32_t)second_param, 0);                    \
+	}
+
+#define SYSCALL_3(syscall_number, first_type, first_param, second_type, second_param, third_type, third_param)            \
+	static inline void syscall_##syscall_number(first_type first_param, second_type second_param, third_type third_param) { \
+		syscall(syscall_number, (uint32_t)first_param, (uint32_t)second_param, 0);                                            \
+	}
 
 // Disk
 #include <fat32.h>
 #define READ 0
-SYSCALL(READ, struct FAT32DriverRequest *);
+SYSCALL_1(READ, struct FAT32DriverRequest *, req);
 
 #define READ_DIRECTORY 1
-SYSCALL(READ_DIRECTORY, struct FAT32DriverRequest *);
+SYSCALL_1(READ_DIRECTORY, struct FAT32DriverRequest *, req);
 
 #define WRITE 2
-SYSCALL(WRITE, struct FAT32DriverRequest *);
+SYSCALL_1(WRITE, struct FAT32DriverRequest *, req);
 
 #define DELETE 3
-SYSCALL(DELETE, struct FAT32DriverRequest *);
+SYSCALL_1(DELETE, struct FAT32DriverRequest *, req);
 
 // Input
 #define GET_CHAR 4
-SYSCALL(GET_CHAR, struct FAT32DriverRequest *);
+SYSCALL_1(GET_CHAR, char *, c);
 
 // Framebuffer
 #define FRAMEBUFFER_PUT_CHAR 5
-SYSCALL(PUT_CHAR, struct FAT32DriverRequest *);
+SYSCALL_1(FRAMEBUFFER_PUT_CHAR, char *, c);
 
 #define FRAMEBUFFER_PUT_CHARS 6
-SYSCALL(PUT_CHARS, struct FAT32DriverRequest *);
+SYSCALL_2(FRAMEBUFFER_PUT_CHARS, char *, c, int, size);
 
 #define FRAMEBUFFER_CLEAR 7
-SYSCALL(FRAMEBUFFER_CLEAR, struct FAT32DriverRequest *);
+SYSCALL_0(FRAMEBUFFER_CLEAR);
 
 #define FRAMEBUFFER_CURSOR 8
-SYSCALL(FRAMEBUFFER_CURSOR, struct FAT32DriverRequest *);
+SYSCALL_2(FRAMEBUFFER_CURSOR, int, x, int, y);
 
 #endif

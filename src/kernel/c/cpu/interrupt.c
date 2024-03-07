@@ -79,7 +79,6 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case 5:
-		framebuffer_state.fg = frame->cpu.general.ecx;
 		framebuffer_put(*(char *)frame->cpu.general.ebx);
 		break;
 
