@@ -1,9 +1,9 @@
 #ifndef _DISK_H
 #define _DISK_H
 
+#include <disk.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
-#include <sys/disk.h>
 
 /* -- ATA PIO status codes -- */
 #define ATA_STATUS_BSY 0x80

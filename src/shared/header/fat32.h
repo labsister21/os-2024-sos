@@ -1,11 +1,19 @@
+#ifndef __FAT32_H
+#define __FAT32_H
+
+#include <disk.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
-#include <sys/disk.h>
 
 #define CLUSTER_BLOCK_COUNT 4
 #define CLUSTER_SIZE (BLOCK_SIZE * CLUSTER_BLOCK_COUNT)
 #define MAX_DIR_TABLE_ENTRY \
 	(int)(CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry))
+
+#define ROOT_CLUSTER_NUMBER 2
+
+#define ATTR_SUBDIRECTORY 0b00010000
+#define UATTR_NOT_EMPTY 0b10101010
 
 /**
  * FAT32 standard 8.3 format - 32 bytes DirectoryEntry, Some detail can be found
@@ -55,3 +63,24 @@ struct FAT32DirectoryEntry {
 struct FAT32DirectoryTable {
 	struct FAT32DirectoryEntry table[MAX_DIR_TABLE_ENTRY];
 } __attribute__((packed));
+
+/**
+ * FAT32DriverRequest - Request for Driver CRUD operation
+ *
+ * @param buf                   Pointer pointing to buffer
+ * @param name                  Name for directory entry
+ * @param ext                   Extension for file
+ * @param parent_cluster_number Parent directory cluster number, for updating
+ * metadata
+ * @param buffer_size           Buffer size, CRUD operation will have different
+ * behaviour with this attribute
+ */
+struct FAT32DriverRequest {
+	void *buf;
+	char name[8];
+	char ext[3];
+	uint32_t parent_cluster_number;
+	uint32_t buffer_size;
+} __attribute__((packed));
+
+#endif

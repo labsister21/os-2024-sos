@@ -54,8 +54,15 @@ void pic_remap(void) {
 void syscall_handler(struct InterruptFrame *frame) {
 	switch (frame->cpu.general.eax) {
 	case 0:
-		*((int8_t *)frame->cpu.general.ecx) =
-				read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
+		*((int8_t *)frame->cpu.general.ecx) = read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
+		break;
+
+	case 1:
+		*((int8_t *)frame->cpu.general.ecx) = read_directory((struct FAT32DriverRequest *)frame->cpu.general.ebx);
+		break;
+
+	case 2:
+		*((int8_t *)frame->cpu.general.ecx) = write((struct FAT32DriverRequest *)frame->cpu.general.ebx);
 		break;
 
 	case 4:
@@ -75,15 +82,22 @@ void syscall_handler(struct InterruptFrame *frame) {
 		framebuffer_state.fg = frame->cpu.general.ecx;
 		framebuffer_put(*(char *)frame->cpu.general.ebx);
 		break;
+
+	case 6:
+		framebuffer_set_cursor(frame->cpu.general.ebx, frame->cpu.general.ecx);
+		break;
+
+	case 7:
+		framebuffer_clear();
+		break;
 	}
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	if (false) { // Debug
+	if (true) { // Debug
 		int n = frame.int_number;
-		framebuffer_put((n / 10) + '0');
-		framebuffer_put((n % 10) + '0');
-		framebuffer_put(' ');
+		framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
+		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
 	}
 	switch (frame.int_number) {
 	case PIC1_OFFSET + IRQ_KEYBOARD:

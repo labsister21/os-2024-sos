@@ -34,15 +34,15 @@ LINKER_FLAGS = -T $(SOURCE_PATH)/kernel/linker.ld -melf_i386
 .SECONDEXPANSION:
 .PHONY: 
 
+run: all insprog.shell
+	@$(QEMU_i386) \
+		-drive file=$(OUTPUT_PATH)/$(DISK_NAME),format=raw,if=ide,index=0,media=disk \
+		-cdrom $(OUTPUT_PATH)/$(ISO_NAME)
+
 clean:
 	rm -rf bin
 
 all: iso disk
-
-run: all
-	@$(QEMU_i386) \
-		-drive file=$(OUTPUT_PATH)/$(DISK_NAME),format=raw,if=ide,index=0,media=disk \
-		-cdrom $(OUTPUT_PATH)/$(ISO_NAME)
 
 # Fn
 SOURCE_TO_OBJECT = $(patsubst $(SOURCE_PATH)%,$(OBJECT_PATH)%,$1)

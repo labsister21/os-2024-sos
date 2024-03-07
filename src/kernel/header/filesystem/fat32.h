@@ -2,9 +2,9 @@
 #define _FAT32_H
 
 #include "header/driver/disk.h"
+#include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
-#include <sys/fat32.h>
 
 /**
  * FAT32 - IF2230 edition - 2024
@@ -12,7 +12,6 @@
 
 /* -- IF2230 File System constants -- */
 #define BOOT_SECTOR 0
-
 #define CLUSTER_MAP_SIZE 512
 
 /* -- FAT32 FileAllocationTable constants -- */
@@ -21,15 +20,12 @@
 #define CLUSTER_1_VALUE 0x0FFFFFFF
 
 // EOF also double as valid cluster / "this is last valid cluster in the chain"
-#define FAT32_FAT_END_OF_FILE 0x0FFFFFFF
 #define FAT32_FAT_EMPTY_ENTRY 0x00000000
+#define FAT32_FAT_END_OF_FILE 0x0FFFFFFF
 
 #define FAT_CLUSTER_NUMBER 1
-#define ROOT_CLUSTER_NUMBER 2
 
 /* -- FAT32 DirectoryEntry constants -- */
-#define ATTR_SUBDIRECTORY 0b00010000
-#define UATTR_NOT_EMPTY 0b10101010
 #define RESERVED_ENTRY 2
 
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
@@ -67,25 +63,6 @@ struct FAT32DriverState {
 	struct ClusterBuffer cluster_buf;
 } __attribute__((packed));
 extern struct FAT32DriverState fat32_driver_state;
-
-/**
- * FAT32DriverRequest - Request for Driver CRUD operation
- *
- * @param buf                   Pointer pointing to buffer
- * @param name                  Name for directory entry
- * @param ext                   Extension for file
- * @param parent_cluster_number Parent directory cluster number, for updating
- * metadata
- * @param buffer_size           Buffer size, CRUD operation will have different
- * behaviour with this attribute
- */
-struct FAT32DriverRequest {
-	void *buf;
-	char name[8];
-	char ext[3];
-	uint32_t parent_cluster_number;
-	uint32_t buffer_size;
-} __attribute__((packed));
 
 /* -- Driver Interfaces -- */
 
