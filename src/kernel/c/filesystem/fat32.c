@@ -60,10 +60,6 @@ get_dir_table_from_cluster(uint32_t cluster, struct FAT32DirectoryTable *dir_ent
 	return -1;
 }
 
-uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *dir_entry) {
-	return (dir_entry->cluster_low) + (((uint32_t)dir_entry->cluster_high) >> 16);
-}
-
 void create_fat32() {
 	write_blocks(fs_signature, 0, 1);
 	struct FAT32FileAllocationTable file_table;
