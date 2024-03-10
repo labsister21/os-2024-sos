@@ -2,6 +2,7 @@
 #include <std/stddef.h>
 #include <std/stdint.h>
 #include <std/string.h>
+#include <syscall.h>
 
 void *memset(void *s, int c, size_t n) {
 	uint8_t *buf = (uint8_t *)s;
@@ -65,4 +66,28 @@ void str_cpy(char *dst, char *src, int size) {
 		++i;
 	}
 	dst[i] = '\0';
+};
+
+/*
+ * This function will destroy original string
+ *
+ */
+char *str_tok(char *str, char delimiter) {
+	static char *current_str;
+	static int i;
+	if (str != NULL) {
+		i = 0;
+		current_str = str;
+	}
+
+	while (current_str[i] != '\0' && current_str[i] == delimiter) ++i;
+
+	int start = i;
+	if (current_str[i] == '\0') return NULL;
+
+	while (current_str[i] != '\0' && current_str[i] != delimiter)
+		++i;
+	current_str[i] = '\0';
+	++i;
+	return &current_str[start];
 };

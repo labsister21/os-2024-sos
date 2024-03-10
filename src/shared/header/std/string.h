@@ -55,4 +55,6 @@ int str_cmp(char *str1, char *str2);
 int str_len(char *str);
 void str_cpy(char *dst, char *src, int size);
 
+char *str_tok(char *str, char delimiter);
+
 #endif
