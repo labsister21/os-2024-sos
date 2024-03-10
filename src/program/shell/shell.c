@@ -27,6 +27,16 @@ void next_line() {
 	syscall_FRAMEBUFFER_CURSOR(state.cursor_x, state.cursor_y);
 }
 
+void refresh_curr_dir() {
+	struct FAT32DriverRequest req;
+	req.parent_cluster_number = get_cluster_from_dir_entry(&state.curr_dir.table[0]);
+	req.buffer_size = CLUSTER_SIZE;
+	req.buf = &state.curr_dir;
+	strcpy(req.name, ".", 8);
+	int8_t ret;
+	syscall_READ_DIRECTORY(&req, &ret);
+}
+
 void ls() {
 	for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
 		struct FAT32DirectoryEntry *entry = &state.curr_dir.table[i];
@@ -40,7 +50,7 @@ void ls() {
 void cd() {
 	struct FAT32DriverRequest req;
 	char *dir;
-	dir = strtok(NULL, ' ');
+	dir = strtok(NULL, '\0');
 	strcpy(req.name, dir, 8);
 	req.parent_cluster_number = get_cluster_from_dir_entry(&state.curr_dir.table[0]);
 	req.buf = &state.curr_dir;
@@ -64,6 +74,21 @@ void cd() {
 	} else if (ret == 1) {
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("can't open file as directory");
 	}
+}
+
+void mkdir() {
+	struct FAT32DriverRequest req;
+	char *dir;
+	dir = strtok(NULL, '\0');
+	strcpy(req.name, dir, 8);
+	req.buf = NULL;
+	req.buffer_size = 0;
+	req.parent_cluster_number = get_cluster_from_dir_entry(&state.curr_dir.table[0]);
+	int8_t ret;
+	syscall_WRITE(&req, &ret);
+
+	syscall_FRAMEBUFFER_PUT_CHAR(ret + '0');
+	refresh_curr_dir();
 }
 
 void get_prompt() {
@@ -94,6 +119,7 @@ void run_prompt() {
 	char *token = strtok(state.prompt, ' ');
 	if (strcmp(token, "ls") == 0) ls();
 	else if (strcmp(token, "cd") == 0) cd();
+	else if (strcmp(token, "mkdir") == 0) mkdir();
 	else if (strcmp(token, "clear") == 0) clear();
 	else {
 		char *not_found = "command not found!";
