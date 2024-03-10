@@ -39,16 +39,16 @@ static inline void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t ed
 // Disk
 #include <fat32.h>
 #define READ 0
-SYSCALL_1(READ, struct FAT32DriverRequest *, req);
+SYSCALL_2(READ, struct FAT32DriverRequest *, req, int8_t *, ret);
 
 #define READ_DIRECTORY 1
-SYSCALL_1(READ_DIRECTORY, struct FAT32DriverRequest *, req);
+SYSCALL_2(READ_DIRECTORY, struct FAT32DriverRequest *, req, int8_t *, ret);
 
 #define WRITE 2
-SYSCALL_1(WRITE, struct FAT32DriverRequest *, req);
+SYSCALL_2(WRITE, struct FAT32DriverRequest *, req, int8_t *, ret);
 
 #define DELETE 3
-SYSCALL_1(DELETE, struct FAT32DriverRequest *, req);
+SYSCALL_2(DELETE, struct FAT32DriverRequest *, req, int8_t *, ret);
 
 // Input
 #define GET_CHAR 4
@@ -56,15 +56,18 @@ SYSCALL_1(GET_CHAR, char *, c);
 
 // Framebuffer
 #define FRAMEBUFFER_PUT_CHAR 5
-SYSCALL_1(FRAMEBUFFER_PUT_CHAR, char *, c);
+SYSCALL_1(FRAMEBUFFER_PUT_CHAR, char, c);
 
 #define FRAMEBUFFER_PUT_CHARS 6
 SYSCALL_2(FRAMEBUFFER_PUT_CHARS, char *, c, int, size);
 
-#define FRAMEBUFFER_CLEAR 7
+#define FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS 7
+SYSCALL_1(FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS, char *, c);
+
+#define FRAMEBUFFER_CLEAR 8
 SYSCALL_0(FRAMEBUFFER_CLEAR);
 
-#define FRAMEBUFFER_CURSOR 8
+#define FRAMEBUFFER_CURSOR 9
 SYSCALL_2(FRAMEBUFFER_CURSOR, int, x, int, y);
 
 #endif

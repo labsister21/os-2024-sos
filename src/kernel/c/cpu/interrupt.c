@@ -6,6 +6,7 @@
 #include "header/filesystem/fat32.h"
 #include "header/text/buffercolor.h"
 #include "header/text/framebuffer.h"
+#include <syscall.h>
 
 void activate_keyboard_interrupt(void) {
 	out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
@@ -53,19 +54,19 @@ void pic_remap(void) {
 
 void syscall_handler(struct InterruptFrame *frame) {
 	switch (frame->cpu.general.eax) {
-	case 0:
+	case READ:
 		*((int8_t *)frame->cpu.general.ecx) = read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
 		break;
 
-	case 1:
+	case READ_DIRECTORY:
 		*((int8_t *)frame->cpu.general.ecx) = read_directory((struct FAT32DriverRequest *)frame->cpu.general.ebx);
 		break;
 
-	case 2:
+	case WRITE:
 		*((int8_t *)frame->cpu.general.ecx) = write((struct FAT32DriverRequest *)frame->cpu.general.ebx);
 		break;
 
-	case 4:
+	case GET_CHAR:
 		keyboard_state_activate();
 		__asm__ volatile("sti"); // Allow hardware interrupt
 		while (true) {
@@ -78,16 +79,34 @@ void syscall_handler(struct InterruptFrame *frame) {
 		keyboard_state_deactivate();
 		break;
 
-	case 5:
-		framebuffer_put(*(char *)frame->cpu.general.ebx);
+	case FRAMEBUFFER_PUT_CHAR:
+		framebuffer_put((char)frame->cpu.general.ebx);
 		break;
 
-	case 6:
-		framebuffer_set_cursor(frame->cpu.general.ebx, frame->cpu.general.ecx);
-		break;
+	case FRAMEBUFFER_PUT_CHARS: {
+		int i = frame->cpu.general.ecx;
+		char *str = (char *)frame->cpu.general.ebx;
+		while (i--) {
+			framebuffer_put(str[i]);
+			++i;
+		}
+	} break;
 
-	case 7:
+	case FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS: {
+		int i = 0;
+		char *str = (char *)frame->cpu.general.ebx;
+		while (str[i] != '\0') {
+			framebuffer_put(str[i]);
+			++i;
+		}
+	} break;
+
+	case FRAMEBUFFER_CLEAR:
 		framebuffer_clear();
+		break;
+
+	case FRAMEBUFFER_CURSOR:
+		framebuffer_set_cursor(frame->cpu.general.ecx, frame->cpu.general.ebx);
 		break;
 	}
 }
