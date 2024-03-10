@@ -83,6 +83,8 @@ struct FAT32DriverRequest {
 	uint32_t buffer_size;
 } __attribute__((packed));
 
-uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *dir_entry);
+static inline uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *dir_entry) {
+	return (dir_entry->cluster_low) + (((uint32_t)dir_entry->cluster_high) >> 16);
+}
 
 #endif
