@@ -28,8 +28,8 @@ void kernel_setup(void) {
 	req.buf = mem;
 	req.buffer_size = PAGE_FRAME_SIZE;
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-	str_cpy(req.name, "shell", 8);
-	str_cpy(req.ext, "", 3);
+	strcpy(req.name, "shell", 8);
+	strcpy(req.ext, "", 3);
 	read(&req);
 
 	set_tss_kernel_current_stack();

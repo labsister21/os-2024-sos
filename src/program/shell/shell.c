@@ -40,8 +40,8 @@ void ls() {
 void cd() {
 	struct FAT32DriverRequest req;
 	char *dir;
-	dir = str_tok(NULL, ' ');
-	str_cpy(req.name, dir, 8);
+	dir = strtok(NULL, ' ');
+	strcpy(req.name, dir, 8);
 	req.parent_cluster_number = get_cluster_from_dir_entry(&state.curr_dir.table[0]);
 	req.buf = &state.curr_dir;
 	req.buffer_size = CLUSTER_SIZE;
@@ -50,9 +50,9 @@ void cd() {
 	syscall_READ_DIRECTORY(&req, &ret);
 
 	if (ret == 0) {
-		if (str_cmp(dir, ".") == 0) {
+		if (strcmp(dir, ".") == 0) {
 			syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("stay in directory");
-		} else if (str_cmp(dir, "..") == 0) {
+		} else if (strcmp(dir, "..") == 0) {
 			syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("moved to parent folder");
 		} else {
 			syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("moved to ");
@@ -91,10 +91,10 @@ void get_prompt() {
 }
 
 void run_prompt() {
-	char *token = str_tok(state.prompt, ' ');
-	if (str_cmp(token, "ls") == 0) ls();
-	else if (str_cmp(token, "cd") == 0) cd();
-	else if (str_cmp(token, "clear") == 0) clear();
+	char *token = strtok(state.prompt, ' ');
+	if (strcmp(token, "ls") == 0) ls();
+	else if (strcmp(token, "cd") == 0) cd();
+	else if (strcmp(token, "clear") == 0) clear();
 	else {
 		char *not_found = "command not found!";
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(not_found);
@@ -108,13 +108,13 @@ int main(void) {
 	struct FAT32DriverRequest req;
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 	req.buffer_size = 0;
-	str_cpy(req.name, "dir", 8);
+	strcpy(req.name, "dir", 8);
 	syscall_WRITE(&req, &ret);
 
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 	req.buf = &state.curr_dir;
 	req.buffer_size = sizeof(struct FAT32DirectoryTable);
-	str_cpy(req.name, ".", 8);
+	strcpy(req.name, ".", 8);
 	syscall_READ_DIRECTORY(&req, &ret);
 
 	while (true) {

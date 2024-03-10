@@ -40,7 +40,7 @@ void *memmove(void *dest, const void *src, size_t n) {
 	return dest;
 }
 
-int str_cmp(char *str1, char *str2) {
+int strcmp(char *str1, char *str2) {
 	int i = 0;
 	while (true) {
 		if (str1[i] < str2[i]) return -1;
@@ -59,7 +59,7 @@ int str_len(char *str) {
 	return i;
 }
 
-void str_cpy(char *dst, char *src, int size) {
+void strcpy(char *dst, char *src, int size) {
 	int i = 0;
 	while (i < size - 1 && src[i] != '\0') {
 		dst[i] = src[i];
@@ -72,7 +72,7 @@ void str_cpy(char *dst, char *src, int size) {
  * This function will destroy original string
  *
  */
-char *str_tok(char *str, char delimiter) {
+char *strtok(char *str, char delimiter) {
 	static char *current_str;
 	static int i;
 	if (str != NULL) {

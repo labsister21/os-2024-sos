@@ -51,10 +51,10 @@ int memcmp(const void *s1, const void *s2, size_t n);
  */
 void *memmove(void *dest, const void *src, size_t n);
 
-int str_cmp(char *str1, char *str2);
+int strcmp(char *str1, char *str2);
 int str_len(char *str);
-void str_cpy(char *dst, char *src, int size);
+void strcpy(char *dst, char *src, int size);
 
-char *str_tok(char *str, char delimiter);
+char *strtok(char *str, char delimiter);
 
 #endif

@@ -177,5 +177,4 @@ int8_t write(struct FAT32DriverRequest *request);
  */
 int8_t delete(struct FAT32DriverRequest *request);
 
-uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *dir_entry);
 #endif
