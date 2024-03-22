@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "../cpu/portio.h"
+#include "../driver/keyboard.h"
 
 /* -- PIC constants -- */
 

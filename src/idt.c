@@ -47,16 +47,16 @@ void set_interrupt_gate(
     // Use &-bitmask, bitshift, and casting for offset
     uint32_t offset_handler = (uint32_t)handler_address;
     idt_int_gate->offset_low = (uint32_t)(offset_handler & 0xFFFF);
-    idt_int_gate->offset_high = (uint32_t)((offset_handler >> 16) & 0xFFFF);
     idt_int_gate->segment = gdt_seg_selector;
-    idt_int_gate->privilege_level = privilege; 
 
     // Target system 32-bit and flag this as valid interrupt gate
     idt_int_gate->_r_bit_1    = INTERRUPT_GATE_R_BIT_1;
     idt_int_gate->_r_bit_2    = INTERRUPT_GATE_R_BIT_2;
-    idt_int_gate->_r_bit_3    = INTERRUPT_GATE_R_BIT_3;
     idt_int_gate->gate_32     = 1;
+    idt_int_gate->_r_bit_3    = INTERRUPT_GATE_R_BIT_3;
+    idt_int_gate->privilege_level = privilege; 
     idt_int_gate->present     = 1;
+    idt_int_gate->offset_high = (uint32_t)((offset_handler >> 16) & 0xFFFF);
 }
 
 struct IDTR _idt_idtr = {

@@ -1,4 +1,5 @@
 #include "header/interrupt/interrupt.h"
+#include "header/driver/framebuffer.h"
 
 void io_wait(void) {
     out(0x80, 0);
@@ -36,6 +37,12 @@ void pic_remap(void) {
 
 void main_interrupt_handler(struct InterruptFrame frame) {
     switch (frame.int_number) {
-
+        case IRQ_KEYBOARD + PIC1_OFFSET:
+            keyboard_isr();
+            break;
     }
+}
+
+void activate_keyboard_interrupt(void) {
+    out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
 }
