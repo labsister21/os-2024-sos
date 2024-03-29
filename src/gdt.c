@@ -7,60 +7,55 @@
  */
 struct GlobalDescriptorTable global_descriptor_table = {
     .table = {
-        {
-            // TODO : Implement
-            .base_low = 0,
-            .segment_low = 0,
-            .base_mid = 0,
-            .type_bit = 0,
-            .non_system = 0,
-            .DPL = 0,
-            .P = 0,
-            .segment_high = 0,
-            // .AVL = 1,
-            .L = 0,
-            .DB = 0,
-            .G = 0,
-            .base_high = 0,
-        },
-        {
-            // TODO : Implement
-            .base_low = 0,
-            .segment_low = 0xFFFF,
-            .base_mid = 0,
-            .type_bit = 0xA,
-            .non_system = 1,
-            .DPL = 0,
-            .P = 1,
-            .segment_high = 0xF,
-            // .AVL = 1,
-            .L = 0,
-            .DB = 1,
-            .G = 1,
-            .base_high = 0,
-        },
-        (struct SegmentDescriptor){
-            // TODO : Implement
-            .base_low = 0,
-            .segment_low = 0xFFFF,
-            .base_mid = 0,
-            .type_bit = 0x2,
-            .non_system = 1,
-            .DPL = 0,
-            .P = 1,
-            .segment_high = 0xF,
-            // .AVL = 1,
-            .L = 0,
-            .DB = 1,
-            .G = 1,
-            .base_high = 0,
-        }}};
+        {// TODO : Implement
+         .segment_low = 0,
+         .base_low = 0,
+         .base_mid = 0,
+         .type_bit = 0,
+         .non_system = 0,
+         .privilege_level = 0,
+         .present = 0,
+         .segment_high = 0,
+         .system_reserved = 0,
+         .long_mode = 0,
+         .operation_size = 0,
+         .granularity = 0,
+         .base_high = 0},
+        {// TODO : Implement
+         .segment_low = 0xFFFF,
+         .base_low = 0,
+         .base_mid = 0,
+         .type_bit = 0b1010,
+         .non_system = 1,
+         .privilege_level = 0,
+         .present = 1,
+         .segment_high = 0xF,
+         .system_reserved = 0,
+         .long_mode = 0,
+         .operation_size = 1,
+         .granularity = 1,
+         .base_high = 0},
+        {// TODO : Implement
+         .segment_low = 0xFFFF,
+         .base_low = 0,
+         .base_mid = 0,
+         .type_bit = 0b0010,
+         .non_system = 1,
+         .privilege_level = 0,
+         .present = 1,
+         .segment_high = 0xF,
+         .system_reserved = 0,
+         .long_mode = 0,
+         .operation_size = 1,
+         .granularity = 1,
+         .base_high = 0}}};
 
 /**
  * _gdt_gdtr, predefined system GDTR.
  * GDT pointed by this variable is already set to point global_descriptor_table above.
  * From: https://wiki.osdev.org/Global_Descriptor_Table, GDTR.size is GDT size minus 1.
  */
+
 struct GDTR _gdt_gdtr = {
     // TODO : Implement, this GDTR will point to global_descriptor_table.
     //        Use sizeof operator
