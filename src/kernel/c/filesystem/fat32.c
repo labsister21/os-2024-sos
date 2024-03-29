@@ -20,12 +20,16 @@ const uint8_t fs_signature[BLOCK_SIZE] = {
 
 struct FAT32DriverState fat32_driver_state;
 
+uint32_t cluster_to_lba(uint32_t cluster) {
+	return cluster * CLUSTER_BLOCK_COUNT;
+};
+
 void write_clusters(const void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
-	write_blocks(ptr, cluster_number * CLUSTER_BLOCK_COUNT, cluster_count * CLUSTER_BLOCK_COUNT);
+	write_blocks(ptr, cluster_to_lba(cluster_number), cluster_count * CLUSTER_BLOCK_COUNT);
 }
 
 void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
-	read_blocks(ptr, cluster_number * CLUSTER_BLOCK_COUNT, cluster_count * CLUSTER_BLOCK_COUNT);
+	read_blocks(ptr, cluster_to_lba(cluster_number), cluster_count * CLUSTER_BLOCK_COUNT);
 };
 
 static void create_empty_directory_table(struct FAT32DirectoryTable *dir_table, uint32_t current, uint32_t parent) {
