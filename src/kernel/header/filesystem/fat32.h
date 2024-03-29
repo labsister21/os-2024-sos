@@ -75,20 +75,6 @@ extern struct FAT32DriverState fat32_driver_state;
 uint32_t cluster_to_lba(uint32_t cluster);
 
 /**
- * Initialize DirectoryTable value with
- * - Entry-0: DirectoryEntry about itself
- * - Entry-1: Parent DirectoryEntry
- *
- * @param dir_table          Pointer to directory table
- * @param name               8-byte char for directory name
- * @param parent_dir_cluster Parent directory cluster number
- */
-void init_directory_table(
-		struct FAT32DirectoryTable *dir_table, char *name,
-		uint32_t parent_dir_cluster
-);
-
-/**
  * Checking whether filesystem signature is missing or not in boot sector
  *
  * @return True if memcmp(boot_sector, fs_signature) returning inequality
