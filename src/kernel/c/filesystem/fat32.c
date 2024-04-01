@@ -94,7 +94,6 @@ void initialize_filesystem_fat32() {
 	if (is_empty_storage())
 		create_fat32();
 	read_clusters(&fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
-	read_clusters(&fat32_driver_state.dir_table_buf.table, ROOT_CLUSTER_NUMBER, 1);
 }
 
 int8_t read(struct FAT32DriverRequest *request) {

@@ -54,12 +54,10 @@ struct FAT32FileAllocationTable {
  *
  * @param fat_table     FAT of the system, will be loaded during
  * initialize_filesystem_fat32()
- * @param dir_table_buf Buffer for directory table
  * @param cluster_buf   Buffer for cluster, can be used for temp var
  */
 struct FAT32DriverState {
 	struct FAT32FileAllocationTable fat_table;
-	struct FAT32DirectoryTable dir_table_buf;
 	struct ClusterBuffer cluster_buf;
 } __attribute__((packed));
 extern struct FAT32DriverState fat32_driver_state;
