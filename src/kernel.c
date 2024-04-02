@@ -21,7 +21,7 @@ void kernel_setup(void) {
     char c[2] = {'1', '2'};
     struct FAT32DriverRequest r = {
         .buf = c,
-        .buffer_size = 2,
+        .buffer_size = 1000,
         .ext = "pdf",
         .name = "con",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
@@ -29,6 +29,17 @@ void kernel_setup(void) {
     int result = write(r);
     char c1 = result + '0';
     framebuffer_write(0,0, c1, 0xF, 0);
+    //struct FAT32DriverRequest r2 = {
+    //    .ext = "pdf",
+    //    .name = "con",
+    //    .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    //    .buffer_size = 10000,
+    //    .buf = c,
+    //};
+    //int res = read(r2);
+    //char c2 = res +'0';
+    //framebuffer_write(1,2, 'a', 0xF, 0);
+    
 
     //struct BlockBuffer b;
     //for (int i = 0; i < 512; i++) b.buf[i] = i % 16;

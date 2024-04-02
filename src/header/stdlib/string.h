@@ -56,4 +56,10 @@ char *strcpy(char *dest, const char *src);
 
 int strcmp(const char *stra, const char *strb, int size);
 
+int strlen(const char *str);
+
+void append(char *dest, const char *src);
+
+void empty_string(char *str, int len);
+
 #endif

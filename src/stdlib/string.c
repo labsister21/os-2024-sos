@@ -76,3 +76,29 @@ char *strcpy(char *dest, const char *src)
     *dest = '\0';
     return new;
 }
+
+int strlen(const char *str) {
+    int len = 0;
+    while (str[len] != '\0')
+    {
+        len++;
+    }
+    return len;
+}
+
+void append(char *dest, const char *src) {
+    int idx = strlen(dest);
+    for (int i = 0; i < strlen(src); i++)
+    {
+        dest[idx] = src[i];
+        idx++;
+    }
+    dest[idx] = '\0';
+}
+
+void empty_string(char *str, int len) {
+    for (int i = 0; i < len; i++)
+    {
+        str[i] = '\0';
+    }
+}

@@ -34,7 +34,7 @@
 #define ATTR_SUBDIRECTORY     0b00010000
 #define UATTR_NOT_EMPTY       0b10101010
 
-
+#define DIRECTORY_TABLE_SIZE CLUSTER_SIZE*sizeof(struct FAT32DirectoryEntry)
 
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
 extern const uint8_t fs_signature[BLOCK_SIZE];
@@ -162,9 +162,9 @@ uint32_t cluster_to_lba(uint32_t cluster);
  * @param parent_dir_cluster Parent directory cluster number
  */
 
-uint16_t merger_cluster(uint16_t low, uint16_t high);
+uint16_t merge_cluster(uint16_t low, uint16_t high);
 
-int ceil(float num);
+int ceil(int pembilang, int penyebut);
 
 void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster, uint32_t current_dir_cluster);
 
