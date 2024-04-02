@@ -234,10 +234,10 @@ int8_t write(struct FAT32DriverRequest *request) {
 
 	// Writing to cluster
 	for (int i = 0; i < needed_cluster; ++i) {
-		struct ClusterBuffer buf;
 
 		uint32_t next_cluster = free_clusters[i + 1];
 		if (i + 1 == needed_cluster) {
+			struct ClusterBuffer buf;
 			next_cluster = FAT32_FAT_END_OF_FILE;
 			int remainder = filesize % CLUSTER_SIZE;
 			if (remainder != 0) {
