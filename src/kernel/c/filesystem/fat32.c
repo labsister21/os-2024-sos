@@ -234,12 +234,13 @@ int8_t write(struct FAT32DriverRequest *request) {
 
 	// Writing to cluster
 	for (int i = 0; i < needed_cluster; ++i) {
+		bool last = i + 1 == needed_cluster;
+		uint32_t cluster = free_clusters[i];
+		uint32_t next_cluster = last ? FAT32_FAT_END_OF_FILE : free_clusters[i + 1];
 
-		uint32_t next_cluster = free_clusters[i + 1];
-		if (i + 1 == needed_cluster) {
-			struct ClusterBuffer buf;
-			next_cluster = FAT32_FAT_END_OF_FILE;
+		if (last) {
 			int remainder = filesize % CLUSTER_SIZE;
+			struct ClusterBuffer buf;
 			if (remainder != 0) {
 				memcpy(&buf, src, remainder);
 				memset(&buf.buf[remainder], 0x00, CLUSTER_SIZE - remainder);
@@ -247,7 +248,6 @@ int8_t write(struct FAT32DriverRequest *request) {
 			}
 		}
 
-		uint32_t cluster = free_clusters[i];
 		write_clusters(src, cluster, 1);
 		src += CLUSTER_SIZE;
 		fat32_driver_state.fat_table.cluster_map[cluster] = next_cluster;
