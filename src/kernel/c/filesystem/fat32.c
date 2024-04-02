@@ -242,8 +242,7 @@ int8_t write(struct FAT32DriverRequest *request) {
 			int remainder = filesize % CLUSTER_SIZE;
 			if (remainder != 0) {
 				memcpy(&buf, src, remainder);
-				for (int i = remainder; i < CLUSTER_SIZE; ++i)
-					buf.buf[i] = 0x0;
+				memset(&buf.buf[remainder], 0x00, CLUSTER_SIZE - remainder);
 				src = (void *)&buf;
 			}
 		}
