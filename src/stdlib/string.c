@@ -43,3 +43,36 @@ void *memmove(void *dest, const void *src, size_t n) {
 
     return dest;
 }
+
+int strcmp(const char *str1, const char *str2, int size)
+{
+    int i;
+    for (i = 0; i < size && str1[i] == str2[i]; i++)
+    {
+        if (str1[i] == '\0')
+        {
+            return 0;
+        }
+    }
+    if (i == size)
+    {
+        return 0;
+    }
+    else
+    {
+        return str1[i] - str2[i];
+    }
+}
+
+char *strcpy(char *dest, const char *src)
+{
+    char *new = dest;
+    while (*src != '\0')
+    {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+    return new;
+}

@@ -161,7 +161,12 @@ uint32_t cluster_to_lba(uint32_t cluster);
  * @param name               8-byte char for directory name
  * @param parent_dir_cluster Parent directory cluster number
  */
-void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster);
+
+uint16_t merger_cluster(uint16_t low, uint16_t high);
+
+int ceil(float num);
+
+void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster, uint32_t current_dir_cluster);
 
 /**
  * Checking whether filesystem signature is missing or not in boot sector

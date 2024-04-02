@@ -2,7 +2,6 @@
 #include "header/driver/framebuffer.h"
 #include "header/cpu/portio.h"
 #include "header/stdlib/string.h"
-#include <string.h>
 
 static struct KeyboardDriverState keyboard_state;
 

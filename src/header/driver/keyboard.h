@@ -4,9 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../interrupt/interrupt.h"
 
 #define EXT_SCANCODE_UP        0x48

@@ -3,6 +3,7 @@ ASM           = nasm
 LIN           = ld
 CC            = gcc
 GENISOIMAGE   = genisoimage
+MKDIR_P 	  = mkdir -p
 
 # Directory
 SOURCE_FOLDER = src
@@ -21,13 +22,13 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
 run: all
-	@qemu-system-i386 -s -S -drive file="bin/storage.bin",format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+	@qemu-system-i386 -drive file="bin/storage.bin",format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
 build: iso
 clean:
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
-
-
+	rm -rf bin
+	@mkdir bin
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
