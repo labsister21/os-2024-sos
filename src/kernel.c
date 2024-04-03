@@ -29,16 +29,27 @@ void kernel_setup(void) {
     int result = write(r);
     char c1 = result + '0';
     framebuffer_write(0,0, c1, 0xF, 0);
-    //struct FAT32DriverRequest r2 = {
-    //    .ext = "pdf",
-    //    .name = "con",
-    //    .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-    //    .buffer_size = 10000,
-    //    .buf = c,
-    //};
-    //int res = read(r2);
-    //char c2 = res +'0';
-    //framebuffer_write(1,2, 'a', 0xF, 0);
+    char c3[4] =  {'a','s','e','p'};
+    struct FAT32DriverRequest r2 = {
+        .buf = c3,
+        .buffer_size = 10000,
+        .ext = "pdf",
+        .name = "nigger",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int res = write(r2);
+    char c2 = res + '0';
+    framebuffer_write(0,2, c2, 0xF, 0);
+    struct FAT32DriverRequest r3 = {
+        .buf = NULL,
+        .buffer_size = 10000,
+        .ext = "pdf",
+        .name = "nigger",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int ress = read(r3);
+    char c4 = ress + '0';
+    framebuffer_write(0,15,c4,0xF,0);
     
 
     //struct BlockBuffer b;
