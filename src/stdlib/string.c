@@ -64,17 +64,15 @@ int strcmp(const char *str1, const char *str2, int size)
     }
 }
 
-char *strcpy(char *dest, const char *src)
+void strcpy(char *dest, const char *src, int max)
 {
-    char *new = dest;
-    while (*src != '\0')
+    while (*src != '\0' && max--) // Change max-- to --max
     {
         *dest = *src;
         dest++;
         src++;
     }
     *dest = '\0';
-    return new;
 }
 
 int strlen(const char *str) {
@@ -96,8 +94,8 @@ void append(char *dest, const char *src) {
     dest[idx] = '\0';
 }
 
-void empty_string(char *str, int len) {
-    for (int i = 0; i < len; i++)
+void empty_string(char *str) {
+    for (int i = 0; i < strlen(str); i++)
     {
         str[i] = '\0';
     }
