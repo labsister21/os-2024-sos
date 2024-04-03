@@ -34,7 +34,7 @@ void kernel_setup(void) {
         .buf = c3,
         .buffer_size = 10000,
         .ext = "pdf",
-        .name = "nigger",
+        .name = "hoho",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
     };
     int res = write(r2);
@@ -44,7 +44,7 @@ void kernel_setup(void) {
         .buf = NULL,
         .buffer_size = 10000,
         .ext = "pdf",
-        .name = "nigger",
+        .name = "hoho",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
     };
     int ress = read(r3);

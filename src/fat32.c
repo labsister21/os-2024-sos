@@ -265,7 +265,7 @@ int8_t write(struct FAT32DriverRequest request) {
         write_entry->attribute = 0;
         strcpy(write_entry->ext, request.ext);
     }
-    if (strcmp(request.name, "nigger", 8) == 0)
+    if (strcmp(request.name, "hoho", 8) == 0)
     {
         framebuffer_write(0,5, empty_dir_index + '0', 0xF, 0);
         framebuffer_write(1,2, write_entry->cluster_low + '0', 0xF, 0);    
