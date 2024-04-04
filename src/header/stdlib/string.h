@@ -60,6 +60,6 @@ int strlen(const char *str);
 
 void append(char *dest, const char *src);
 
-void empty_string(char *str);
+void empty_string(char *str, int len);
 
 #endif

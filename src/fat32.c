@@ -364,25 +364,21 @@ int8_t delete(struct FAT32DriverRequest request) {
             return 2;
         }
     }
-    dir_table->table[dir_idx].user_attribute = 0;
-    empty_string(dir_table->table[dir_idx].name);
-    empty_string(dir_table->table[dir_idx].ext);
-    dir_table->table[dir_idx].attribute = 0;
-    dir_table->table[dir_idx].filesize = 0;
-    dir_table->table[dir_idx].user_attribute = 0;
+    memset(&dir_table->table[dir_idx], 0x00, sizeof(struct FAT32DirectoryEntry));
     write_clusters(dir_table->table, request.parent_cluster_number, 1);
     read_clusters(fat_table, FAT_CLUSTER_NUMBER, 1);
     
     int temp_idx;
+    int i = 0;
     while (cluster != FAT32_FAT_END_OF_FILE)
     {
-        temp_idx = cluster;
+        //write_clusters(0, cluster, 1);
+        temp_idx = fat_table->cluster_map[cluster];
+        fat_table->cluster_map[cluster] = FAT32_FAT_EMPTY_ENTRY;
         cluster = fat_table->cluster_map[temp_idx];
-        fat_table->cluster_map[temp_idx] = FAT32_FAT_EMPTY_ENTRY;
-        framebuffer_write(3,1,cluster + '0',0xF,0); 
     }
-    fat_table->cluster_map[cluster] = FAT32_FAT_EMPTY_ENTRY;
-    write_clusters(fat_table, FAT_CLUSTER_NUMBER, 1);
+    //fat_table->cluster_map[cluster] = FAT32_FAT_EMPTY_ENTRY;
+    write_clusters(fat_table->cluster_map, FAT_CLUSTER_NUMBER, 1);
     return 0;
     //return -1;
 }

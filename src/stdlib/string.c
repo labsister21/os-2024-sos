@@ -94,8 +94,8 @@ void append(char *dest, const char *src) {
     dest[idx] = '\0';
 }
 
-void empty_string(char *str) {
-    for (int i = 0; i < strlen(str); i++)
+void empty_string(char *str, int len) {
+    for (int i = 0; i < len; i++)
     {
         str[i] = '\0';
     }

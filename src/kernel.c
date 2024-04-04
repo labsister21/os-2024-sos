@@ -40,21 +40,26 @@ void kernel_setup(void) {
     int res = write(r2);
     char c2 = res + '0';
     framebuffer_write(0,2, c2, 0xF, 0);
-    char p[4];
+    char p[11];
     struct FAT32DriverRequest r3 = {
-        .buf = c3,
+        .buf = p,
         .buffer_size = 10000,
         .ext = "pdf",
-        .name = "hoho",
+        .name = "con",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
     };
     int ress = delete(r3);
     char c4 = ress + '0';
-    framebuffer_write(0,15,c4,0xF,0);
-    framebuffer_write(2,3,p[0],0xF,0);
-    framebuffer_write(2,4,p[1],0xF,0);
-    framebuffer_write(2,5,p[2],0xF,0);
-    framebuffer_write(2,6,p[3],0xF,0);
+    //framebuffer_write(0,15,c4,0xF,0);
+    //framebuffer_write(2,3,p[0],0xF,0);
+    //framebuffer_write(2,4,p[1],0xF,0);
+    //framebuffer_write(2,5,p[2],0xF,0);
+    //framebuffer_write(2,6,p[3],0xF,0);
+    //framebuffer_write(2,7,p[4],0xF,0);
+    //framebuffer_write(2,8,p[5],0xF,0);
+    //framebuffer_write(2,9,p[6],0xF,0);
+    //framebuffer_write(2,10,p[7],0xF,0);
+    //framebuffer_write(2,11,p[8],0xF,0);
     
 
     //struct BlockBuffer b;
