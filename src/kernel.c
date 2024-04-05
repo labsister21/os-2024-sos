@@ -50,16 +50,39 @@ void kernel_setup(void) {
     };
     int ress = delete(r3);
     char c4 = ress + '0';
-    //framebuffer_write(0,15,c4,0xF,0);
-    //framebuffer_write(2,3,p[0],0xF,0);
-    //framebuffer_write(2,4,p[1],0xF,0);
-    //framebuffer_write(2,5,p[2],0xF,0);
-    //framebuffer_write(2,6,p[3],0xF,0);
-    //framebuffer_write(2,7,p[4],0xF,0);
-    //framebuffer_write(2,8,p[5],0xF,0);
-    //framebuffer_write(2,9,p[6],0xF,0);
-    //framebuffer_write(2,10,p[7],0xF,0);
-    //framebuffer_write(2,11,p[8],0xF,0);
+    framebuffer_write(4,1,c4, 0xF, 0);
+    char q[11] = {'h','a','i',' ','o','n','i','c','a','n'};
+    struct FAT32DriverRequest r4 = {
+        .buf = q,
+        .buffer_size = 10000,
+        .ext = "pdf",
+        .name = "niinii",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int ress2 = write(r4);
+    char pq = ress2 + '0';
+    char s[11];
+    struct FAT32DriverRequest r6 = {
+        .buf = s,
+        .buffer_size = 10000,
+        .ext = "pdf",
+        .name = "niinii",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int ress5 = read(r6);
+    char ps = ress2 + '0';
+    framebuffer_write(0,15,c4,0xF,0);
+    framebuffer_write(2,3,s[0],0xF,0);
+    framebuffer_write(2,4,s[1],0xF,0);
+    framebuffer_write(2,5,s[2],0xF,0);
+    framebuffer_write(2,6,s[3],0xF,0);
+    framebuffer_write(2,7,s[4],0xF,0);
+    framebuffer_write(2,8,s[5],0xF,0);
+    framebuffer_write(2,9,s[6],0xF,0);
+    framebuffer_write(2,10,s[7],0xF,0);
+    framebuffer_write(2,11,s[8],0xF,0);
+    framebuffer_write(2,12,s[9],0xF,0);
+    framebuffer_write(2,13,s[10],0xF,0);
     
 
     //struct BlockBuffer b;

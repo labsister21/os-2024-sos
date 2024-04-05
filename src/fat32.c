@@ -310,7 +310,7 @@ int8_t write(struct FAT32DriverRequest request) {
         fat32_driver_state.fat_table.cluster_map[freeClusters[i]] = next_cluster; 
     }
     //empty_string(request.buf);
-    write_clusters(&fat32_driver_state.fat_table, FAT_CLUSTER_NUMBER, 1);    
+    write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);    
     return 0;
 }
 
@@ -368,14 +368,13 @@ int8_t delete(struct FAT32DriverRequest request) {
     write_clusters(dir_table->table, request.parent_cluster_number, 1);
     read_clusters(fat_table, FAT_CLUSTER_NUMBER, 1);
     
-    int temp_idx;
-    int i = 0;
+    int next_cluster;
     while (cluster != FAT32_FAT_END_OF_FILE)
     {
         //write_clusters(0, cluster, 1);
-        temp_idx = fat_table->cluster_map[cluster];
+        next_cluster = fat_table->cluster_map[cluster];
         fat_table->cluster_map[cluster] = FAT32_FAT_EMPTY_ENTRY;
-        cluster = fat_table->cluster_map[temp_idx];
+        cluster = next_cluster;
     }
     //fat_table->cluster_map[cluster] = FAT32_FAT_EMPTY_ENTRY;
     write_clusters(fat_table->cluster_map, FAT_CLUSTER_NUMBER, 1);
