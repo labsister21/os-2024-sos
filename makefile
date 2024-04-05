@@ -22,7 +22,7 @@ WARNING_CFLAG = -Wall -Wextra -Werror
 DEBUG_CFLAG = -fshort-wchar -g
 TARGET_CFLAG = -m32
 SHARED_INCLUDE_CFLAG = -isystem $(SOURCE_PATH)/shared/header
-INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel
+INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel/header
 STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding -fno-pie
 
 # Flags
@@ -131,7 +131,7 @@ KERNEL_CODE = $(SOURCE_PATH)/kernel/c
 $(OUTPUT_PATH)/$(INSERTER_NAME): 
 	@mkdir -p $(@D)
 	$(CC) $(WARNING_CFLAG) \
-		-I$(SOURCE_PATH)/kernel \
+		-I$(SOURCE_PATH)/kernel/header \
 		$(SHARED_INCLUDE_CFLAG) \
 		-Wno-builtin-declaration-mismatch -g \
 		$(SOURCE_PATH)/kernel/c/filesystem/fat32.c \

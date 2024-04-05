@@ -1,7 +1,7 @@
 #ifndef _FRAMEBUFFER_H
 #define _FRAMEBUFFER_H
 
-#include "header/text/buffercolor.h"
+#include "text/buffercolor.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
 

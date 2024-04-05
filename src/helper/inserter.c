@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "header/driver/disk.h"
-#include "header/filesystem/fat32.h"
+#include "driver/disk.h"
+#include "filesystem/fat32.h"
 
 // Global variable
 uint8_t *image_storage;

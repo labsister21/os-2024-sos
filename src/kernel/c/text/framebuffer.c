@@ -1,6 +1,6 @@
-#include "header/text/framebuffer.h"
-#include "header/cpu/portio.h"
-#include "header/text/buffercolor.h"
+#include "text/framebuffer.h"
+#include "cpu/portio.h"
+#include "text/buffercolor.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
 

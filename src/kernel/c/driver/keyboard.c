@@ -1,6 +1,6 @@
-#include "header/driver/keyboard.h"
-#include "header/cpu/interrupt.h"
-#include "header/cpu/portio.h"
+#include "driver/keyboard.h"
+#include "cpu/interrupt.h"
+#include "cpu/portio.h"
 #include <std/stdint.h>
 
 // clang-format off

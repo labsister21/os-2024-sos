@@ -1,4 +1,4 @@
-#include "header/memory/paging.h"
+#include "memory/paging.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
 #include <std/string.h>

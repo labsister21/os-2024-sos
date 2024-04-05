@@ -1,7 +1,7 @@
 #ifndef _FAT32_H
 #define _FAT32_H
 
-#include "header/driver/disk.h"
+#include "driver/disk.h"
 #include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>

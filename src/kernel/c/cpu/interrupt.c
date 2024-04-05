@@ -1,11 +1,11 @@
-#include "header/cpu/interrupt.h"
-#include "header/cpu/gdt.h"
-#include "header/cpu/idt.h"
-#include "header/cpu/portio.h"
-#include "header/driver/keyboard.h"
-#include "header/filesystem/fat32.h"
-#include "header/text/buffercolor.h"
-#include "header/text/framebuffer.h"
+#include "cpu/interrupt.h"
+#include "cpu/gdt.h"
+#include "cpu/idt.h"
+#include "cpu/portio.h"
+#include "driver/keyboard.h"
+#include "filesystem/fat32.h"
+#include "text/buffercolor.h"
+#include "text/framebuffer.h"
 #include <syscall.h>
 
 void activate_keyboard_interrupt(void) {

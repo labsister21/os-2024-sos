@@ -1,10 +1,10 @@
-#include "header/cpu/gdt.h"
-#include "header/cpu/idt.h"
-#include "header/cpu/interrupt.h"
-#include "header/filesystem/fat32.h"
-#include "header/kernel-entrypoint.h"
-#include "header/memory/paging.h"
-#include "header/text/framebuffer.h"
+#include "cpu/gdt.h"
+#include "cpu/idt.h"
+#include "cpu/interrupt.h"
+#include "filesystem/fat32.h"
+#include "kernel-entrypoint.h"
+#include "memory/paging.h"
+#include "text/framebuffer.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
 #include <std/string.h>

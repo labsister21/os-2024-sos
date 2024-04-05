@@ -1,7 +1,7 @@
-#include "header/filesystem/fat32.h"
-#include "header/driver/disk.h"
-#include "header/text/buffercolor.h"
-#include "header/text/framebuffer.h"
+#include "filesystem/fat32.h"
+#include "driver/disk.h"
+#include "text/buffercolor.h"
+#include "text/framebuffer.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
 #include <std/string.h>

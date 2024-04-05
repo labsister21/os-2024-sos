@@ -1,7 +1,7 @@
 #ifndef _KERNEL_ENTRYPOINT
 #define _KERNEL_ENTRYPOINT
 
-#include "header/cpu/gdt.h"
+#include "cpu/gdt.h"
 #include <std/stdint.h>
 
 extern uint32_t _linker_kernel_virtual_addr_start;

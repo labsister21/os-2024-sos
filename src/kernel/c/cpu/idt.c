@@ -1,5 +1,5 @@
-#include "header/cpu/idt.h"
-#include "header/cpu/gdt.h"
+#include "cpu/idt.h"
+#include "cpu/gdt.h"
 #include <std/stdint.h>
 
 struct InterruptDescriptorTable interrupt_descriptor_table;
