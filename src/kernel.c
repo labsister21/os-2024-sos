@@ -101,7 +101,7 @@ void kernel_setup(void) {
         .buf = sooo,
         .buffer_size = 0,
         .name = "inDir",
-        .parent_cluster_number = 14,
+        .parent_cluster_number = 13,
     };
     int pl = write(r9);
     char aq =  pl + '0';
@@ -113,6 +113,8 @@ void kernel_setup(void) {
         .parent_cluster_number = 15,
     };
     int nig = write(r10);
+    int del = read(r10);
+    framebuffer_write(24,0, del + '0', 0xF, 0);
     framebuffer_write(11,20, aq,0xF,0);
 
     framebuffer_write(10,3,s[0],0xF,0);

@@ -153,7 +153,7 @@ int8_t read(struct FAT32DriverRequest request) {
         {
             // File
             isFound = true;
-            if (strcmp(dir_table->table[i].ext, request.ext, 3) == 0)
+            if (strcmp(dir_table->table[i].ext, request.ext, 3) == 0 && dir_table->table[i].attribute != ATTR_SUBDIRECTORY)
             {
                 if (request.buffer_size < dir_table->table[i].filesize)
                 {
@@ -341,14 +341,14 @@ int8_t delete(struct FAT32DriverRequest request) {
     if (dir_table->table[dir_idx].attribute == ATTR_SUBDIRECTORY)
     {
         struct FAT32DirectoryTable folder_table;
-        uint32_t i = 0;
+        uint32_t i = 2;
         bool isEmpty = true;
 
         read_clusters(&folder_table, cluster, 1);
 
         while (i < DIRECTORY_TABLE_SIZE && isEmpty)
         {
-            if (folder_table.table[i].user_attribute != UATTR_NOT_EMPTY)
+            if (folder_table.table[i].user_attribute == UATTR_NOT_EMPTY)
             {
                 isEmpty = false;
             }
