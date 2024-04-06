@@ -52,4 +52,14 @@ int memcmp(const void *s1, const void *s2, size_t n);
 */
 void *memmove(void *dest, const void *src, size_t n);
 
+void strcpy(char *dest, const char *src, int max);
+
+int strcmp(const char *stra, const char *strb, int size);
+
+int strlen(const char *str);
+
+void append(char *dest, const char *src);
+
+void empty_string(char *str, int len);
+
 #endif

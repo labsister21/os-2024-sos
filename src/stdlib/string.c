@@ -43,3 +43,60 @@ void *memmove(void *dest, const void *src, size_t n) {
 
     return dest;
 }
+
+int strcmp(const char *str1, const char *str2, int size)
+{
+    int i;
+    for (i = 0; i < size && str1[i] == str2[i]; i++)
+    {
+        if (str1[i] == '\0')
+        {
+            return 0;
+        }
+    }
+    if (i == size)
+    {
+        return 0;
+    }
+    else
+    {
+        return str1[i] - str2[i];
+    }
+}
+
+void strcpy(char *dest, const char *src, int max)
+{
+    while (*src != '\0' && max--) // Change max-- to --max
+    {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}
+
+int strlen(const char *str) {
+    int len = 0;
+    while (str[len] != '\0')
+    {
+        len++;
+    }
+    return len;
+}
+
+void append(char *dest, const char *src) {
+    int idx = strlen(dest);
+    for (int i = 0; i < strlen(src); i++)
+    {
+        dest[idx] = src[i];
+        idx++;
+    }
+    dest[idx] = '\0';
+}
+
+void empty_string(char *str, int len) {
+    for (int i = 0; i < len; i++)
+    {
+        str[i] = '\0';
+    }
+}

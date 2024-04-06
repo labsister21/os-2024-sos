@@ -1,7 +1,10 @@
 {
     "debug.onTaskErrors": "debugAnyway",
     "files.associations": {
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "*.h": "c"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc-9",
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
 }
