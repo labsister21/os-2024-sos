@@ -70,8 +70,56 @@ void kernel_setup(void) {
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
     };
     int ress5 = read(r6);
-    char ps = ress2 + '0';
-    framebuffer_write(0,15,c4,0xF,0);
+    char ps = ress5 + '0';
+    framebuffer_write(5,0,ps,0xF,0);
+    char o[4] = {'h','a', 'l', 'o'};
+    struct FAT32DriverRequest r5 = {
+        .buf = o,
+        .buffer_size = 0,
+        .name = "niinii",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int ress6 = write(r5);
+    void *so;
+    struct FAT32DriverRequest r7 = {
+        .buf = so,
+        .buffer_size = 0,
+        .name = "niinii",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    int ress7 = read_directory(r7);
+    char soo[4];
+    struct FAT32DriverRequest r8 = {
+        .buf = soo,
+        .buffer_size = 0,
+        .name = "tes",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+    };
+    write(r8);
+    char sooo[4];
+    struct FAT32DriverRequest r9 = {
+        .buf = sooo,
+        .buffer_size = 0,
+        .name = "inDir",
+        .parent_cluster_number = 14,
+    };
+    int pl = write(r9);
+    char aq =  pl + '0';
+    struct FAT32DirectoryTable *k;
+    struct FAT32DriverRequest r10 = {
+        .buf = k,
+        .buffer_size = 0,
+        .name = "jacko",
+        .parent_cluster_number = 15,
+    };
+    int nig = write(r10);
+    framebuffer_write(11,20, aq,0xF,0);
+
+    framebuffer_write(10,3,s[0],0xF,0);
+    framebuffer_write(2,4,s[1],0xF,0);
+    framebuffer_write(2,5,s[2],0xF,0);
+    framebuffer_write(2,6,s[3],0xF,0);
+    framebuffer_write(2,7,s[4],0xF,0);
     framebuffer_write(2,3,s[0],0xF,0);
     framebuffer_write(2,4,s[1],0xF,0);
     framebuffer_write(2,5,s[2],0xF,0);
