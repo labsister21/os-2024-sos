@@ -1,3 +1,5 @@
+#include "boot/boot.h"
+#include "boot/multiboot.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/interrupt.h"
@@ -10,30 +12,42 @@
 #include <std/string.h>
 
 void kernel_setup(void) {
+	/* Multiboot Info setup */
+	init_multiboot_info();
+
+	/* Global Descriptor Table setup*/
 	load_gdt(&_gdt_gdtr);
+
+	/* Interrrupt setup */
 	pic_remap();
 	initialize_idt();
 	activate_keyboard_interrupt();
-	framebuffer_clear();
-	framebuffer_set_cursor(0, 0);
+
+	/* Filesystem setup */
 	initialize_filesystem_fat32();
 
-	gdt_install_tss();
-	set_tss_register();
+	/* Framebuffer setup */
+	framebuffer_clear();
+	framebuffer_set_cursor(0, 0);
 
-	void *mem = 0;
-	paging_allocate_user_page_frame(&_paging_kernel_page_directory, mem);
+	framebuffer_put_hex((uint32_t)get_multiboot_info());
 
-	struct FAT32DriverRequest req;
-	req.buf = mem;
-	req.buffer_size = PAGE_FRAME_SIZE;
-	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-	strcpy(req.name, "shell", 8);
-	strcpy(req.ext, "", 3);
-	read(&req);
-
-	set_tss_kernel_current_stack();
-	kernel_execute_user_program(mem);
+	// gdt_install_tss();
+	// set_tss_register();
+	//
+	// void *mem = 0;
+	// paging_allocate_user_page_frame(&_paging_kernel_page_directory, mem);
+	//
+	// struct FAT32DriverRequest req;
+	// req.buf = mem;
+	// req.buffer_size = PAGE_FRAME_SIZE;
+	// req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+	// strcpy(req.name, "shell", 8);
+	// strcpy(req.ext, "", 3);
+	// read(&req);
+	//
+	// set_tss_kernel_current_stack();
+	// kernel_execute_user_program(mem);
 
 	while (1) continue;
 }

@@ -7,7 +7,8 @@ SECTIONS {
 	.multiboot ALIGN (0x1000) : AT (ADDR (.multiboot) - 0xC0000000)
 	{
 		*(.multiboot)
-}
+	}
+
 	.setup.text ALIGN (0x1000) : AT (ADDR (.setup.text) - 0xC0000000)
 	{
 		*(.setup.text)

@@ -59,3 +59,21 @@ void framebuffer_clear(void) {
 		}
 	}
 }
+
+void framebuffer_put_hex(uint32_t value) {
+	char c[8];
+
+	for (int i = 7; i >= 0; --i) {
+		int mod = value % 16;
+		value /= 16;
+
+		if (mod < 10) c[i] = mod + '0';
+		else c[i] = (mod - 10) + 'A';
+	}
+
+	framebuffer_put('0');
+	framebuffer_put('x');
+	for (int i = 0; i < 8; ++i) {
+		framebuffer_put(c[i]);
+	}
+};
