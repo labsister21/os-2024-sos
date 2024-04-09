@@ -30,8 +30,6 @@ void kernel_setup(void) {
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
 
-	framebuffer_put_hex((uint32_t)get_multiboot_info());
-
 	// gdt_install_tss();
 	// set_tss_register();
 	//

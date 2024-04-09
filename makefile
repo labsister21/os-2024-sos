@@ -36,7 +36,7 @@ LINKER_FLAGS = -T $(SOURCE_PATH)/kernel/linker.ld -melf_i386
 
 run: all
 	$(QEMU_i386) \
-		-m 1G \
+		-m 2G \
 		-drive file=$(OUTPUT_PATH)/$(DISK_NAME),format=raw,if=ide,index=0,media=disk \
 		-cdrom $(OUTPUT_PATH)/$(ISO_NAME)
 
