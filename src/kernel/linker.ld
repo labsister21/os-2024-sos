@@ -33,9 +33,14 @@ SECTIONS {
 	{
 		*(COMMON)
 		*(.bss)
-		bin/obj/kernel/asm/kernel-entrypoint.o(.bss)
+	}
+
+	.stack ALIGN (0x1000) : AT (ADDR (.stack) - 0xC0000000)
+	{
+		*(.stack)
 		_linker_kernel_stack_top = .;
 	}
+
 
 	_linker_kernel_virtual_addr_end = .;
 	_linker_kernel_physical_addr_end = . - 0xC0000000;
