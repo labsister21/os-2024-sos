@@ -55,6 +55,11 @@ int strcmp(char *str1, char *str2);
 int str_len(char *str);
 void strcpy(char *dst, char *src, int size);
 
+/*
+ * This function will destroy original string
+ */
 char *strtok(char *str, char delimiter);
+
+int strtoi(char *str, char **end);
 
 #endif

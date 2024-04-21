@@ -7,6 +7,9 @@ struct TTYState {
 	int size;
 	int current;
 	char buffer[1024];
+
+	int ansi_escape_size;
+	char ansi_escape[32];
 };
 
 extern struct TTYState tty_state;

@@ -4,10 +4,66 @@
 
 struct TTYState tty_state = {
 		.size = 0,
-		.current = 0
+		.current = 0,
+		.ansi_escape_size = 0,
 };
 
+bool check_ansi_escape_end(char c) {
+	switch (c) {
+	case '[':
+	case ']':
+	case '\\':
+	case '^':
+	case '_':
+	case '`':
+	case '{':
+	case '|':
+	case '}':
+	case '~':
+		return true;
+	default: {
+		if (
+				('A' <= c && c <= 'Z') ||
+				('a' <= c && c <= 'z')
+		) {
+			return true;
+		}
+		return false;
+	}
+	}
+}
+
+void process_ansi_escape() {
+	char *buffer = tty_state.ansi_escape;
+	char escape_end = buffer[tty_state.ansi_escape_size - 1];
+	switch (escape_end) {
+	case 'A':
+		framebuffer_move_cursor(UP, 1);
+		break;
+	case 'B':
+		framebuffer_move_cursor(DOWN, 1);
+		break;
+	case 'C':
+		framebuffer_move_cursor(RIGHT, 1);
+		break;
+		framebuffer_move_cursor(LEFT, 1);
+		break;
+	case 'J':
+		framebuffer_clear();
+		break;
+	}
+}
+
 void fputc(char c) {
+	if (c == '\e' || tty_state.ansi_escape_size > 0) {
+		tty_state.ansi_escape[tty_state.ansi_escape_size++] = c;
+		if (check_ansi_escape_end(c)) {
+			process_ansi_escape();
+			tty_state.ansi_escape_size = 0;
+		}
+		return;
+	}
+
 	if (c == '\n') {
 		framebuffer_next_line();
 		return;
@@ -35,9 +91,9 @@ char fgetc() {
 					if (tty_state.size == 0) continue;
 					--tty_state.size;
 
-					framebuffer_set_cursor(framebuffer_state.row, framebuffer_state.col - 1);
+					framebuffer_move_cursor(LEFT, 1);
 					framebuffer_put(' ');
-					framebuffer_set_cursor(framebuffer_state.row, framebuffer_state.col - 1);
+					framebuffer_move_cursor(LEFT, 1);
 					continue;
 				}
 

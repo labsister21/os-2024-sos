@@ -68,10 +68,6 @@ void strcpy(char *dst, char *src, int size) {
 	dst[i] = '\0';
 };
 
-/*
- * This function will destroy original string
- *
- */
 char *strtok(char *str, char delimiter) {
 	static char *current_str;
 	static int i;
@@ -90,4 +86,16 @@ char *strtok(char *str, char delimiter) {
 	current_str[i] = '\0';
 	++i;
 	return &current_str[start];
+};
+
+int strtoi(char *str, char **end) {
+	int result = 0;
+	while (true) {
+		if ('0' <= *str && *str <= '9') {
+			result = 10 * result + (*str - '0');
+			str += 1;
+			*end = str + 1;
+		}
+	}
+	return result;
 };

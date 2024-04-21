@@ -13,7 +13,8 @@ struct ShellState {
 struct ShellState state = {};
 
 void clear() {
-	syscall_FRAMEBUFFER_CLEAR();
+	syscall_PUT_CHAR('\e');
+	syscall_PUT_CHAR('J');
 }
 
 void refresh_curr_dir() {
@@ -94,15 +95,19 @@ void get_prompt() {
 
 void run_prompt() {
 	char *token = strtok(state.prompt, ' ');
-	if (strcmp(token, "ls") == 0) ls();
+
+	bool isClear = strcmp(token, "clear") == 0;
+
+	if (isClear) clear();
+	else if (strcmp(token, "ls") == 0) ls();
 	else if (strcmp(token, "cd") == 0) cd();
 	else if (strcmp(token, "mkdir") == 0) mkdir();
-	else if (strcmp(token, "clear") == 0) clear();
 	else {
 		char *not_found = "command not found!";
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(not_found);
 	}
-	syscall_PUT_CHAR('\n');
+
+	if (!isClear) syscall_PUT_CHAR('\n');
 }
 
 int main(void) {

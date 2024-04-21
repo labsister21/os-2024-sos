@@ -16,11 +16,9 @@
 struct FramebufferState {
 	int row;
 	int col;
-	uint8_t fg;
-	uint8_t bg;
+	int fg;
+	int bg;
 } __attribute((packed));
-
-extern struct FramebufferState framebuffer_state;
 
 /**
  * Terminal framebuffer
@@ -42,7 +40,7 @@ extern struct FramebufferState framebuffer_state;
  * @param bg  Background color
  */
 void framebuffer_write(
-		uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg
+		int row, int col, char c, int fg, int bg
 );
 
 /**
@@ -51,7 +49,7 @@ void framebuffer_write(
  * @param r row
  * @param c column
  */
-void framebuffer_set_cursor(uint8_t r, uint8_t c);
+void framebuffer_set_cursor(int row, int col);
 
 /**
  * Set all cell in framebuffer character to 0x00 (empty character)
@@ -61,6 +59,14 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+enum FramebufferCursorMove {
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT
+};
+
+void framebuffer_move_cursor(enum FramebufferCursorMove direction, int count);
 void framebuffer_next_line(void);
 void framebuffer_put(char c);
 void framebuffer_put_hex(uint32_t value);
