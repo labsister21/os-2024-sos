@@ -7,6 +7,15 @@ struct TTYState tty_state = {
 		.current = 0
 };
 
+void fputc(char c) {
+	if (c == '\n') {
+		framebuffer_next_line();
+		return;
+	}
+	framebuffer_put(c);
+	return;
+}
+
 char fgetc() {
 	if (tty_state.size == 0) {
 		keyboard_state_activate();

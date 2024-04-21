@@ -72,6 +72,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 		*ptr = fgetc();
 	} break;
 
+	case PUT_CHAR: {
+		fputc((char)frame->cpu.general.ebx);
+	} break;
+
 	case FRAMEBUFFER_PUT_CHAR:
 		framebuffer_put((char)frame->cpu.general.ebx);
 		break;

@@ -102,6 +102,7 @@ void run_prompt() {
 		char *not_found = "command not found!";
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(not_found);
 	}
+	syscall_PUT_CHAR('\n');
 }
 
 int main(void) {

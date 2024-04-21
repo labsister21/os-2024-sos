@@ -12,5 +12,6 @@ struct TTYState {
 extern struct TTYState tty_state;
 
 char fgetc();
+void fputc(char c);
 
 #endif
