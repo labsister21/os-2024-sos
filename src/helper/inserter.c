@@ -62,7 +62,12 @@ int main(int argc, char *argv[]) {
 	sscanf(argv[2], "%u", &parent_cluster_number);
 	request.parent_cluster_number = parent_cluster_number;
 	sscanf(argv[1], "%8s", request.name);
-	int retcode = write(&request);
+
+	int retcode;
+	retcode = delete (&request);
+	printf("Delete return code: %d\n", retcode);
+
+	retcode = write(&request);
 	switch (retcode) {
 	case 0:
 		puts("Write success");
