@@ -61,6 +61,7 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+void framebuffer_next_line(void);
 void framebuffer_put(char c);
 void framebuffer_put_hex(uint32_t value);
 

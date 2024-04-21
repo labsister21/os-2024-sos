@@ -20,6 +20,15 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c) {
 	framebuffer_state.col = c;
 }
 
+void framebuffer_next_line(void) {
+	uint8_t next_row = framebuffer_state.row;
+	next_row += 1;
+	if (next_row == BUFFER_HEIGHT) {
+		next_row = 0;
+	}
+	framebuffer_set_cursor(next_row, 0);
+};
+
 void framebuffer_put(char c) {
 	framebuffer_write(
 			framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,

@@ -9,22 +9,11 @@ struct ShellState {
 	struct FAT32DirectoryTable curr_dir;
 	char prompt[MAX_PROMPT];
 	int prompt_size;
-	int cursor_y;
-	int cursor_x;
 };
-struct ShellState state = {.cursor_y = 0, .cursor_x = 0};
+struct ShellState state = {};
 
 void clear() {
-	state.cursor_x = 0;
-	state.cursor_y = 0;
 	syscall_FRAMEBUFFER_CLEAR();
-}
-
-void next_line() {
-	state.cursor_x = 0;
-	state.cursor_y += 1;
-	if (state.cursor_y > 25) clear();
-	syscall_FRAMEBUFFER_CURSOR(state.cursor_x, state.cursor_y);
 }
 
 void refresh_curr_dir() {
@@ -93,26 +82,14 @@ void mkdir() {
 
 void get_prompt() {
 	state.prompt_size = 0;
-	while (state.prompt_size + 1 < MAX_PROMPT) {
-		char n;
-		syscall(0x4, (uint32_t)&n, 0, 0);
-		if (n == '\n') break;
-		if (n == '\b') {
-			if (state.cursor_x == 0) continue;
-			n = ' ';
-			state.cursor_x -= 1;
-			syscall_FRAMEBUFFER_CURSOR(state.cursor_x + 2, state.cursor_y);
-			syscall_FRAMEBUFFER_PUT_CHAR(n);
-			syscall_FRAMEBUFFER_CURSOR(state.cursor_x + 2, state.cursor_y);
-			state.prompt_size -= 1;
-			continue;
-		}
-		syscall_FRAMEBUFFER_PUT_CHAR(n);
-		state.prompt[state.prompt_size++] = n;
-		state.cursor_x += 1;
-	};
+
+	char c;
+	while (1) {
+		syscall_GET_CHAR(&c);
+		if (c == '\n' || state.prompt_size + 1 >= MAX_PROMPT) break;
+		state.prompt[state.prompt_size++] = c;
+	}
 	state.prompt[state.prompt_size] = '\0';
-	next_line();
 }
 
 void run_prompt() {
@@ -125,7 +102,6 @@ void run_prompt() {
 		char *not_found = "command not found!";
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(not_found);
 	}
-	next_line();
 }
 
 int main(void) {

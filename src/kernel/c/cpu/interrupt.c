@@ -3,6 +3,7 @@
 #include "cpu/idt.h"
 #include "cpu/portio.h"
 #include "driver/keyboard.h"
+#include "driver/tty.h"
 #include "filesystem/fat32.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
@@ -66,18 +67,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 		*((int8_t *)frame->cpu.general.ecx) = write((struct FAT32DriverRequest *)frame->cpu.general.ebx);
 		break;
 
-	case GET_CHAR:
-		keyboard_state_activate();
-		__asm__ volatile("sti"); // Allow hardware interrupt
-		while (true) {
-			__asm__ volatile("hlt");
-			if (keyboard_state.buffer_filled) {
-				get_keyboard_buffer((char *)frame->cpu.general.ebx);
-				break;
-			}
-		}
-		keyboard_state_deactivate();
-		break;
+	case GET_CHAR: {
+		char *ptr = (char *)frame->cpu.general.ebx;
+		*ptr = fgetc();
+	} break;
 
 	case FRAMEBUFFER_PUT_CHAR:
 		framebuffer_put((char)frame->cpu.general.ebx);
