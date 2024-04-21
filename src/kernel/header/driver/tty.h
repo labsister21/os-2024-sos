@@ -5,7 +5,7 @@
 // TOOD: Option to ignore line edit layer
 struct TTYState {
 	int size;
-	int current;
+	int current_read;
 	char buffer[1024];
 
 	int ansi_escape_size;

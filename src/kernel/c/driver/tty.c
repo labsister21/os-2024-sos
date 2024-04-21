@@ -4,7 +4,7 @@
 
 struct TTYState tty_state = {
 		.size = 0,
-		.current = 0,
+		.current_read = 0,
 		.ansi_escape_size = 0,
 };
 
@@ -97,17 +97,19 @@ char fgetc() {
 					continue;
 				}
 
-				framebuffer_put(c);
-				tty_state.buffer[tty_state.size++] = c;
+				if (' ' <= c && c <= '~') {
+					framebuffer_put(c);
+					tty_state.buffer[tty_state.size++] = c;
+				}
 			}
 		}
 
 		keyboard_state_deactivate();
 	}
-	char c = tty_state.buffer[tty_state.current++];
-	if (tty_state.size == tty_state.current) {
+	char c = tty_state.buffer[tty_state.current_read++];
+	if (tty_state.size == tty_state.current_read) {
 		tty_state.size = 0;
-		tty_state.current = 0;
+		tty_state.current_read = 0;
 	}
 	return c;
 }
