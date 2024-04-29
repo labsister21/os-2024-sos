@@ -76,9 +76,10 @@ bool paging_free_user_page_frame(
 		struct PageDirectory *page_dir, void *virtual_addr
 ) {
 	int i = 0;
-	while (i < PAGE_ENTRY_COUNT) {
-		if (page_manager_state.mapped_address[i] == virtual_addr) break;
-	}
+	while (i < PAGE_ENTRY_COUNT)
+		if (page_manager_state.mapped_address[i++] == virtual_addr) break;
+
+	if (i == PAGE_ENTRY_COUNT) return false;
 
 	update_page_directory_entry(
 			page_dir, (void *)0, virtual_addr,
@@ -113,24 +114,21 @@ struct PageDirectory *paging_create_new_page_directory(void) {
 	 * - Return the page directory address
 	 */
 
-	int empty = -1;
-	for (int i = 0; i < PAGING_DIRECTORY_TABLE_MAX_COUNT; ++i) {
-		if (page_directory_manager.page_directory_used[i] == false) {
-			empty = i;
-			break;
-		}
-	}
-	if (empty == -1) return NULL;
+	int i = 0;
+	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT)
+		if (page_directory_manager.page_directory_used[i++] == false) break;
 
-	page_directory_list[empty].table[0x300] = (struct PageDirectoryEntry){
+	if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return NULL;
+
+	page_directory_list[i].table[0x300] = (struct PageDirectoryEntry){
 			.flag.present_bit = 1,
 			.flag.write_bit = 1,
 			.flag.use_pagesize_4_mb = 1,
 			.lower_address = 0,
 	};
 
-	page_directory_manager.page_directory_used[empty] = true;
-	return &(page_directory_list[empty]);
+	page_directory_manager.page_directory_used[i] = true;
+	return &(page_directory_list[i]);
 }
 
 bool paging_free_page_directory(struct PageDirectory *page_dir) {
@@ -141,17 +139,20 @@ bool paging_free_page_directory(struct PageDirectory *page_dir) {
 	 * - Return true
 	 */
 
-	int idx = -1;
-	for (int i = 0; i < PAGING_DIRECTORY_TABLE_MAX_COUNT; ++i) {
-		if (page_dir == &(page_directory_list[i])) {
-			idx = i;
-			break;
-		}
-	}
-	if (idx == -1) return false;
+	int i = 0;
+	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT)
+		if (page_dir == &(page_directory_list[i++])) break;
 
-	memset(&(page_directory_list[idx]), 0, sizeof(struct PageDirectory));
-	page_directory_manager.page_directory_used[idx] = false;
+	if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return false;
+
+	for (int j = 0; j < PAGE_ENTRY_COUNT; ++j) {
+		struct PageDirectoryEntry *entry = &(page_directory_list[i].table[j]);
+		if (entry->flag.present_bit)
+			paging_free_user_page_frame(&page_directory_list[i], (void *)(PAGE_FRAME_SIZE * j));
+	}
+
+	memset(&(page_directory_list[i]), 0, sizeof(struct PageDirectory));
+	page_directory_manager.page_directory_used[i] = false;
 	return false;
 }
 
