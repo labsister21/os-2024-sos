@@ -45,8 +45,7 @@ void flush_single_tlb(void *virtual_addr) {
 
 /* --- Memory Management --- */
 bool paging_allocate_check(uint32_t amount) {
-	uint32_t needed = (amount + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
-	return needed <= page_manager_state.free_page_frame_count;
+	return amount <= page_manager_state.free_page_frame_count;
 }
 
 bool paging_allocate_user_page_frame(

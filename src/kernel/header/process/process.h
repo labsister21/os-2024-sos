@@ -60,9 +60,11 @@ struct ProcessContext {
 	struct PageDirectory *page_directory_virtual_addr;
 };
 
-enum PROCESS_STATE {
+enum ProcessState {
 	// TODO: Implement
-	TODO
+	Inactive,
+	Running,
+	Waiting
 };
 
 /**
@@ -74,7 +76,8 @@ enum PROCESS_STATE {
  */
 struct ProcessControlBlock {
 	struct {
-		// ...
+		uint32_t pid;
+		enum ProcessState state;
 	} metadata;
 	struct ProcessContext context;
 	struct {
@@ -82,6 +85,7 @@ struct ProcessControlBlock {
 		uint32_t page_frame_used_count;
 	} memory;
 };
+extern struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
 /**
  * Get currently running process PCB pointer
@@ -99,7 +103,7 @@ struct ProcessControlBlock *process_get_current_running_pcb_pointer(void);
  * @param request Appropriate read request for the executable
  * @return        Process creation return code
  */
-int32_t process_create_user_process(struct FAT32DriverRequest request);
+int32_t process_create_user_process(struct FAT32DriverRequest *request);
 
 /**
  * Destroy process then release page directory and process control block

@@ -6,6 +6,7 @@
 #include "filesystem/fat32.h"
 #include "kernel-entrypoint.h"
 #include "memory/paging.h"
+#include "process/process.h"
 #include "text/framebuffer.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
@@ -48,6 +49,9 @@ void kernel_setup(void) {
 	read(&req);
 
 	set_tss_kernel_current_stack();
+	// kernel_execute_user_program(mem);
+	process_create_user_process(&req);
+	paging_use_page_directory(_process_list[0].context.page_directory_virtual_addr);
 	kernel_execute_user_program(mem);
 
 	while (1) continue;
