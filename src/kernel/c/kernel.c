@@ -33,8 +33,11 @@ void kernel_setup(void) {
 	gdt_install_tss();
 	set_tss_register();
 
+	struct PageDirectory *page_directory = paging_create_new_page_directory();
+	paging_use_page_directory(page_directory);
+
 	void *mem = 0;
-	paging_allocate_user_page_frame(&_paging_kernel_page_directory, mem);
+	paging_allocate_user_page_frame(page_directory, mem);
 
 	struct FAT32DriverRequest req;
 	req.buf = mem;

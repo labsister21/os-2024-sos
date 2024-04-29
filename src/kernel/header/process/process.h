@@ -46,6 +46,44 @@
 #define PROCESS_CREATE_FAIL_FS_READ_FAILURE 4
 
 /**
+ * Contain information needed for task to be able to get interrupted and resumed later
+ *
+ * @param cpu                         All CPU register state
+ * @param eip                         CPU instruction counter to resume execution
+ * @param eflags                      Flag register to load before resuming the execution
+ * @param page_directory_virtual_addr CPU register CR3, containing pointer to active page directory
+ */
+struct ProcessContext {
+	struct CPURegister cpu;
+	uint32_t eip;
+	uint32_t eflags;
+	struct PageDirectory *page_directory_virtual_addr;
+};
+
+enum PROCESS_STATE {
+	// TODO: Implement
+	TODO
+};
+
+/**
+ * Structure data containing information about a process
+ *
+ * @param metadata Process metadata, contain various information about process
+ * @param context  Process context used for context saving & switching
+ * @param memory   Memory used for the process
+ */
+struct ProcessControlBlock {
+	struct {
+		// ...
+	} metadata;
+	struct ProcessContext context;
+	struct {
+		void *virtual_addr_used[PROCESS_PAGE_FRAME_COUNT_MAX];
+		uint32_t page_frame_used_count;
+	} memory;
+};
+
+/**
  * Get currently running process PCB pointer
  *
  * @return Will return NULL if there's no running process
