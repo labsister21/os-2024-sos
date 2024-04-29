@@ -265,7 +265,7 @@ int8_t delete(struct FAT32DriverRequest *request) {
 
 	bool aFile;
 	uint32_t cluster;
-	int dir_entry_index;
+	int dir_entry_index = -1;
 
 	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
 		struct FAT32DirectoryEntry *dir_entry = &(dir_table.table[i]);
@@ -277,6 +277,10 @@ int8_t delete(struct FAT32DriverRequest *request) {
 			dir_entry_index = i;
 			break;
 		}
+	}
+
+	if (dir_entry_index == -1) {
+		return -1;
 	}
 
 	if (aFile) {
