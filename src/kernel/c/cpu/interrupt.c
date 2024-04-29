@@ -115,6 +115,9 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
 	}
 	switch (frame.int_number) {
+	case 0x20:
+		pic_ack(PIC1_OFFSET + IRQ_TIMER);
+		break;
 	case PIC1_OFFSET + IRQ_KEYBOARD:
 		keyboard_isr();
 		break;

@@ -7,6 +7,7 @@
 #include "kernel-entrypoint.h"
 #include "memory/paging.h"
 #include "process/process.h"
+#include "process/scheduler.h"
 #include "text/framebuffer.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
@@ -33,6 +34,7 @@ void kernel_setup(void) {
 
 	gdt_install_tss();
 	set_tss_register();
+	scheduler_init();
 
 	struct PageDirectory *page_directory = paging_create_new_page_directory();
 	paging_use_page_directory(page_directory);
