@@ -94,7 +94,7 @@ kernel_execute_user_program:
 		mov gs, ax
 
 		mov ecx, [esp+4]
-		push eax ; Program address
+		push eax ; Data segment
 		mov eax, ecx
 		add eax, 0x400000 - 4
 		push eax ; Stack address
@@ -102,57 +102,43 @@ kernel_execute_user_program:
 		mov eax, 0x18 | 0x3
 		push eax ; Code segment
 		mov eax, ecx
-		push eax ; Program address again
+		push eax ; Program address
 
 		iret
 
 kernel_start_user_mode:
-		mov edi, [esp + 4] ; Source
-		mov esi, [esp + 4] ; Source
-		add esi, 68
-.loop:
-		mov eax, [esi]
-		push eax
-		sub esi, 4
-		cmp esi, edi
-		jne .loop
+		mov eax, [esp + 4] ; Interrupt Frame source
+		mov edi, [eax]
+		mov esi, [eax + 4]
+		mov ebp, [eax + 8]
+		; mov esp, [eax + 12] ; Setup for iret
+		; mov ebx, [eax + 16] ; Needed for temporary register later
+		mov edx, [eax + 20]
+		mov ecx, [eax + 24]
+		; mov eax, [eax + 28] ; Needed for source address
 
-    ; Restore registers
-    popad
-    pop gs
-    pop fs
-    pop es
-    pop ds
+		mov gs, [eax + 32]
+		mov fs, [eax + 36]
+		mov es, [eax + 40]
+		mov ds, [eax + 44]
 
-    ; Restore the esp (interrupt number & error code)
-    add esp, 8
-		mov eax, [esp]
+		; ignore int_number [eax + 48]
+		; ignore error_code [eax + 52]
 
-		sti
-.l:
-		jmp .l
+		; ; Setup for iret
+		mov ebx, [eax + 44] ; Data segment for stack segment
+		push ebx
 
-    ; Return to the code that got interrupted
-    ; at this point, stack should be structured like this
-    ; [esp], [esp+4], [esp+8]
-    ;   eip,   cs,    eflags
-    ; Improper value will cause invalid return address & register
-    iret
+		mov ebx, [eax + 12] ; User stack
+		push ebx
 
+		mov ebx, [eax + 64] ; eflags
+		push ebx
 
+		mov ebx, [eax + 60] ; cs
+		push ebx
 
+		mov ebx, [eax + 56] ; eip
+		push ebx
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		iret
