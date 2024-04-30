@@ -34,7 +34,6 @@ void kernel_setup(void) {
 
 	gdt_install_tss();
 	set_tss_register();
-	scheduler_init();
 
 	struct PageDirectory *page_directory = paging_create_new_page_directory();
 	paging_use_page_directory(page_directory);
@@ -48,13 +47,10 @@ void kernel_setup(void) {
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 	strcpy(req.name, "shell", 8);
 	strcpy(req.ext, "", 3);
-	read(&req);
 
 	set_tss_kernel_current_stack();
-	// kernel_execute_user_program(mem);
 	process_create_user_process(&req);
-	paging_use_page_directory(_process_list[0].context.page_directory_virtual_addr);
-	kernel_execute_user_program(mem);
+	scheduler_init();
 
 	while (1) continue;
 }

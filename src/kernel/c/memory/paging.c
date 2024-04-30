@@ -75,8 +75,10 @@ bool paging_free_user_page_frame(
 		struct PageDirectory *page_dir, void *virtual_addr
 ) {
 	int i = 0;
-	while (i < PAGE_ENTRY_COUNT)
-		if (page_manager_state.mapped_address[i++] == virtual_addr) break;
+	while (i < PAGE_ENTRY_COUNT) {
+		if (page_manager_state.mapped_address[i] == virtual_addr) break;
+		++i;
+	}
 
 	if (i == PAGE_ENTRY_COUNT) return false;
 
@@ -114,8 +116,10 @@ struct PageDirectory *paging_create_new_page_directory(void) {
 	 */
 
 	int i = 0;
-	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT)
-		if (page_directory_manager.page_directory_used[i++] == false) break;
+	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT) {
+		if (page_directory_manager.page_directory_used[i] == false) break;
+		++i;
+	}
 
 	if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return NULL;
 
@@ -139,8 +143,10 @@ bool paging_free_page_directory(struct PageDirectory *page_dir) {
 	 */
 
 	int i = 0;
-	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT)
-		if (page_dir == &(page_directory_list[i++])) break;
+	while (i < PAGING_DIRECTORY_TABLE_MAX_COUNT) {
+		if (page_dir == &(page_directory_list[i])) break;
+		++i;
+	}
 
 	if (i == PAGING_DIRECTORY_TABLE_MAX_COUNT) return false;
 
