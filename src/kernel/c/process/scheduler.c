@@ -5,6 +5,8 @@
 #include <std/stdint.h>
 #include <std/string.h>
 
+extern void kernel_start_user_mode(struct InterruptFrame *);
+
 void activate_timer_interrupt(void) {
 	__asm__ volatile("cli");
 	// Setup how often PIT fire
@@ -62,4 +64,5 @@ void scheduler_init(void) {
 
 	// Assume start program always in 0
 	kernel_execute_user_program((void *)0);
+	// kernel_start_user_mode(&_process_list[i].context.frame);
 };

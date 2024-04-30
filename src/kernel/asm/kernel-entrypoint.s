@@ -1,5 +1,6 @@
 global loader                        ; the entry symbol for ELF
 global load_gdt                      ; load GDT table
+global kernel_start_user_mode
 global set_tss_register              ; set tss register to GDT entry
 global kernel_execute_user_program
 extern kernel_setup                  ; kernel C entrypoint
@@ -86,21 +87,72 @@ set_tss_register:
     ret
 
 kernel_execute_user_program:
-    mov eax, 0x20 | 0x3 
+    mov eax, 0x20 | 0x3 ; Data segment
 		mov ds, ax
 		mov es, ax
 		mov fs, ax
 		mov gs, ax
 
 		mov ecx, [esp+4]
-		push eax
+		push eax ; Program address
 		mov eax, ecx
 		add eax, 0x400000 - 4
-		push eax
-		pushf
+		push eax ; Stack address
+		pushf ; Flags
 		mov eax, 0x18 | 0x3
-		push eax
+		push eax ; Code segment
 		mov eax, ecx
-		push eax
+		push eax ; Program address again
 
 		iret
+
+kernel_start_user_mode:
+		mov edi, [esp + 4] ; Source
+		mov esi, [esp + 4] ; Source
+		add esi, 68
+.loop:
+		mov eax, [esi]
+		push eax
+		sub esi, 4
+		cmp esi, edi
+		jne .loop
+
+    ; Restore registers
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
+    ; Restore the esp (interrupt number & error code)
+    add esp, 8
+		mov eax, [esp]
+
+		sti
+.l:
+		jmp .l
+
+    ; Return to the code that got interrupted
+    ; at this point, stack should be structured like this
+    ; [esp], [esp+4], [esp+8]
+    ;   eip,   cs,    eflags
+    ; Improper value will cause invalid return address & register
+    iret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

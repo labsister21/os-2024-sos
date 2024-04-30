@@ -54,7 +54,6 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 	// Creating page directory
 	struct PageDirectory *page_directory = paging_create_new_page_directory();
 	pcb->context.page_directory_virtual_addr = page_directory;
-	pcb->context.frame.int_stack.eflags |= CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
 
 	struct PageDirectory *current_page_directory = paging_get_current_page_directory_addr();
 	paging_use_page_directory(page_directory);
@@ -65,6 +64,32 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 
 	pcb->memory.virtual_addr_used[0] = program_base_address;
 	pcb->memory.page_frame_used_count += 1;
+
+	// Setup register
+	struct InterruptFrame *frame = &(pcb->context.frame);
+	frame->cpu.index.edi = 0;
+	frame->cpu.index.esi = 0;
+
+	frame->cpu.stack.ebp = 0;
+	frame->cpu.stack.esp = 0x400000 - 4;
+
+	frame->cpu.general.eax = 0;
+	frame->cpu.general.ebx = 0;
+	frame->cpu.general.ecx = 0;
+	frame->cpu.general.edx = 0;
+
+	uint32_t segment = 0x20 | 0x3;
+	frame->cpu.segment.ds = segment;
+	frame->cpu.segment.es = segment;
+	frame->cpu.segment.fs = segment;
+	frame->cpu.segment.gs = segment;
+
+	frame->int_stack.eflags |= CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
+	frame->int_stack.cs = 0x18 | 0x3;
+	frame->int_stack.eip = 0; // Assume always start at 0
+	frame->int_stack.error_code = 0;
+
+	frame->int_number = 0;
 
 	process_manager_state.active_process_count += 1;
 exit_cleanup:
