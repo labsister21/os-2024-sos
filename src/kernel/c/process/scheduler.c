@@ -38,9 +38,10 @@ void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	}
 
 	// Only one process active, no need to switch
-	if (current == next) return;
+	// if (current == next) return;
 
-	memcpy(frame, &_process_list[next].context.frame, sizeof(struct InterruptFrame));
+	paging_use_page_directory(_process_list[next].context.page_directory_virtual_addr);
+	kernel_start_user_mode(&_process_list[next].context.frame);
 
 	return;
 };
@@ -61,7 +62,6 @@ void scheduler_init(void) {
 	_process_list[i].metadata.state = Running;
 
 	paging_use_page_directory(_process_list[i].context.page_directory_virtual_addr);
-
 	kernel_start_user_mode(&_process_list[i].context.frame);
 };
 

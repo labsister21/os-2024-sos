@@ -71,7 +71,7 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 	frame->cpu.index.esi = 0;
 
 	frame->cpu.stack.ebp = 0;
-	frame->cpu.stack.esp = 0x400000 - 4;
+	frame->cpu.stack.esp = 0;
 
 	frame->cpu.general.eax = 0;
 	frame->cpu.general.ebx = 0;
@@ -88,6 +88,8 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 	frame->int_stack.cs = 0x18 | 0x3;
 	frame->int_stack.eip = 0; // Assume always start at 0
 	frame->int_stack.error_code = 0;
+	frame->int_stack.old_esp = 0x400000 - 4;
+	frame->int_stack.ss = segment;
 
 	frame->int_number = 0;
 

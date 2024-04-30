@@ -126,10 +126,10 @@ kernel_start_user_mode:
 		; ignore error_code [eax + 52]
 
 		; ; Setup for iret
-		mov ebx, [eax + 44] ; Data segment for stack segment
+		mov ebx, [eax + 72] ; Data segment for stack segment
 		push ebx
 
-		mov ebx, [eax + 12] ; User stack
+		mov ebx, [eax + 68] ; User stack
 		push ebx
 
 		mov ebx, [eax + 64] ; eflags

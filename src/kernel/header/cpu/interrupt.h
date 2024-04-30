@@ -108,6 +108,8 @@ struct InterruptStack {
 	uint32_t eip;
 	uint32_t cs;
 	uint32_t eflags;
+	uint32_t old_esp; // esp when interrupt happened
+	uint32_t ss;
 } __attribute__((packed));
 
 /**
