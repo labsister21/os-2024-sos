@@ -5,6 +5,7 @@
 #include "driver/keyboard.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
+#include "process/scheduler.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
 #include <syscall.h>
@@ -115,8 +116,8 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
 	}
 	switch (frame.int_number) {
-	case 0x20:
-		pic_ack(PIC1_OFFSET + IRQ_TIMER);
+	case 0x20: // Timer
+		scheduler_handle_timer_interrupt(&frame);
 		break;
 	case PIC1_OFFSET + IRQ_KEYBOARD:
 		keyboard_isr();

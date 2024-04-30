@@ -1,6 +1,7 @@
 #ifndef _SCHEDULER_H
 #define _SCHEDULER_H
 
+#include "cpu/interrupt.h"
 #include "process/process.h"
 
 #define PIT_MAX_FREQUENCY 1193182
@@ -44,5 +45,7 @@ void scheduler_save_context_to_current_running_pcb(struct ProcessContext ctx);
 __attribute__((noreturn)) void scheduler_switch_to_next_process(void);
 
 void activate_timer_interrupt(void);
+
+void scheduler_handle_timer_interrupt(struct InterruptFrame *);
 
 #endif

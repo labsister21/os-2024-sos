@@ -1,7 +1,9 @@
 #include "process/scheduler.h"
 #include "cpu/portio.h"
 #include "kernel-entrypoint.h"
+#include "text/framebuffer.h"
 #include <std/stdint.h>
+#include <std/string.h>
 
 void activate_timer_interrupt(void) {
 	__asm__ volatile("cli");
@@ -14,6 +16,32 @@ void activate_timer_interrupt(void) {
 	// Activate the interrupt
 	out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
 }
+
+void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
+	pic_ack(PIC1_OFFSET + IRQ_TIMER);
+
+	int current = 0;
+	while (current < PROCESS_COUNT_MAX) {
+		if (_process_list[current].metadata.state == Running) break;
+		++current;
+	}
+
+	memcpy(&_process_list[current].context.frame, frame, sizeof(struct InterruptFrame));
+
+	int next = current + 1;
+	while (true) {
+		if (next == current) break;
+		if (_process_list[next].metadata.state == Waiting) break;
+		next = (next + 1) % PROCESS_COUNT_MAX;
+	}
+
+	// Only one process active, no need to switch
+	if (current == next) return;
+
+	memcpy(frame, &_process_list[next].context.frame, sizeof(struct InterruptFrame));
+
+	return;
+};
 
 void scheduler_init(void) {
 	activate_timer_interrupt();

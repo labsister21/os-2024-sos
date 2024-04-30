@@ -54,7 +54,7 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 	// Creating page directory
 	struct PageDirectory *page_directory = paging_create_new_page_directory();
 	pcb->context.page_directory_virtual_addr = page_directory;
-	pcb->context.eflags |= CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
+	pcb->context.frame.int_stack.eflags |= CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
 
 	struct PageDirectory *current_page_directory = paging_get_current_page_directory_addr();
 	paging_use_page_directory(page_directory);

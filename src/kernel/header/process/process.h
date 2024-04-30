@@ -54,9 +54,7 @@
  * @param page_directory_virtual_addr CPU register CR3, containing pointer to active page directory
  */
 struct ProcessContext {
-	struct CPURegister cpu;
-	uint32_t eip;
-	uint32_t eflags;
+	struct InterruptFrame frame;
 	struct PageDirectory *page_directory_virtual_addr;
 };
 
