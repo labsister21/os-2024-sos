@@ -2,7 +2,9 @@
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/interrupt.h"
+#include "cpu/portio.h"
 #include "driver/keyboard.h"
+#include "driver/time.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
 #include "kernel-entrypoint.h"
@@ -25,6 +27,9 @@ void kernel_setup(void) {
 	pic_remap();
 	initialize_idt();
 	activate_keyboard_interrupt();
+
+	/* Time setup */
+	setup_time();
 
 	/* Filesystem setup */
 	initialize_filesystem_fat32();

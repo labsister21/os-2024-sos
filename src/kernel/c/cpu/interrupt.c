@@ -3,6 +3,7 @@
 #include "cpu/idt.h"
 #include "cpu/portio.h"
 #include "driver/keyboard.h"
+#include "driver/time.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
 #include "process/scheduler.h"
@@ -126,6 +127,9 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		break;
 	case PIC1_OFFSET + IRQ_KEYBOARD:
 		keyboard_isr();
+		break;
+	case PIC1_OFFSET + IRQ_CMOS:
+		handle_rtc_interrupt();
 		break;
 	case SYSCALL_INT:
 		syscall_handler(&frame);
