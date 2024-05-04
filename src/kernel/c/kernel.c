@@ -34,22 +34,23 @@ void kernel_setup(void) {
 
 	gdt_install_tss();
 	set_tss_register();
-
-	struct PageDirectory *page_directory = paging_create_new_page_directory();
-	paging_use_page_directory(page_directory);
-
-	void *mem = 0;
-	paging_allocate_user_page_frame(page_directory, mem);
+	set_tss_kernel_current_stack();
 
 	struct FAT32DriverRequest req;
-	req.buf = mem;
+	req.buf = 0;
 	req.buffer_size = PAGE_FRAME_SIZE;
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-	strcpy(req.name, "shell", 8);
 	strcpy(req.ext, "", 3);
 
-	set_tss_kernel_current_stack();
+	strcpy(req.name, "pong", 8);
 	process_create_user_process(&req);
+
+	strcpy(req.name, "ping", 8);
+	process_create_user_process(&req);
+
+	strcpy(req.name, "shell", 8);
+	process_create_user_process(&req);
+
 	scheduler_init();
 
 	while (1) continue;
