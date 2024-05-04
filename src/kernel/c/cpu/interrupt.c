@@ -9,6 +9,7 @@
 #include "process/scheduler.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
+#include <std/string.h>
 #include <syscall.h>
 
 void activate_keyboard_interrupt(void) {
@@ -112,6 +113,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 	case FRAMEBUFFER_CURSOR:
 		framebuffer_set_cursor(frame->cpu.general.ecx, frame->cpu.general.ebx);
 		break;
+
+	case GET_TIME:
+		memcpy((void *)frame->cpu.general.ebx, &startup_time, sizeof(struct TimeRTC));
+		break;
 	}
 }
 
@@ -122,7 +127,8 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
 	}
 	switch (frame.int_number) {
-	case 0x20: // Timer
+	case PIC1_OFFSET + IRQ_TIMER: // Timer
+		time_handle_timer_interrupt();
 		scheduler_handle_timer_interrupt(&frame);
 		break;
 	case PIC1_OFFSET + IRQ_KEYBOARD:

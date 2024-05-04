@@ -28,9 +28,6 @@ void kernel_setup(void) {
 	initialize_idt();
 	activate_keyboard_interrupt();
 
-	/* Time setup */
-	setup_time();
-
 	/* Filesystem setup */
 	initialize_filesystem_fat32();
 
@@ -54,6 +51,8 @@ void kernel_setup(void) {
 	strcpy(req.name, "shell", 8);
 	process_create_user_process(&req);
 
+	/* Time setup, before starting timer */
+	setup_time();
 	scheduler_init();
 
 	while (1) continue;

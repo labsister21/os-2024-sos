@@ -1,8 +1,74 @@
 #include "driver/time.h"
 #include "cpu/interrupt.h"
 #include "cpu/portio.h"
+#include "process/scheduler.h"
 #include "text/framebuffer.h"
+#include <std/string.h>
 #include <time.h>
+
+static bool handled = false;
+struct TimeRTC startup_time;
+struct TimeRTC current_time;
+
+int day_in_month[] = {31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+void time_handle_timer_interrupt() {
+	static unsigned int interrupt_counter = 0;
+
+	if (interrupt_counter == PIT_TIMER_FREQUENCY) {
+		// Add one second
+		current_time.second += 1;
+
+		if (current_time.second == 60) {
+			current_time.second = 0;
+			current_time.minute += 1;
+		}
+
+		if (current_time.minute == 60) {
+			current_time.minute = 0;
+			current_time.hour += 1;
+		}
+
+		if (current_time.hour == 24) {
+			current_time.hour = 0;
+			current_time.day += 1;
+		}
+
+		bool day_overflow = false;
+		if (current_time.month == 2) {
+			bool is_leap_year = (current_time.year % 400 == 0) ||
+													(current_time.year % 4 == 0 && current_time.year % 100 != 0);
+
+			int day_in_february = 28;
+			if (is_leap_year) day_in_february += 1;
+			if (day_in_february == current_time.day)
+				day_overflow = true;
+		} else {
+			if (day_in_month[current_time.month] - 1 == current_time.day)
+				day_overflow = true;
+		}
+
+		if (day_overflow) {
+			current_time.month += 1;
+			current_time.day = 1;
+		}
+
+		if (current_time.month == 12) {
+			current_time.year += 1;
+		}
+
+		interrupt_counter = 0;
+	}
+	// framebuffer_write(0, 79, current_time.second % 10 + '0', WHITE, BLACK);
+	// framebuffer_write(0, 78, current_time.second / 10 + '0', WHITE, BLACK);
+	//
+	// framebuffer_write(0, 76, current_time.minute % 10 + '0', WHITE, BLACK);
+	// framebuffer_write(0, 75, current_time.minute / 10 + '0', WHITE, BLACK);
+	//
+	// framebuffer_write(0, 73, current_time.hour / 10 + '0', WHITE, BLACK);
+	// framebuffer_write(0, 72, current_time.hour / 10 + '0', WHITE, BLACK);
+
+	interrupt_counter += 1;
+};
 
 void enable_rtc_interrupt() {
 	__asm__ volatile("cli");
@@ -35,8 +101,6 @@ unsigned char get_RTC_register(int reg) {
 	return in(cmos_data);
 }
 
-static bool handled = false;
-static struct TimeRTC startup_time;
 void handle_rtc_interrupt() {
 	startup_time.second = get_RTC_register(0x00);
 	startup_time.minute = get_RTC_register(0x02);
@@ -71,4 +135,5 @@ void setup_time() {
 	enable_rtc_interrupt();
 	while (!handled) // Wait till finished reading rtc
 		asm("hlt");
+	memcpy(&current_time, &startup_time, sizeof(struct TimeRTC));
 }

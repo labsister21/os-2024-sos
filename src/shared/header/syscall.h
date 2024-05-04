@@ -77,4 +77,8 @@ SYSCALL_0(FRAMEBUFFER_CLEAR);
 #define FRAMEBUFFER_CURSOR 10
 SYSCALL_2(FRAMEBUFFER_CURSOR, int, x, int, y);
 
+// Time
+#define GET_TIME 11
+SYSCALL_1(GET_TIME, struct TimeRTC *, t);
+
 #endif
