@@ -2,6 +2,7 @@
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/interrupt.h"
+#include "driver/keyboard.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
 #include "kernel-entrypoint.h"
@@ -41,9 +42,6 @@ void kernel_setup(void) {
 	req.buffer_size = PAGE_FRAME_SIZE;
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 	strcpy(req.ext, "", 3);
-
-	strcpy(req.name, "pong", 8);
-	process_create_user_process(&req);
 
 	strcpy(req.name, "ping", 8);
 	process_create_user_process(&req);

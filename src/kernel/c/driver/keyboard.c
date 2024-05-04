@@ -1,6 +1,7 @@
 #include "driver/keyboard.h"
 #include "cpu/interrupt.h"
 #include "cpu/portio.h"
+#include "text/framebuffer.h"
 #include <std/stdint.h>
 
 // clang-format off
@@ -68,6 +69,7 @@ void keyboard_state_deactivate() { keyboard_state.keyboard_input_on = false; }
 
 void get_keyboard_buffer(char *buff) {
 	*buff = keyboard_state.keyboard_buffer;
+	keyboard_state.keyboard_buffer = '\0';
 	keyboard_state.buffer_filled = false;
 }
 
@@ -75,7 +77,7 @@ void keyboard_isr() {
 	uint8_t scancode = in(KEYBOARD_DATA_PORT);
 	pic_ack(PIC1_OFFSET + IRQ_KEYBOARD);
 
-	if (!keyboard_state.keyboard_input_on) return;
+	// if (!keyboard_state.keyboard_input_on) return;
 	switch (scancode) {
 
 	case EXT_SCANCODE_RIGHT_SHIFT + MAKE_OFFSET:

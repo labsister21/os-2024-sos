@@ -54,6 +54,9 @@ SYSCALL_2(DELETE, struct FAT32DriverRequest *, req, int8_t *, ret);
 #define GET_CHAR 4
 SYSCALL_1(GET_CHAR, char *, c);
 
+#define GET_CHAR_NON_BLOCKING 40
+SYSCALL_1(GET_CHAR_NON_BLOCKING, char *, c);
+
 #define PUT_CHAR 5
 SYSCALL_1(PUT_CHAR, char, c);
 

@@ -84,10 +84,14 @@ void mkdir() {
 void get_prompt() {
 	state.prompt_size = 0;
 
-	char c;
 	while (1) {
-		syscall_GET_CHAR(&c);
-		if (c == '\n' || state.prompt_size + 1 >= MAX_PROMPT) break;
+		char c = '\0';
+		while (c == '\0')
+			syscall_GET_CHAR_NON_BLOCKING(&c);
+
+		syscall_PUT_CHAR(c);
+		if (c == '\n' || state.prompt_size + 1 >= MAX_PROMPT)
+			break;
 		state.prompt[state.prompt_size++] = c;
 	}
 	state.prompt[state.prompt_size] = '\0';

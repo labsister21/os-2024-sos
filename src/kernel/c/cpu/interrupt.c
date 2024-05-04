@@ -73,6 +73,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 		*ptr = fgetc();
 	} break;
 
+	case GET_CHAR_NON_BLOCKING: {
+		char *ptr = (char *)frame->cpu.general.ebx;
+		get_keyboard_buffer(ptr);
+	} break;
+
 	case PUT_CHAR: {
 		fputc((char)frame->cpu.general.ebx);
 	} break;
