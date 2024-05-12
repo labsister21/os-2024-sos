@@ -87,11 +87,10 @@ struct PageDirectory {
 struct PageManagerState {
     bool     page_frame_map[PAGE_FRAME_MAX_COUNT];
     uint32_t free_page_frame_count;
+    // mapped address is used to check the idx of page frame when deallocated
+    void* mapped_address[PAGE_FRAME_MAX_COUNT];
     // TODO: Add if needed ...
 } __attribute__((packed));
-
-
-
 
 
 /**

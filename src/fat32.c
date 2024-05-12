@@ -228,7 +228,6 @@ int8_t write(struct FAT32DriverRequest request) {
     uint32_t filesize = request.buffer_size == 0 ? CLUSTER_SIZE : request.buffer_size;
     int needed_cluster = ceil(filesize, CLUSTER_SIZE);
     int count = 0;
-    int idx = 0;
     int j = 0;
     uint32_t freeClusters[needed_cluster];
     while (j < CLUSTER_MAP_SIZE && count < needed_cluster) {
