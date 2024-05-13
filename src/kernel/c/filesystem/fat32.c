@@ -453,7 +453,6 @@ static int open(char *path) {
 	struct VFSState *state = &vfs_state[idx];
 	struct FAT32DirectoryEntry entry;
 	int status = get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
-	framebuffer_put_hex(status);
 	if (status != 0)
 		return status;
 
@@ -559,6 +558,70 @@ static int write_vfs(int fd, char *buffer, int size) {
 	return write_count;
 };
 
+int mkgeneral(char *path, char *name, char *ext, bool aFile) {
+	struct FAT32DirectoryEntry entry;
+	get_entry(path, &entry);
+
+	struct FAT32DirectoryTable dir;
+	uint32_t parent_cluster = get_cluster_from_dir_entry(&entry);
+	read_clusters(&dir, parent_cluster, 1);
+
+	bool duplicate = false;
+	struct FAT32DirectoryEntry *empty_entry = NULL;
+
+	char used_name[MAX_83_FILENAME_SIZE];
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
+		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
+		if (current_entry->user_attribute == UATTR_NOT_EMPTY) {
+			extract_83_fullname(current_entry, used_name);
+			if (strcmp(name, used_name) == 0) {
+				duplicate = true;
+				break;
+			}
+		} else if (empty_entry == NULL) empty_entry = current_entry;
+	}
+
+	if (duplicate || empty_entry == NULL)
+		return -1;
+
+	uint32_t free_cluster = 0;
+	while (free_cluster < CLUSTER_MAP_SIZE) {
+		if (fat32_driver_state.fat_table.cluster_map[free_cluster] == FAT32_FAT_EMPTY_ENTRY) break;
+		free_cluster += 1;
+	}
+
+	empty_entry->user_attribute = 0x0;
+	empty_entry->filesize = 0;
+	empty_entry->attribute = aFile ? 0 : ATTR_SUBDIRECTORY;
+	empty_entry->user_attribute = UATTR_NOT_EMPTY;
+	empty_entry->cluster_low = (uint16_t)(free_cluster & 0xFFFF);
+	empty_entry->cluster_high = (uint16_t)(free_cluster >> 16);
+	strcpy(empty_entry->name, name, 8);
+	if (aFile)
+		strcpy(empty_entry->ext, ext, 3);
+
+	write_clusters(&dir, parent_cluster, 1);
+	write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
+
+	return 0;
+}
+
+int mkfile(char *path, char *name) {
+	char *filename = strtok(name, '.');
+	char *extension = strtok(NULL, '.');
+	if (extension == NULL)
+		extension = "";
+	return mkgeneral(path, filename, extension, true);
+}
+
+int mkdir(char *path, char *name) {
+	int i = 0;
+	while (name[i] != '\0')
+		if (name[i++] == '.') return -1;
+
+	return mkgeneral(path, name, "", false);
+}
+
 struct VFSHandler fat32_vfs = {
 		.stat = stat,
 		.dirstat = dirstat,
@@ -568,25 +631,35 @@ struct VFSHandler fat32_vfs = {
 
 		.read = read_vfs,
 		.write = write_vfs,
+
+		.mkfile = mkfile,
+		.mkdir = mkdir,
 };
 
 void test_vfs() {
-	char *path = "hello";
+	mkfile("", "c");
 
-	struct VFSEntry entry;
-	stat(path, &entry);
+	mkdir("", "a");
+	mkdir("", "b");
+	mkdir("", "c");
+	mkdir("", "d");
 
-	int size = 5008;
+	// char *path = "hello";
+	//
+	// struct VFSEntry entry;
+	// stat(path, &entry);
+	//
+	// int size = 5008;
 
-	int fd;
-
-	fd = open("hello");
-
-	char buf[size];
-	for (int i = 0; i < size; ++i) buf[i] = i % 10;
-	int v = write_vfs(fd, buf, size);
-	framebuffer_put_hex(v);
-	close(fd);
+	// int fd;
+	//
+	// fd = open("hello");
+	//
+	// char buf[size];
+	// for (int i = 0; i < size; ++i) buf[i] = i % 10;
+	// int v = write_vfs(fd, buf, size);
+	// framebuffer_put_hex(v);
+	// close(fd);
 
 	// fd = open("hello");
 	// int i = 0;

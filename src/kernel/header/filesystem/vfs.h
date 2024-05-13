@@ -21,6 +21,9 @@ struct VFSHandler {
 
 	int (*read)(int fd, char *buffer, int size);
 	int (*write)(int fd, char *buffer, int size);
+
+	int (*mkfile)(char *path, char *name);
+	int (*mkdir)(char *path, char *name);
 };
 
 #endif
