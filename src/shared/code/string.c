@@ -71,20 +71,24 @@ void strcpy(char *dst, char *src, int size) {
 char *strtok(char *str, char delimiter) {
 	static char *current_str;
 	static int i;
+	static bool finished = false;
 	if (str != NULL) {
 		i = 0;
 		current_str = str;
+		finished = false;
 	}
+	if (finished) return NULL;
 
 	while (current_str[i] != '\0' && current_str[i] == delimiter) ++i;
 
 	int start = i;
 	if (current_str[i] == '\0') return NULL;
 
-	while (current_str[i] != '\0' && current_str[i] != delimiter)
-		++i;
-	current_str[i] = '\0';
-	++i;
+	while (current_str[i] != '\0' && current_str[i] != delimiter) ++i;
+
+	if (current_str[i] == '\0') finished = true;
+	current_str[i++] = '\0';
+
 	return &current_str[start];
 };
 

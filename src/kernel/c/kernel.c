@@ -35,25 +35,38 @@ void kernel_setup(void) {
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
 
-	gdt_install_tss();
-	set_tss_register();
-	set_tss_kernel_current_stack();
+	char *str = "//abc/fsd";
+	char *curr = strtok(str, '/');
+	while (curr != NULL) {
+		int i = 0;
+		while (curr[i] != '\0')
+			framebuffer_put(curr[i++]);
+		framebuffer_put(' ');
+		framebuffer_put(' ');
+		framebuffer_put(' ');
 
-	struct FAT32DriverRequest req;
-	req.buf = 0;
-	req.buffer_size = PAGE_FRAME_SIZE;
-	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-	strcpy(req.ext, "", 3);
+		curr = strtok(NULL, '/');
+	}
 
-	// strcpy(req.name, "ping", 8);
+	// gdt_install_tss();
+	// set_tss_register();
+	// set_tss_kernel_current_stack();
+	//
+	// struct FAT32DriverRequest req;
+	// req.buf = 0;
+	// req.buffer_size = PAGE_FRAME_SIZE;
+	// req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+	// strcpy(req.ext, "", 3);
+	//
+	// // strcpy(req.name, "ping", 8);
+	// // process_create_user_process(&req);
+	//
+	// strcpy(req.name, "shell", 8);
 	// process_create_user_process(&req);
-
-	strcpy(req.name, "shell", 8);
-	process_create_user_process(&req);
-
-	/* Time setup, before starting timer */
-	setup_time();
-	scheduler_init();
+	//
+	// /* Time setup, before starting timer */
+	// setup_time();
+	// scheduler_init();
 
 	while (1) continue;
 }
