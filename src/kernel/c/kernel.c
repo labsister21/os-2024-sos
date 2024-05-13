@@ -45,8 +45,8 @@ void kernel_setup(void) {
 	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
 	strcpy(req.ext, "", 3);
 
-	strcpy(req.name, "ping", 8);
-	process_create_user_process(&req);
+	// strcpy(req.name, "ping", 8);
+	// process_create_user_process(&req);
 
 	strcpy(req.name, "shell", 8);
 	process_create_user_process(&req);
