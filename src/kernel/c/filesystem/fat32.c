@@ -374,28 +374,60 @@ static int get_entry_count(struct FAT32DirectoryEntry *entry) {
 	return count;
 }
 
+static void fat32_to_vfs(struct FAT32DirectoryEntry *fat32, struct VFSEntry *vfs) {
+	bool aFile = fat32->attribute != ATTR_SUBDIRECTORY;
+
+	extract_83_fullname(fat32, vfs->name);
+	vfs->type = aFile ? File : Directory;
+	vfs->size = fat32->filesize;
+	if (!aFile)
+		vfs->size = get_entry_count(fat32);
+}
+
 static int stat(char *path, struct VFSEntry *entry) {
+	struct FAT32DirectoryEntry fat32_entry;
+	int status = get_entry(path, &fat32_entry);
+	if (status != 0)
+		return status;
+
+	fat32_to_vfs(&fat32_entry, entry);
+	return 0;
+};
+
+static int dirstat(char *path, struct VFSEntry *entries) {
 	struct FAT32DirectoryEntry fat32_entry;
 	get_entry(path, &fat32_entry);
 
-	bool aFile = fat32_entry.attribute != ATTR_SUBDIRECTORY;
+	struct FAT32DirectoryTable dir;
+	read_clusters(&dir, get_cluster_from_dir_entry(&fat32_entry), 1);
 
-	extract_83_fullname(&fat32_entry, entry->name);
-	entry->type = aFile ? File : Directory;
-	entry->size = fat32_entry.filesize;
-	if (!aFile)
-		entry->size = get_entry_count(&fat32_entry);
+	int count = 0;
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
+		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
+		if (current_entry->user_attribute != UATTR_NOT_EMPTY)
+			continue;
+
+		fat32_to_vfs(current_entry, &entries[count++]);
+	}
 
 	return 0;
 };
 
 struct VFSHandler fat32_vfs = {
 		.stat = stat,
+		.dirstat = dirstat
 };
 
 void test_vfs() {
+	char *path = "a";
+
 	struct VFSEntry entry;
-	stat("", &entry);
-	framebuffer_puts(entry.name);
-	framebuffer_put_hex(entry.size);
+	stat(path, &entry);
+
+	struct VFSEntry entries[entry.size];
+	dirstat(path, entries);
+	for (int i = 0; i < entry.size; ++i) {
+		framebuffer_puts(entries[i].name);
+		framebuffer_puts("   ");
+	}
 }
