@@ -19,8 +19,8 @@ struct VFSHandler {
 	int (*open)(char *path);
 	int (*close)(int fd);
 
-	int (*read)(int fd, char *buffer, int count);
-	int (*write)(int fd, char *);
+	int (*read)(int fd, char *buffer, int size);
+	int (*write)(int fd, char *buffer, int size);
 };
 
 #endif

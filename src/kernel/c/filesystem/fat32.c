@@ -1,7 +1,6 @@
 #include "filesystem/fat32.h"
 #include "driver/disk.h"
 #include "filesystem/vfs.h"
-#include "text/buffercolor.h"
 #include "text/framebuffer.h"
 #include <fat32.h>
 #include <std/stdbool.h>
@@ -322,18 +321,21 @@ static void extract_83_fullname(struct FAT32DirectoryEntry *entry, char *result)
 	}
 }
 
-static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
+// Really botching here
+int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEntry *entry, uint32_t *parent_cluster, uint32_t *index) {
 	char *current = strtok(path, '/');
 
 	struct FAT32DirectoryTable dir;
 	read_clusters(&dir, ROOT_CLUSTER_NUMBER, 1);
 	if (current == NULL) {
+		*parent_cluster = ROOT_CLUSTER_NUMBER;
 		memcpy(entry, &dir.table[0], sizeof(struct FAT32DirectoryEntry));
 		return 0;
 	}
 
 	struct FAT32DirectoryEntry *current_entry = NULL;
 	while (true) {
+		*parent_cluster = get_cluster_from_dir_entry(&dir.table[0]);
 		for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
 			current_entry = &dir.table[i];
 			if (current_entry->user_attribute != UATTR_NOT_EMPTY)
@@ -341,8 +343,10 @@ static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
 
 			char name[MAX_83_FILENAME_SIZE];
 			extract_83_fullname(current_entry, name);
-			if (strcmp(name, current) == 0)
+			if (strcmp(name, current) == 0) {
+				*index = i;
 				break;
+			}
 		}
 
 		if (current_entry == NULL)
@@ -356,6 +360,11 @@ static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
 
 	memcpy(entry, current_entry, sizeof(struct FAT32DirectoryEntry));
 	return 0;
+}
+
+static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
+	uint32_t tmp1, tmp2;
+	return get_entry_with_parent_cluster_and_index(path, entry, &tmp1, &tmp2);
 }
 
 static int get_entry_count(struct FAT32DirectoryEntry *entry) {
@@ -420,6 +429,10 @@ struct VFSState { // Local struct to track opened file
 	uint32_t progress_pointer;
 	uint32_t progress_end;
 	uint32_t current_cluster;
+
+	// Kinda botching here
+	uint32_t directory_cluster;
+	uint32_t directory_index;
 };
 
 struct VFSState vfs_state[MAX_OPENED_FILE];
@@ -436,7 +449,7 @@ static int open(char *path) {
 
 	struct VFSState *state = &vfs_state[idx];
 	struct FAT32DirectoryEntry entry;
-	get_entry(path, &entry);
+	get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
 
 	if (entry.attribute == ATTR_SUBDIRECTORY)
 		return -1;
@@ -457,14 +470,14 @@ static int close(int fd) {
 	return 0;
 };
 
-static int read_vfs(int fd, char *buffer, int count) {
+static int read_vfs(int fd, char *buffer, int size) {
 	struct VFSState *state = &vfs_state[fd];
 	if (!state->used) // File closed
 		return -1;
 
 	int read_count = 0;
 	while (true) {
-		if (read_count >= count) break;
+		if (read_count >= size) break;
 		if (state->progress_pointer >= state->progress_end) break;
 
 		int local_offset = state->progress_pointer % CLUSTER_SIZE;
@@ -484,11 +497,58 @@ static int read_vfs(int fd, char *buffer, int count) {
 	return read_count;
 };
 
-int write_vfs(int fd, char *buffer) {
-	(void)fd;
-	(void)buffer;
+static int write_vfs(int fd, char *buffer, int size) {
+	struct VFSState *state = &vfs_state[fd];
+	if (!state->used) // File closed
+		return -1;
 
-	return 0;
+	int write_count = 0;
+	while (true) {
+		if (write_count >= size) break;
+
+		int local_offset = state->progress_pointer % CLUSTER_SIZE;
+		if (local_offset == 0) {
+			if (state->progress_pointer != 0) {
+				write_clusters(state->buffer, state->current_cluster, 1);
+				state->current_cluster = fat32_driver_state.fat_table.cluster_map[state->current_cluster];
+			}
+
+			if (state->current_cluster == FAT32_FAT_END_OF_FILE) {
+				// Searching free FAT table
+				uint32_t free_cluster = 0;
+				while (free_cluster < CLUSTER_MAP_SIZE) {
+					if (fat32_driver_state.fat_table.cluster_map[free_cluster] == FAT32_FAT_EMPTY_ENTRY) break;
+				}
+
+				if (free_cluster == CLUSTER_MAP_SIZE) // Storage full
+					return -1;
+
+				// Refreshing FAT table
+				fat32_driver_state.fat_table.cluster_map[state->current_cluster] = free_cluster;
+				fat32_driver_state.fat_table.cluster_map[free_cluster] = FAT32_FAT_END_OF_FILE;
+				write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
+				state->current_cluster = free_cluster;
+			}
+
+			read_clusters(state->buffer, state->current_cluster, 1);
+		}
+
+		state->buffer[local_offset] = buffer[write_count];
+		state->progress_pointer += 1;
+		write_count += 1;
+	}
+	write_clusters(state->buffer, state->current_cluster, 1);
+
+	if (state->progress_pointer > state->progress_end)
+		state->progress_end = state->progress_pointer;
+
+	// Refresh directory table
+	struct FAT32DirectoryTable dir;
+	read_clusters(&dir, state->directory_cluster, 1);
+	dir.table[state->directory_index].filesize = state->progress_end;
+	write_clusters(&dir, state->directory_cluster, 1);
+
+	return write_count;
 };
 
 struct VFSHandler fat32_vfs = {
@@ -499,6 +559,7 @@ struct VFSHandler fat32_vfs = {
 		.close = close,
 
 		.read = read_vfs,
+		.write = write_vfs,
 };
 
 void test_vfs() {
@@ -507,7 +568,13 @@ void test_vfs() {
 	struct VFSEntry entry;
 	stat(path, &entry);
 
-	int fd = open("hello");
+	int fd;
+
+	fd = open("hello");
+	write_vfs(fd, "12345678901234567890", 20);
+	close(fd);
+
+	fd = open("hello");
 	char c;
 	while (read_vfs(fd, &c, 1)) {
 		framebuffer_put(c);
