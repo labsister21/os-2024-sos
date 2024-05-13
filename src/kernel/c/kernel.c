@@ -35,18 +35,15 @@ void kernel_setup(void) {
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
 
-	char *str = "//abc/fsd";
-	char *curr = strtok(str, '/');
-	while (curr != NULL) {
-		int i = 0;
-		while (curr[i] != '\0')
-			framebuffer_put(curr[i++]);
-		framebuffer_put(' ');
-		framebuffer_put(' ');
-		framebuffer_put(' ');
-
-		curr = strtok(NULL, '/');
-	}
+	// char *str = "//abc/fsd";
+	// char *curr = strtok(str, '/');
+	// while (curr != NULL) {
+	// 	framebuffer_puts(curr);
+	// 	framebuffer_puts("   ");
+	// 	curr = strtok(NULL, '/');
+	// }
+	//
+	test_vfs();
 
 	// gdt_install_tss();
 	// set_tss_register();

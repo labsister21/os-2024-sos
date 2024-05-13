@@ -104,6 +104,12 @@ void framebuffer_clear(void) {
 	framebuffer_set_cursor(0, 0);
 }
 
+void framebuffer_puts(char *str) {
+	int i = 0;
+	while (str[i] != '\0')
+		framebuffer_put(str[i++]);
+}
+
 void framebuffer_put_hex(uint32_t value) {
 	char c[8];
 

@@ -1,7 +1,9 @@
 #include "filesystem/fat32.h"
 #include "driver/disk.h"
+#include "filesystem/vfs.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
+#include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
 #include <std/string.h>
@@ -309,3 +311,56 @@ int8_t delete(struct FAT32DriverRequest *request) {
 };
 
 // TODO: Read metadata method
+/* VFS Implementation */
+#define MAX_83_FILENAME_SIZE 8 + 1 + 3 + 1
+
+static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
+	char *current = strtok(path, '/');
+
+	struct FAT32DirectoryTable dir;
+	read_clusters(&dir, ROOT_CLUSTER_NUMBER, 1);
+	if (current == NULL) {
+		memcpy(entry, &dir.table[0], sizeof(struct FAT32DirectoryEntry));
+		return 0;
+	}
+
+	struct FAT32DirectoryEntry *current_entry = NULL;
+	while (true) {
+		for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
+			current_entry = &dir.table[i];
+			if (current_entry->user_attribute != UATTR_NOT_EMPTY)
+				continue;
+
+			if (strcmp(current_entry->name, current) == 0)
+				break;
+		}
+
+		if (current_entry == NULL)
+			return -1;
+
+		current = strtok(NULL, '/');
+		if (current == NULL) break;
+		if (current_entry->attribute != ATTR_SUBDIRECTORY) return -1;
+		read_clusters(&dir, get_cluster_from_dir_entry(current_entry), 1);
+	}
+
+	memcpy(entry, current_entry, sizeof(struct FAT32DirectoryEntry));
+	return 0;
+}
+
+static int stat(char *path, struct VFSEntry *entry) {
+	(void)path;
+	(void)entry;
+
+	return 0;
+};
+
+struct VFSHandler fat32_vfs = {
+		.stat = stat,
+};
+
+void test_vfs() {
+	struct FAT32DirectoryEntry entry;
+	get_entry("a/b/d", &entry);
+	framebuffer_puts(entry.name);
+}

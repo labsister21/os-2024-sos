@@ -69,6 +69,7 @@ enum FramebufferCursorMove {
 void framebuffer_move_cursor(enum FramebufferCursorMove direction, int count);
 void framebuffer_next_line(void);
 void framebuffer_put(char c);
+void framebuffer_puts(char *c);
 void framebuffer_put_hex(uint32_t value);
 
 #endif
