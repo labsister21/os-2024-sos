@@ -322,8 +322,13 @@ static void extract_83_fullname(struct FAT32DirectoryEntry *entry, char *result)
 }
 
 // Really botching here
+#define MAX_PATH 1024
 int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEntry *entry, uint32_t *parent_cluster, uint32_t *index) {
-	char *current = strtok(path, '/');
+
+	char copy[str_len(path)];
+	strcpy(copy, path, MAX_PATH);
+
+	char *current = strtok(copy, '/');
 
 	struct FAT32DirectoryTable dir;
 	read_clusters(&dir, ROOT_CLUSTER_NUMBER, 1);
@@ -425,7 +430,6 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 };
 
 #define MAX_OPENED_FILE 16
-#define MAX_PATH 512
 struct VFSState { // Local struct to track opened file
 	bool used;
 	char buffer[CLUSTER_SIZE];
@@ -590,6 +594,9 @@ int mkgeneral(char *path, char *name, char *ext, bool aFile) {
 		free_cluster += 1;
 	}
 
+	if (free_cluster == CLUSTER_MAP_SIZE)
+		return -1;
+
 	empty_entry->user_attribute = 0x0;
 	empty_entry->filesize = 0;
 	empty_entry->attribute = aFile ? 0 : ATTR_SUBDIRECTORY;
@@ -599,9 +606,16 @@ int mkgeneral(char *path, char *name, char *ext, bool aFile) {
 	strcpy(empty_entry->name, name, 8);
 	if (aFile)
 		strcpy(empty_entry->ext, ext, 3);
-
 	write_clusters(&dir, parent_cluster, 1);
+
+	fat32_driver_state.fat_table.cluster_map[free_cluster] = FAT32_FAT_END_OF_FILE;
 	write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
+
+	if (!aFile) {
+		struct FAT32DirectoryTable new_dir_table;
+		create_empty_directory_table(&new_dir_table, free_cluster, parent_cluster);
+		write_clusters(&new_dir_table, free_cluster, 1);
+	}
 
 	return 0;
 }
@@ -637,39 +651,29 @@ struct VFSHandler fat32_vfs = {
 };
 
 void test_vfs() {
-	mkfile("", "c");
+	mkdir("", "dir");
 
-	mkdir("", "a");
-	mkdir("", "b");
-	mkdir("", "c");
-	mkdir("", "d");
+	char *path = "hello";
+	mkfile("dir", path);
 
-	// char *path = "hello";
-	//
-	// struct VFSEntry entry;
-	// stat(path, &entry);
-	//
-	// int size = 5008;
+	struct VFSEntry entry;
+	stat(path, &entry);
 
-	// int fd;
-	//
-	// fd = open("hello");
-	//
-	// char buf[size];
-	// for (int i = 0; i < size; ++i) buf[i] = i % 10;
-	// int v = write_vfs(fd, buf, size);
-	// framebuffer_put_hex(v);
-	// close(fd);
+	int size = 5000;
+	char buf[size];
+	int fd;
+	fd = open("dir/hello");
+	for (int i = 0; i < size; ++i) buf[i] = i % 16;
+	write_vfs(fd, buf, 14);
+	close(fd);
 
-	// fd = open("hello");
-	// int i = 0;
-	// char c;
-	// while (read_vfs(fd, &c, 1)) {
-	// 	// if (c != buf[i]) framebuffer_put('F');
-	// 	// framebuffer_put(c);
-	// 	i += 1;
-	// }
-	// close(fd);
-
-	// framebuffer_put_hex(i);
+	fd = open("dir/hello");
+	int i = 0;
+	char c;
+	while (read_vfs(fd, &c, 1) > 0) {
+		if (c != buf[i]) framebuffer_put('F');
+		i += 1;
+	}
+	close(fd);
+	framebuffer_put_hex(i);
 }
