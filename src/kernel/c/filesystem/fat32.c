@@ -1,6 +1,5 @@
 #include "filesystem/fat32.h"
 #include "driver/disk.h"
-#include "filesystem/vfs.h"
 #include "text/framebuffer.h"
 #include <fat32.h>
 #include <std/stdbool.h>
@@ -684,33 +683,3 @@ struct VFSHandler fat32_vfs = {
 
 		.delete = delete_vfs,
 };
-
-void test_vfs() {
-	mkdir("", "dir");
-
-	char *path = "hello";
-	mkfile("dir", path);
-
-	struct VFSEntry entry;
-	stat(path, &entry);
-
-	int size = 5000;
-	char buf[size];
-	int fd;
-	fd = open("dir/hello");
-	for (int i = 0; i < size; ++i) buf[i] = i % 16;
-	write_vfs(fd, buf, size);
-	close(fd);
-
-	fd = open("dir/hello");
-	int i = 0;
-	char c;
-	while (read_vfs(fd, &c, 1) > 0) {
-		if (c != buf[i]) framebuffer_put('F');
-		i += 1;
-	}
-	close(fd);
-	framebuffer_put_hex(i);
-
-	delete_vfs("dir/hello");
-}

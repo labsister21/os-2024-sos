@@ -87,6 +87,6 @@ static inline uint32_t get_cluster_from_dir_entry(struct FAT32DirectoryEntry *di
 	return (dir_entry->cluster_low) + (((uint32_t)dir_entry->cluster_high) >> 16);
 }
 
-void test_vfs();
+extern struct VFSHandler fat32_vfs;
 
 #endif

@@ -1,5 +1,6 @@
 #include "process/process.h"
 #include "cpu/gdt.h"
+#include "filesystem/vfs.h"
 #include "memory/paging.h"
 #include <std/string.h>
 
@@ -24,22 +25,18 @@ int32_t process_list_get_inactive_index() {
 	return -1;
 }
 
-// TODO: Change parameter signature to path only
-int32_t process_create_user_process(struct FAT32DriverRequest *request) {
+int32_t process_create_user_process(char *path) {
 	int32_t retcode = PROCESS_CREATE_SUCCESS;
 	if (process_manager_state.active_process_count >= PROCESS_COUNT_MAX) {
 		retcode = PROCESS_CREATE_FAIL_MAX_PROCESS_EXCEEDED;
 		goto exit_cleanup;
 	}
 
-	// Ensure entrypoint is not located at kernel's section at higher half
-	if ((uint32_t)request->buf >= KERNEL_VIRTUAL_ADDRESS_BASE) {
-		retcode = PROCESS_CREATE_FAIL_INVALID_ENTRYPOINT;
-		goto exit_cleanup;
-	}
+	struct VFSEntry entry;
+	fat32_vfs.stat(path, &entry);
 
 	// Check whether memory is enough for the executable and additional frame for user stack
-	uint32_t page_frame_count_needed = (request->buffer_size + PAGE_FRAME_SIZE + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
+	uint32_t page_frame_count_needed = (entry.size + PAGE_FRAME_SIZE + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
 	if (!paging_allocate_check(page_frame_count_needed) || page_frame_count_needed > PROCESS_PAGE_FRAME_COUNT_MAX) {
 		retcode = PROCESS_CREATE_FAIL_NOT_ENOUGH_MEMORY;
 		goto exit_cleanup;
@@ -57,9 +54,14 @@ int32_t process_create_user_process(struct FAT32DriverRequest *request) {
 
 	struct PageDirectory *current_page_directory = paging_get_current_page_directory_addr();
 	paging_use_page_directory(page_directory);
-	void *program_base_address = request->buf;
+
+	void *program_base_address = 0;
 	paging_allocate_user_page_frame(page_directory, program_base_address);
-	read(request);
+
+	int fd = fat32_vfs.open(path);
+	fat32_vfs.read(fd, program_base_address, entry.size);
+	fat32_vfs.close(fd);
+
 	paging_use_page_directory(current_page_directory);
 
 	pcb->memory.virtual_addr_used[0] = program_base_address;

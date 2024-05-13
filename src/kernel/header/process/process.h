@@ -101,7 +101,7 @@ struct ProcessControlBlock *process_get_current_running_pcb_pointer(void);
  * @param request Appropriate read request for the executable
  * @return        Process creation return code
  */
-int32_t process_create_user_process(struct FAT32DriverRequest *request);
+int32_t process_create_user_process(char *path);
 
 /**
  * Destroy process then release page directory and process control block

@@ -2,6 +2,7 @@
 #define _FAT32_H
 
 #include "driver/disk.h"
+#include "filesystem/vfs.h"
 #include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
