@@ -412,7 +412,9 @@ static int stat(char *path, struct VFSEntry *entry) {
 
 static int dirstat(char *path, struct VFSEntry *entries) {
 	struct FAT32DirectoryEntry fat32_entry;
-	get_entry(path, &fat32_entry);
+	int status = get_entry(path, &fat32_entry);
+	if (status != 0)
+		return status;
 
 	struct FAT32DirectoryTable dir;
 	read_clusters(&dir, get_cluster_from_dir_entry(&fat32_entry), 1);
@@ -564,7 +566,9 @@ static int write_vfs(int fd, char *buffer, int size) {
 
 int mkgeneral(char *path, char *name, char *ext, bool aFile) {
 	struct FAT32DirectoryEntry entry;
-	get_entry(path, &entry);
+	int status = get_entry(path, &entry);
+	if (status != 0)
+		return status;
 
 	struct FAT32DirectoryTable dir;
 	uint32_t parent_cluster = get_cluster_from_dir_entry(&entry);
@@ -636,6 +640,35 @@ int mkdir(char *path, char *name) {
 	return mkgeneral(path, name, "", false);
 }
 
+int delete_vfs(char *path) {
+	uint32_t parent_cluster;
+	uint32_t index;
+
+	struct FAT32DirectoryEntry entry;
+	int status = get_entry_with_parent_cluster_and_index(path, &entry, &parent_cluster, &index);
+	if (status != 0)
+		return status;
+
+	if (get_entry_count(&entry) != 0)
+		return -1;
+
+	uint32_t current_cluster = get_cluster_from_dir_entry(&entry);
+	while (current_cluster != FAT32_FAT_END_OF_FILE) {
+		int next_cluster = fat32_driver_state.fat_table.cluster_map[current_cluster];
+		fat32_driver_state.fat_table.cluster_map[current_cluster] = FAT32_FAT_EMPTY_ENTRY;
+		current_cluster = next_cluster;
+	}
+
+	struct FAT32DirectoryTable dir;
+	read_clusters(&dir, parent_cluster, 1);
+	memset(&dir.table[index], 0x00, sizeof(struct FAT32DirectoryEntry));
+
+	write_clusters(&dir, parent_cluster, 1);
+	write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
+
+	return 0;
+};
+
 struct VFSHandler fat32_vfs = {
 		.stat = stat,
 		.dirstat = dirstat,
@@ -648,6 +681,8 @@ struct VFSHandler fat32_vfs = {
 
 		.mkfile = mkfile,
 		.mkdir = mkdir,
+
+		.delete = delete_vfs,
 };
 
 void test_vfs() {
@@ -664,7 +699,7 @@ void test_vfs() {
 	int fd;
 	fd = open("dir/hello");
 	for (int i = 0; i < size; ++i) buf[i] = i % 16;
-	write_vfs(fd, buf, 14);
+	write_vfs(fd, buf, size);
 	close(fd);
 
 	fd = open("dir/hello");
@@ -676,4 +711,6 @@ void test_vfs() {
 	}
 	close(fd);
 	framebuffer_put_hex(i);
+
+	delete_vfs("dir/hello");
 }

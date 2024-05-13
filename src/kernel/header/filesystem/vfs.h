@@ -24,6 +24,8 @@ struct VFSHandler {
 
 	int (*mkfile)(char *path, char *name);
 	int (*mkdir)(char *path, char *name);
+
+	int (*delete)(char *path);
 };
 
 #endif
