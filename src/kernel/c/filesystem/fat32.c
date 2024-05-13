@@ -336,6 +336,8 @@ int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEnt
 	struct FAT32DirectoryEntry *current_entry = NULL;
 	while (true) {
 		*parent_cluster = get_cluster_from_dir_entry(&dir.table[0]);
+
+		bool found = false;
 		for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
 			current_entry = &dir.table[i];
 			if (current_entry->user_attribute != UATTR_NOT_EMPTY)
@@ -345,11 +347,12 @@ int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEnt
 			extract_83_fullname(current_entry, name);
 			if (strcmp(name, current) == 0) {
 				*index = i;
+				found = true;
 				break;
 			}
 		}
 
-		if (current_entry == NULL)
+		if (!found)
 			return -1;
 
 		current = strtok(NULL, '/');
@@ -449,7 +452,10 @@ static int open(char *path) {
 
 	struct VFSState *state = &vfs_state[idx];
 	struct FAT32DirectoryEntry entry;
-	get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
+	int status = get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
+	framebuffer_put_hex(status);
+	if (status != 0)
+		return status;
 
 	if (entry.attribute == ATTR_SUBDIRECTORY)
 		return -1;
@@ -578,18 +584,19 @@ void test_vfs() {
 
 	char buf[size];
 	for (int i = 0; i < size; ++i) buf[i] = i % 10;
-	write_vfs(fd, buf, size);
+	int v = write_vfs(fd, buf, size);
+	framebuffer_put_hex(v);
 	close(fd);
 
-	fd = open("hello");
-	int i = 0;
-	char c;
-	while (read_vfs(fd, &c, 1)) {
-		if (c != buf[i]) framebuffer_put('F');
-		// framebuffer_put(c);
-		i += 1;
-	}
-	close(fd);
+	// fd = open("hello");
+	// int i = 0;
+	// char c;
+	// while (read_vfs(fd, &c, 1)) {
+	// 	// if (c != buf[i]) framebuffer_put('F');
+	// 	// framebuffer_put(c);
+	// 	i += 1;
+	// }
+	// close(fd);
 
-	framebuffer_put_hex(i);
+	// framebuffer_put_hex(i);
 }
