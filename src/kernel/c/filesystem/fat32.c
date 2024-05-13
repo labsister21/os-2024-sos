@@ -313,6 +313,15 @@ int8_t delete(struct FAT32DriverRequest *request) {
 // TODO: Read metadata method
 /* VFS Implementation */
 #define MAX_83_FILENAME_SIZE 8 + 1 + 3 + 1
+static void extract_83_fullname(struct FAT32DirectoryEntry *entry, char *result) {
+	result[0] = '\0';
+	strcat(result, entry->name, MAX_83_FILENAME_SIZE);
+
+	if (entry->attribute != ATTR_SUBDIRECTORY && str_len(entry->ext) != 0) {
+		strcat(result, ".", MAX_83_FILENAME_SIZE);
+		strcat(result, entry->ext, MAX_83_FILENAME_SIZE);
+	}
+}
 
 static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
 	char *current = strtok(path, '/');
@@ -331,7 +340,9 @@ static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
 			if (current_entry->user_attribute != UATTR_NOT_EMPTY)
 				continue;
 
-			if (strcmp(current_entry->name, current) == 0)
+			char name[MAX_83_FILENAME_SIZE];
+			extract_83_fullname(current_entry, name);
+			if (strcmp(name, current) == 0)
 				break;
 		}
 
@@ -348,9 +359,32 @@ static int get_entry(char *path, struct FAT32DirectoryEntry *entry) {
 	return 0;
 }
 
+static int get_entry_count(struct FAT32DirectoryEntry *entry) {
+	if (entry->attribute != ATTR_SUBDIRECTORY)
+		return 0;
+
+	int count = 0;
+	struct FAT32DirectoryTable dir;
+	read_clusters(&dir, get_cluster_from_dir_entry(entry), 1);
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
+		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
+		if (current_entry->user_attribute == UATTR_NOT_EMPTY)
+			count += 1;
+	}
+	return count;
+}
+
 static int stat(char *path, struct VFSEntry *entry) {
-	(void)path;
-	(void)entry;
+	struct FAT32DirectoryEntry fat32_entry;
+	get_entry(path, &fat32_entry);
+
+	bool aFile = fat32_entry.attribute != ATTR_SUBDIRECTORY;
+
+	extract_83_fullname(&fat32_entry, entry->name);
+	entry->type = aFile ? File : Directory;
+	entry->size = fat32_entry.filesize;
+	if (!aFile)
+		entry->size = get_entry_count(&fat32_entry);
 
 	return 0;
 };
@@ -360,7 +394,8 @@ struct VFSHandler fat32_vfs = {
 };
 
 void test_vfs() {
-	struct FAT32DirectoryEntry entry;
-	get_entry("a/b/d", &entry);
+	struct VFSEntry entry;
+	stat("", &entry);
 	framebuffer_puts(entry.name);
+	framebuffer_put_hex(entry.size);
 }

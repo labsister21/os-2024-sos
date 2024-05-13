@@ -1,10 +1,15 @@
 #ifndef _VFS_H
 #define _VFS_H
 
+enum VFSType {
+	File,
+	Directory
+};
+
 struct VFSEntry {
 	char name[255];
 	int size;
-	int type;
+	enum VFSType type;
 };
 
 struct VFSHandler {
