@@ -508,6 +508,7 @@ static int write_vfs(int fd, char *buffer, int size) {
 
 		int local_offset = state->progress_pointer % CLUSTER_SIZE;
 		if (local_offset == 0) {
+			uint32_t old_cluster = state->current_cluster;
 			if (state->progress_pointer != 0) {
 				write_clusters(state->buffer, state->current_cluster, 1);
 				state->current_cluster = fat32_driver_state.fat_table.cluster_map[state->current_cluster];
@@ -518,13 +519,14 @@ static int write_vfs(int fd, char *buffer, int size) {
 				uint32_t free_cluster = 0;
 				while (free_cluster < CLUSTER_MAP_SIZE) {
 					if (fat32_driver_state.fat_table.cluster_map[free_cluster] == FAT32_FAT_EMPTY_ENTRY) break;
+					free_cluster += 1;
 				}
 
 				if (free_cluster == CLUSTER_MAP_SIZE) // Storage full
 					return -1;
 
 				// Refreshing FAT table
-				fat32_driver_state.fat_table.cluster_map[state->current_cluster] = free_cluster;
+				fat32_driver_state.fat_table.cluster_map[old_cluster] = free_cluster;
 				fat32_driver_state.fat_table.cluster_map[free_cluster] = FAT32_FAT_END_OF_FILE;
 				write_clusters(fat32_driver_state.fat_table.cluster_map, FAT_CLUSTER_NUMBER, 1);
 				state->current_cluster = free_cluster;
@@ -568,16 +570,26 @@ void test_vfs() {
 	struct VFSEntry entry;
 	stat(path, &entry);
 
+	int size = 5008;
+
 	int fd;
 
 	fd = open("hello");
-	write_vfs(fd, "12345678901234567890", 20);
+
+	char buf[size];
+	for (int i = 0; i < size; ++i) buf[i] = i % 10;
+	write_vfs(fd, buf, size);
 	close(fd);
 
 	fd = open("hello");
+	int i = 0;
 	char c;
 	while (read_vfs(fd, &c, 1)) {
-		framebuffer_put(c);
+		if (c != buf[i]) framebuffer_put('F');
+		// framebuffer_put(c);
+		i += 1;
 	}
 	close(fd);
+
+	framebuffer_put_hex(i);
 }
