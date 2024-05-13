@@ -103,3 +103,12 @@ int strtoi(char *str, char **end) {
 	}
 	return result;
 };
+
+void strcat(char *dst, char *src, int max) {
+	int i = 0;
+	while (i < max - 1 && dst[i] != '\0') ++i;
+
+	int j = 0;
+	while (i < max - 1 && src[j] != '\0') dst[i++] = src[j++];
+	dst[i] = '\0';
+}
