@@ -1,7 +1,5 @@
 #include "process/scheduler.h"
 #include "cpu/portio.h"
-#include "kernel-entrypoint.h"
-#include "text/framebuffer.h"
 #include <std/stdint.h>
 #include <std/string.h>
 

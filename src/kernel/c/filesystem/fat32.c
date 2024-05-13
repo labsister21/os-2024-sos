@@ -310,7 +310,6 @@ int8_t delete(struct FAT32DriverRequest *request) {
 	return 0;
 };
 
-// TODO: Read metadata method
 /* VFS Implementation */
 #define MAX_83_FILENAME_SIZE 8 + 1 + 3 + 1
 static void extract_83_fullname(struct FAT32DirectoryEntry *entry, char *result) {
@@ -413,9 +412,57 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	return 0;
 };
 
+#define MAX_OPENED_FILE 16
+#define MAX_PATH 512
+struct VFSState { // Local struct to track opened file
+	bool used;
+	char buffer[CLUSTER_SIZE];
+	uint32_t progress_pointer;
+	uint32_t progress_end;
+	uint32_t current_cluster;
+};
+
+struct VFSState vfs_state[MAX_OPENED_FILE];
+
+static int open(char *path) {
+	int idx = 0;
+	while (idx < MAX_OPENED_FILE) {
+		if (!vfs_state[idx].used) break;
+		++idx;
+	}
+
+	if (idx == MAX_OPENED_FILE)
+		return -1;
+
+	struct VFSState *state = &vfs_state[idx];
+	struct FAT32DirectoryEntry entry;
+	get_entry(path, &entry);
+
+	if (entry.attribute == ATTR_SUBDIRECTORY)
+		return -1;
+
+	state->current_cluster = get_cluster_from_dir_entry(&entry);
+	state->progress_pointer = -1;
+	state->progress_end = entry.filesize;
+	state->used = true;
+
+	return idx;
+};
+
+int close(int fd) {
+	if (!vfs_state[fd].used)
+		return -1;
+
+	vfs_state[fd].used = false;
+	return 0;
+};
+
 struct VFSHandler fat32_vfs = {
 		.stat = stat,
-		.dirstat = dirstat
+		.dirstat = dirstat,
+
+		.open = open,
+		.close = close
 };
 
 void test_vfs() {

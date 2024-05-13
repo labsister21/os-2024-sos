@@ -43,27 +43,27 @@ void kernel_setup(void) {
 	// 	curr = strtok(NULL, '/');
 	// }
 	//
-	test_vfs();
+	// test_vfs();
 
-	// gdt_install_tss();
-	// set_tss_register();
-	// set_tss_kernel_current_stack();
-	//
-	// struct FAT32DriverRequest req;
-	// req.buf = 0;
-	// req.buffer_size = PAGE_FRAME_SIZE;
-	// req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
-	// strcpy(req.ext, "", 3);
-	//
-	// // strcpy(req.name, "ping", 8);
-	// // process_create_user_process(&req);
-	//
-	// strcpy(req.name, "shell", 8);
-	// process_create_user_process(&req);
-	//
-	// /* Time setup, before starting timer */
-	// setup_time();
-	// scheduler_init();
+	gdt_install_tss();
+	set_tss_register();
+	set_tss_kernel_current_stack();
+
+	struct FAT32DriverRequest req;
+	req.buf = 0;
+	req.buffer_size = PAGE_FRAME_SIZE;
+	req.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+	strcpy(req.ext, "", 3);
+
+	strcpy(req.name, "ping", 8);
+	process_create_user_process(&req);
+
+	strcpy(req.name, "shell", 8);
+	process_create_user_process(&req);
+
+	/* Time setup, before starting timer */
+	setup_time();
+	scheduler_init();
 
 	while (1) continue;
 }
