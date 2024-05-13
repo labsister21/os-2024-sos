@@ -13,14 +13,14 @@ struct VFSEntry {
 };
 
 struct VFSHandler {
-	int (*stat)(char *, struct VFSEntry *);
-	int (*dirstat)(char *, struct VFSEntry *);
+	int (*stat)(char *path, struct VFSEntry *entry);
+	int (*dirstat)(char *path, struct VFSEntry *entries);
 
-	int (*open)(char *);
+	int (*open)(char *path);
 	int (*close)(int fd);
 
-	int (*read)(int fd);
-	int (*write)(int fd);
+	int (*read)(int fd, char *buffer, int count);
+	int (*write)(int fd, char *);
 };
 
 #endif

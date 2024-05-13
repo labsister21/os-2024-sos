@@ -442,18 +442,52 @@ static int open(char *path) {
 		return -1;
 
 	state->current_cluster = get_cluster_from_dir_entry(&entry);
-	state->progress_pointer = -1;
+	state->progress_pointer = 0;
 	state->progress_end = entry.filesize;
 	state->used = true;
 
 	return idx;
 };
 
-int close(int fd) {
+static int close(int fd) {
 	if (!vfs_state[fd].used)
 		return -1;
 
 	vfs_state[fd].used = false;
+	return 0;
+};
+
+static int read_vfs(int fd, char *buffer, int count) {
+	struct VFSState *state = &vfs_state[fd];
+	if (!state->used) // File closed
+		return -1;
+
+	int read_count = 0;
+	while (true) {
+		if (read_count >= count) break;
+		if (state->progress_pointer >= state->progress_end) break;
+
+		int local_offset = state->progress_pointer % CLUSTER_SIZE;
+		if (local_offset == 0) {
+			if (state->current_cluster == FAT32_FAT_END_OF_FILE) // Corrupted file
+				return -1;
+
+			read_clusters(state->buffer, state->current_cluster, 1);
+			state->current_cluster = fat32_driver_state.fat_table.cluster_map[state->current_cluster];
+		}
+
+		buffer[read_count] = state->buffer[local_offset];
+		state->progress_pointer += 1;
+		read_count += 1;
+	}
+
+	return read_count;
+};
+
+int write_vfs(int fd, char *buffer) {
+	(void)fd;
+	(void)buffer;
+
 	return 0;
 };
 
@@ -462,19 +496,21 @@ struct VFSHandler fat32_vfs = {
 		.dirstat = dirstat,
 
 		.open = open,
-		.close = close
+		.close = close,
+
+		.read = read_vfs,
 };
 
 void test_vfs() {
-	char *path = "a";
+	char *path = "hello";
 
 	struct VFSEntry entry;
 	stat(path, &entry);
 
-	struct VFSEntry entries[entry.size];
-	dirstat(path, entries);
-	for (int i = 0; i < entry.size; ++i) {
-		framebuffer_puts(entries[i].name);
-		framebuffer_puts("   ");
+	int fd = open("hello");
+	char c;
+	while (read_vfs(fd, &c, 1)) {
+		framebuffer_put(c);
 	}
+	close(fd);
 }
