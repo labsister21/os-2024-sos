@@ -117,6 +117,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 	case GET_TIME:
 		memcpy((void *)frame->cpu.general.ebx, &startup_time, sizeof(struct TimeRTC));
 		break;
+
+	case EXEC: {
+		process_create_user_process((char *)frame->cpu.general.ebx);
+	} break;
 	}
 }
 

@@ -26,6 +26,12 @@ int32_t process_list_get_inactive_index() {
 }
 
 int32_t process_create_user_process(char *path) {
+	// Path needs to be copied, since we will be changing page directory
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
+	path = copy;
+
 	int32_t retcode = PROCESS_CREATE_SUCCESS;
 	if (process_manager_state.active_process_count >= PROCESS_COUNT_MAX) {
 		retcode = PROCESS_CREATE_FAIL_MAX_PROCESS_EXCEEDED;

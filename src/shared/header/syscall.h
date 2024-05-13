@@ -81,4 +81,8 @@ SYSCALL_2(FRAMEBUFFER_CURSOR, int, x, int, y);
 #define GET_TIME 11
 SYSCALL_1(GET_TIME, struct TimeRTC *, t);
 
+// Process
+#define EXEC 12
+SYSCALL_1(EXEC, char *, path);
+
 #endif

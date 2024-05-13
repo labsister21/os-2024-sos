@@ -39,7 +39,6 @@ void kernel_setup(void) {
 	set_tss_register();
 	set_tss_kernel_current_stack();
 
-	process_create_user_process("ping");
 	process_create_user_process("shell");
 
 	/* Time setup, before starting timer */

@@ -106,6 +106,7 @@ void run_prompt() {
 	else if (strcmp(token, "ls") == 0) ls();
 	else if (strcmp(token, "cd") == 0) cd();
 	else if (strcmp(token, "mkdir") == 0) mkdir();
+	else if (strcmp(token, "exec") == 0) syscall_EXEC(strtok(NULL, ' '));
 	else {
 		char *not_found = "command not found!";
 		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(not_found);
