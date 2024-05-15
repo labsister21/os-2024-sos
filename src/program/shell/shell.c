@@ -5,6 +5,7 @@
 
 #define MAX_PROMPT 512
 
+int status;
 struct ShellState {
 	struct VFSEntry cwd;
 	struct VFSEntry cwd_entries[128]; // Waiting for malloc
@@ -70,8 +71,18 @@ void run_prompt() {
 }
 
 int main(void) {
-	syscall_VFS_STAT("/", &state.cwd);
+	status = syscall_VFS_STAT("/", &state.cwd);
+	if (status != 0) {
+		puts("Error, can't read root directory");
+		return 0;
+	}
+
 	syscall_VFS_DIR_STAT("/", state.cwd_entries);
+	if (status != 0) {
+		puts("Error, can't read root directory");
+		return 0;
+	}
+
 	while (true) {
 		puts("> ");
 		get_prompt();

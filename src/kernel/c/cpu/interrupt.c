@@ -57,6 +57,8 @@ void pic_remap(void) {
 }
 
 void syscall_handler(struct InterruptFrame *frame) {
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+	int *result = (void *)(&frame->cpu.general.eax);
 	uint32_t first = frame->cpu.general.ebx;
 	uint32_t second = frame->cpu.general.ecx;
 	// uint32_t third = frame->cpu.general.edx;
@@ -127,11 +129,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 	} break;
 
 	case VFS_STAT: {
-		fat32_vfs.stat((void *)first, (void *)second);
+		*result = fat32_vfs.stat((void *)first, (void *)second);
 	} break;
 
 	case VFS_DIR_STAT: {
-		fat32_vfs.dirstat((void *)first, (void *)second);
+		*result = fat32_vfs.dirstat((void *)first, (void *)second);
 	} break;
 	}
 }
