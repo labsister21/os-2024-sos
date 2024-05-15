@@ -204,6 +204,28 @@ void cp() {
 	puts("Copy succeed");
 }
 
+void exec() {
+	int pid = syscall_EXEC(strtok(NULL, ' '));
+	syscall_PUT_CHAR('0' + pid);
+}
+
+void kill() {
+	char *token = strtok(NULL, ' ');
+	int pid = strtoi(token, NULL);
+	if (pid == -1) {
+		puts("Invalid PID");
+		return;
+	}
+
+	status = syscall_KILL(pid);
+	if (status != 0) {
+		puts("Error killing process");
+		return;
+	}
+
+	puts("Process killed");
+}
+
 void get_prompt() {
 	state.prompt_size = 0;
 
@@ -232,7 +254,8 @@ void run_prompt() {
 	else if (strcmp(token, "cat") == 0) cat();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
-	else if (strcmp(token, "exec") == 0) syscall_EXEC(strtok(NULL, ' '));
+	else if (strcmp(token, "exec") == 0) exec();
+	else if (strcmp(token, "kill") == 0) kill();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);

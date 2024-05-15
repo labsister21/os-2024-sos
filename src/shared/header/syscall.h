@@ -42,20 +42,6 @@ static inline int syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx
 		return syscall(syscall_number, (uint32_t)first_param, (uint32_t)second_param, (uint32_t)third_param);                \
 	}
 
-// Disk
-#include <fat32.h>
-#define READ 0
-SYSCALL_2(READ, struct FAT32DriverRequest *, req, int8_t *, ret);
-
-#define READ_DIRECTORY 1
-SYSCALL_2(READ_DIRECTORY, struct FAT32DriverRequest *, req, int8_t *, ret);
-
-#define WRITE 2
-SYSCALL_2(WRITE, struct FAT32DriverRequest *, req, int8_t *, ret);
-
-#define DELETE 3
-SYSCALL_2(DELETE, struct FAT32DriverRequest *, req, int8_t *, ret);
-
 // Input
 #define GET_CHAR 4
 SYSCALL_1(GET_CHAR, char *, c);
@@ -87,8 +73,11 @@ SYSCALL_2(FRAMEBUFFER_CURSOR, int, x, int, y);
 SYSCALL_1(GET_TIME, struct TimeRTC *, t);
 
 // Process
-#define EXEC 12
+#define EXEC 121
 SYSCALL_1(EXEC, char *, path);
+
+#define KILL 122
+SYSCALL_1(KILL, int, pid);
 
 // VFS
 #define VFS_STAT 131

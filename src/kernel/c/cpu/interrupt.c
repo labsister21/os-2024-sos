@@ -64,39 +64,27 @@ void syscall_handler(struct InterruptFrame *frame) {
 	uint32_t third = frame->cpu.general.edx;
 
 	switch (frame->cpu.general.eax) {
-	case READ:
-		*((int8_t *)frame->cpu.general.ecx) = read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
-		break;
-
-	case READ_DIRECTORY:
-		*((int8_t *)frame->cpu.general.ecx) = read_directory((struct FAT32DriverRequest *)frame->cpu.general.ebx);
-		break;
-
-	case WRITE:
-		*((int8_t *)frame->cpu.general.ecx) = write((struct FAT32DriverRequest *)frame->cpu.general.ebx);
-		break;
-
 	case GET_CHAR: {
-		char *ptr = (char *)frame->cpu.general.ebx;
+		char *ptr = (char *)first;
 		*ptr = fgetc();
 	} break;
 
 	case GET_CHAR_NON_BLOCKING: {
-		char *ptr = (char *)frame->cpu.general.ebx;
+		char *ptr = (char *)first;
 		get_keyboard_buffer(ptr);
 	} break;
 
 	case PUT_CHAR: {
-		fputc((char)frame->cpu.general.ebx);
+		fputc((char)first);
 	} break;
 
 	case FRAMEBUFFER_PUT_CHAR:
-		framebuffer_put((char)frame->cpu.general.ebx);
+		framebuffer_put((char)first);
 		break;
 
 	case FRAMEBUFFER_PUT_CHARS: {
-		int i = frame->cpu.general.ecx;
-		char *str = (char *)frame->cpu.general.ebx;
+		int i = second;
+		char *str = (char *)first;
 		while (i--) {
 			framebuffer_put(str[i]);
 			++i;
@@ -105,7 +93,7 @@ void syscall_handler(struct InterruptFrame *frame) {
 
 	case FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS: {
 		int i = 0;
-		char *str = (char *)frame->cpu.general.ebx;
+		char *str = (char *)first;
 		while (str[i] != '\0') {
 			framebuffer_put(str[i]);
 			++i;
@@ -117,15 +105,19 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case FRAMEBUFFER_CURSOR:
-		framebuffer_set_cursor(frame->cpu.general.ecx, frame->cpu.general.ebx);
+		framebuffer_set_cursor(second, first);
 		break;
 
 	case GET_TIME:
-		memcpy((void *)frame->cpu.general.ebx, &startup_time, sizeof(struct TimeRTC));
+		memcpy((void *)first, &startup_time, sizeof(struct TimeRTC));
 		break;
 
 	case EXEC: {
-		process_create_user_process((char *)frame->cpu.general.ebx);
+		*result = process_create((char *)first);
+	} break;
+
+	case KILL: {
+		*result = process_destroy((int)first);
 	} break;
 
 	case VFS_STAT: {
@@ -158,6 +150,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 
 	case VFS_WRITE: {
 		*result = fat32_vfs.write((int)first, (char *)second, (int)third);
+	} break;
+
+	default: {
+		framebuffer_puts("System call not implemented");
+		*result = -1;
 	} break;
 	}
 }

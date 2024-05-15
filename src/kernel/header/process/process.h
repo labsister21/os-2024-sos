@@ -101,7 +101,7 @@ struct ProcessControlBlock *process_get_current_running_pcb_pointer(void);
  * @param request Appropriate read request for the executable
  * @return        Process creation return code
  */
-int32_t process_create_user_process(char *path);
+int process_create(char *path);
 
 /**
  * Destroy process then release page directory and process control block
@@ -109,6 +109,6 @@ int32_t process_create_user_process(char *path);
  * @param pid Process ID to delete
  * @return    True if process destruction success
  */
-bool process_destroy(uint32_t pid);
+int process_destroy(uint32_t pid);
 
 #endif

@@ -93,13 +93,19 @@ char *strtok(char *str, char delimiter) {
 };
 
 int strtoi(char *str, char **end) {
-	int result = 0;
-	while (true) {
+	int result = -1;
+	while (*str != '\0') {
 		if ('0' <= *str && *str <= '9') {
+			if (result == -1) result = 0;
+
 			result = 10 * result + (*str - '0');
-			str += 1;
-			*end = str + 1;
+			if (end != NULL)
+				*end = str + 1;
+		} else {
+			if (result != -1) break;
 		}
+
+		str += 1;
 	}
 	return result;
 };

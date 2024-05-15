@@ -14,27 +14,27 @@ struct {
 
 struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
-int32_t process_generate_new_pid() {
+int process_generate_new_pid() {
 	return process_manager_state.last_pid++;
 };
 
-int32_t process_list_get_inactive_index() {
+int process_list_get_inactive_index() {
 	for (int i = 0; i < PROCESS_COUNT_MAX; ++i) {
 		if (_process_list[i].metadata.state == Inactive) return i;
 	}
 	return -1;
 }
 
-int32_t process_create_user_process(char *path) {
+int process_create(char *path) {
 	// Path needs to be copied, since we will be changing page directory
 	int size = str_len(path) + 1;
 	char copy[size];
 	strcpy(copy, path, size);
 	path = copy;
 
-	int32_t retcode = PROCESS_CREATE_SUCCESS;
+	int32_t retcode = 0;
 	if (process_manager_state.active_process_count >= PROCESS_COUNT_MAX) {
-		retcode = PROCESS_CREATE_FAIL_MAX_PROCESS_EXCEEDED;
+		retcode = -1;
 		goto exit_cleanup;
 	}
 
@@ -44,14 +44,20 @@ int32_t process_create_user_process(char *path) {
 	// Check whether memory is enough for the executable and additional frame for user stack
 	uint32_t page_frame_count_needed = (entry.size + PAGE_FRAME_SIZE + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
 	if (!paging_allocate_check(page_frame_count_needed) || page_frame_count_needed > PROCESS_PAGE_FRAME_COUNT_MAX) {
-		retcode = PROCESS_CREATE_FAIL_NOT_ENOUGH_MEMORY;
+		retcode = -1;
 		goto exit_cleanup;
 	}
 
 	// Process PCB
 	int32_t p_index = process_list_get_inactive_index();
+	if (p_index < 0) {
+		retcode = -1;
+		goto exit_cleanup;
+	}
+
 	struct ProcessControlBlock *pcb = &(_process_list[p_index]);
-	pcb->metadata.pid = process_generate_new_pid();
+	int pid = process_generate_new_pid();
+	pcb->metadata.pid = pid;
 	pcb->metadata.state = Waiting;
 
 	// Creating page directory
@@ -102,6 +108,34 @@ int32_t process_create_user_process(char *path) {
 	frame->int_number = 0;
 
 	process_manager_state.active_process_count += 1;
+	retcode = pid;
 exit_cleanup:
 	return retcode;
 }
+
+int process_destroy(uint32_t pid) {
+	int idx = -1;
+	int running = -1;
+
+	int i = 0;
+	while (i < PROCESS_COUNT_MAX && (idx == -1 || running == -1)) {
+		struct ProcessControlBlock *current = &_process_list[i];
+		if (
+				current->metadata.state != Inactive &&
+				current->metadata.pid == pid
+		) idx = i;
+		if (current->metadata.state == Running) running = i;
+		i += 1;
+	}
+	if (idx == -1) return -1;
+
+	// Process can't kill itself
+	if (idx == running) return -1;
+
+	struct ProcessControlBlock *pcb = &_process_list[idx];
+	paging_free_page_directory(pcb->context.page_directory_virtual_addr);
+	pcb->metadata.state = Inactive;
+	process_manager_state.active_process_count -= 1;
+
+	return 0;
+};
