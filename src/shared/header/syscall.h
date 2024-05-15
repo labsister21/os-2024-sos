@@ -3,6 +3,7 @@
 
 #include <std/stdint.h>
 #include <time.h>
+#include <vfs.h>
 
 static inline void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 	__asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -34,7 +35,7 @@ static inline void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t ed
 
 #define SYSCALL_3(syscall_number, first_type, first_param, second_type, second_param, third_type, third_param)            \
 	static inline void syscall_##syscall_number(first_type first_param, second_type second_param, third_type third_param) { \
-		syscall(syscall_number, (uint32_t)first_param, (uint32_t)second_param, 0);                                            \
+		syscall(syscall_number, (uint32_t)first_param, (uint32_t)second_param, (uint32_t)third_param);                        \
 	}
 
 // Disk
@@ -84,5 +85,33 @@ SYSCALL_1(GET_TIME, struct TimeRTC *, t);
 // Process
 #define EXEC 12
 SYSCALL_1(EXEC, char *, path);
+
+// VFS
+#define VFS_STAT 131
+SYSCALL_2(VFS_STAT, char *, path, struct VFSEntry *, entry)
+
+#define VFS_DIR_STAT 132
+SYSCALL_2(VFS_DIR_STAT, char *, path, struct VFSEntry *, entries)
+
+#define VFS_OPEN 133
+SYSCALL_1(VFS_OPEN, char *, path)
+
+#define VFS_CLOSE 134
+SYSCALL_1(VFS_CLOSE, int, fd)
+
+#define VFS_READ 135
+SYSCALL_3(VFS_READ, int, fd, char *, buffer, int, size)
+
+#define VFS_WRITE 136
+SYSCALL_3(VFS_WRITE, int, fd, char *, buffer, int, size)
+
+#define VFS_MKFILE 137
+SYSCALL_2(VFS_MKFILE, char *, path, char *, name)
+
+#define VFS_MKDIR 138
+SYSCALL_2(VFS_MKDIR, char *, path, char *, name)
+
+#define VFS_DELETE 139
+SYSCALL_1(VFS_DELETE, char *, path)
 
 #endif

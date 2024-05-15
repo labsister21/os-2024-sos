@@ -1,17 +1,7 @@
 #ifndef _VFS_H
 #define _VFS_H
 
-enum VFSType {
-	File,
-	Directory
-};
-
-struct VFSEntry {
-	char name[255];
-	int size;
-	enum VFSType type;
-};
-
+#include <vfs.h>
 struct VFSHandler {
 	int (*stat)(char *path, struct VFSEntry *entry);
 	int (*dirstat)(char *path, struct VFSEntry *entries);

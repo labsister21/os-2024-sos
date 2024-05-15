@@ -57,6 +57,10 @@ void pic_remap(void) {
 }
 
 void syscall_handler(struct InterruptFrame *frame) {
+	uint32_t first = frame->cpu.general.ebx;
+	uint32_t second = frame->cpu.general.ecx;
+	// uint32_t third = frame->cpu.general.edx;
+
 	switch (frame->cpu.general.eax) {
 	case READ:
 		*((int8_t *)frame->cpu.general.ecx) = read((struct FAT32DriverRequest *)frame->cpu.general.ebx);
@@ -120,6 +124,14 @@ void syscall_handler(struct InterruptFrame *frame) {
 
 	case EXEC: {
 		process_create_user_process((char *)frame->cpu.general.ebx);
+	} break;
+
+	case VFS_STAT: {
+		fat32_vfs.stat((void *)first, (void *)second);
+	} break;
+
+	case VFS_DIR_STAT: {
+		fat32_vfs.dirstat((void *)first, (void *)second);
 	} break;
 	}
 }
