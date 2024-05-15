@@ -628,6 +628,13 @@ int mkfile(char *path, char *name) {
 	char *extension = strtok(NULL, '.');
 	if (extension == NULL)
 		extension = "";
+
+	if (str_len(filename) > (8 - 1))
+		return -1;
+
+	if (str_len(extension) > (3 - 1))
+		return -1;
+
 	return mkgeneral(path, filename, extension, true);
 }
 
@@ -635,6 +642,9 @@ int mkdir(char *path, char *name) {
 	int i = 0;
 	while (name[i] != '\0')
 		if (name[i++] == '.') return -1;
+
+	if (str_len(name) > (8 - 1))
+		return -1;
 
 	return mkgeneral(path, name, "", false);
 }

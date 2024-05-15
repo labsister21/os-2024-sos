@@ -61,7 +61,7 @@ void syscall_handler(struct InterruptFrame *frame) {
 	int *result = (void *)(&frame->cpu.general.eax);
 	uint32_t first = frame->cpu.general.ebx;
 	uint32_t second = frame->cpu.general.ecx;
-	// uint32_t third = frame->cpu.general.edx;
+	uint32_t third = frame->cpu.general.edx;
 
 	switch (frame->cpu.general.eax) {
 	case READ:
@@ -129,11 +129,35 @@ void syscall_handler(struct InterruptFrame *frame) {
 	} break;
 
 	case VFS_STAT: {
-		*result = fat32_vfs.stat((void *)first, (void *)second);
+		*result = fat32_vfs.stat((char *)first, (struct VFSEntry *)second);
 	} break;
 
 	case VFS_DIR_STAT: {
-		*result = fat32_vfs.dirstat((void *)first, (void *)second);
+		*result = fat32_vfs.dirstat((char *)first, (struct VFSEntry *)second);
+	} break;
+
+	case VFS_MKDIR: {
+		*result = fat32_vfs.mkdir((char *)first, (char *)second);
+	} break;
+
+	case VFS_MKFILE: {
+		*result = fat32_vfs.mkfile((char *)first, (char *)second);
+	} break;
+
+	case VFS_OPEN: {
+		*result = fat32_vfs.open((char *)first);
+	} break;
+
+	case VFS_CLOSE: {
+		*result = fat32_vfs.close((int)first);
+	} break;
+
+	case VFS_READ: {
+		*result = fat32_vfs.read((int)first, (char *)second, (int)third);
+	} break;
+
+	case VFS_WRITE: {
+		*result = fat32_vfs.write((int)first, (char *)second, (int)third);
 	} break;
 	}
 }
