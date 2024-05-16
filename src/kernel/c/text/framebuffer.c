@@ -34,15 +34,6 @@ void framebuffer_set_cursor(int row, int col) {
 	framebuffer_state.col = col;
 }
 
-void framebuffer_next_line(void) {
-	int next_row = framebuffer_state.row;
-	next_row += 1;
-	if (next_row == BUFFER_HEIGHT) {
-		next_row = 0;
-	}
-	framebuffer_set_cursor(next_row, 0);
-};
-
 void framebuffer_move_cursor(enum FramebufferCursorMove direction, int count) {
 	int next_row = framebuffer_state.row;
 	int next_col = framebuffer_state.col;
@@ -63,6 +54,43 @@ void framebuffer_move_cursor(enum FramebufferCursorMove direction, int count) {
 	framebuffer_set_cursor(next_row, next_col);
 };
 
+void framebuffer_scroll_up() {
+	static bool scrolling = false;
+
+	if (scrolling)
+		return;
+
+	scrolling = true;
+	for (int row = 0; row < BUFFER_HEIGHT - 1; ++row) {
+		for (int col = 0; col < BUFFER_WIDTH; ++col) {
+
+			uint16_t flatten;
+
+			flatten = ((row + 1) * BUFFER_WIDTH) + col;
+			uint16_t value = *(uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
+
+			flatten = (row * BUFFER_WIDTH) + col;
+			uint16_t *address = (uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
+			*address = value;
+		}
+	}
+
+	for (int col = 0; col < BUFFER_WIDTH; ++col) {
+		framebuffer_write(BUFFER_HEIGHT - 1, col, ' ', WHITE, BLACK);
+	}
+	scrolling = false;
+}
+
+void framebuffer_next_line(void) {
+	int next_row = framebuffer_state.row;
+	next_row += 1;
+	if (next_row == BUFFER_HEIGHT) {
+		framebuffer_scroll_up();
+		next_row = BUFFER_HEIGHT - 1;
+	}
+	framebuffer_set_cursor(next_row, 0);
+};
+
 void framebuffer_put(char c) {
 	framebuffer_write(
 			framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,
@@ -79,7 +107,8 @@ void framebuffer_put(char c) {
 	}
 
 	if (next_row == BUFFER_HEIGHT) {
-		next_row = 0;
+		framebuffer_scroll_up();
+		next_row = BUFFER_HEIGHT - 1;
 	}
 
 	framebuffer_set_cursor(next_row, next_col);

@@ -160,11 +160,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	if (true) { // Debug
-		int n = frame.int_number;
-		framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
-		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
-	}
+	// if (true) { // Debug
+	// 	int n = frame.int_number;
+	// 	framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
+	// 	framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
+	// }
 	switch (frame.int_number) {
 	case PIC1_OFFSET + IRQ_TIMER: // Timer
 		time_handle_timer_interrupt();

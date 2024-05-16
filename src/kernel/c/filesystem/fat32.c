@@ -651,9 +651,6 @@ int mkfile(char *path) {
 	char *name;
 	parse_path(copy, &parent, &name);
 
-	framebuffer_puts(parent);
-	framebuffer_puts(name);
-
 	char *filename = strtok(name, '.');
 	char *extension = strtok(NULL, '.');
 	if (extension == NULL)
