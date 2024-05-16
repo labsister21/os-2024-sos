@@ -7,6 +7,7 @@
 #include "driver/time.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
+#include "filesystem/vfs.h"
 #include "kernel-entrypoint.h"
 #include "memory/kmalloc.h"
 #include "memory/paging.h"
@@ -36,15 +37,19 @@ void kernel_setup(void) {
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
 
-	gdt_install_tss();
-	set_tss_register();
-	set_tss_kernel_current_stack();
+	mount("/", NULL);
+	mount("/proc", NULL);
+	get_handler_by_path("/proc/lmao/fjksdlfj");
 
-	process_create("shell");
-
-	/* Time setup, before starting timer */
-	setup_time();
-	scheduler_init();
+	// gdt_install_tss();
+	// set_tss_register();
+	// set_tss_kernel_current_stack();
+	//
+	// process_create("shell");
+	//
+	// /* Time setup, before starting timer */
+	// setup_time();
+	// scheduler_init();
 
 	while (1) continue;
 }

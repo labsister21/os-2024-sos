@@ -18,4 +18,9 @@ struct VFSHandler {
 	int (*delete)(char *path);
 };
 
+int mount(char *path, struct VFSHandler *handler);
+
+struct VFSHandler *get_handler_by_path(char *path);
+struct VFSHandler *get_handler_by_fd(char *path);
+
 #endif
