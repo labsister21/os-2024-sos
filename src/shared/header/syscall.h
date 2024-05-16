@@ -99,10 +99,10 @@ SYSCALL_3(VFS_READ, int, fd, char *, buffer, int, size)
 SYSCALL_3(VFS_WRITE, int, fd, char *, buffer, int, size)
 
 #define VFS_MKFILE 137
-SYSCALL_2(VFS_MKFILE, char *, path, char *, name)
+SYSCALL_1(VFS_MKFILE, char *, path)
 
 #define VFS_MKDIR 138
-SYSCALL_2(VFS_MKDIR, char *, path, char *, name)
+SYSCALL_1(VFS_MKDIR, char *, path)
 
 #define VFS_DELETE 139
 SYSCALL_1(VFS_DELETE, char *, path)

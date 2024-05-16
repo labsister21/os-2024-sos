@@ -32,7 +32,12 @@ int refresh_cwd() {
 }
 
 // Botched
-void join_path(char *result, char *base, char *next) {
+void resolve_path(char *result, char *base, char *next) {
+	if (next[0] == '/') {
+		strcpy(result, next, MAX_PATH);
+		return;
+	}
+
 	strcpy(result, base, MAX_PATH);
 	if (strcmp(base, "/") != 0)
 		strcat(result, "/", MAX_PATH);
@@ -99,8 +104,11 @@ void cd() {
 }
 
 void mkdir() {
-	char *next = strtok(NULL, ' ');
-	status = syscall_VFS_MKDIR(state.cwd_path, next);
+	char *dir = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	resolve_path(fullpath, state.cwd_path, dir);
+
+	status = syscall_VFS_MKDIR(fullpath);
 	if (status != 0)
 		puts("Error creating directory");
 	else
@@ -109,15 +117,16 @@ void mkdir() {
 
 void tac() {
 	char *filename = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	resolve_path(fullpath, state.cwd_path, filename);
 
-	status = syscall_VFS_MKFILE(state.cwd_path, filename);
+	status = syscall_VFS_MKFILE(fullpath);
 	if (status != 0) {
 		puts("Error creating file");
 		return;
 	}
 
-	char fullpath[MAX_PATH];
-	join_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath, state.cwd_path, filename);
 
 	int fd = syscall_VFS_OPEN(fullpath);
 	if (fd < 0) {
@@ -134,7 +143,7 @@ void cat() {
 	char *filename = strtok(NULL, ' ');
 
 	char fullpath[MAX_PATH];
-	join_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath, state.cwd_path, filename);
 
 	struct VFSEntry entry;
 	status = syscall_VFS_STAT(fullpath, &entry);
@@ -165,7 +174,7 @@ void cp() {
 	char *to = strtok(NULL, ' ');
 
 	char fullpath_from[MAX_PATH];
-	join_path(fullpath_from, state.cwd_path, from);
+	resolve_path(fullpath_from, state.cwd_path, from);
 
 	struct VFSEntry from_entry;
 	syscall_VFS_STAT(fullpath_from, &from_entry);
@@ -181,9 +190,9 @@ void cp() {
 	}
 
 	char fullpath_to[MAX_PATH];
-	join_path(fullpath_to, state.cwd_path, to);
+	resolve_path(fullpath_to, state.cwd_path, to);
 
-	int status = syscall_VFS_MKFILE(state.cwd_path, to);
+	int status = syscall_VFS_MKFILE(fullpath_to);
 	if (status != 0) {
 		puts("Error creating file");
 		return;

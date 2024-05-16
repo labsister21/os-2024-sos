@@ -129,11 +129,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 	} break;
 
 	case VFS_MKDIR: {
-		*result = fat32_vfs.mkdir((char *)first, (char *)second);
+		*result = fat32_vfs.mkdir((char *)first);
 	} break;
 
 	case VFS_MKFILE: {
-		*result = fat32_vfs.mkfile((char *)first, (char *)second);
+		*result = fat32_vfs.mkfile((char *)first);
 	} break;
 
 	case VFS_OPEN: {

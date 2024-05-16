@@ -323,9 +323,9 @@ static void extract_83_fullname(struct FAT32DirectoryEntry *entry, char *result)
 // Really botching here
 #define MAX_PATH 1024
 int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEntry *entry, uint32_t *parent_cluster, uint32_t *index) {
-
-	char copy[str_len(path)];
-	strcpy(copy, path, MAX_PATH);
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
 
 	char *current = strtok(copy, '/');
 
@@ -623,7 +623,37 @@ int mkgeneral(char *path, char *name, char *ext, bool aFile) {
 	return 0;
 }
 
-int mkfile(char *path, char *name) {
+static void parse_path(char *path, char **parent, char **name) {
+	int size = str_len(path);
+
+	int i = size - 1;
+	while (i >= 0) {
+		if (path[i] == '/') break;
+		i -= 1;
+	}
+
+	if (i == -1) {
+		*parent = &path[size];
+		*name = path;
+	} else {
+		path[i] = '\0';
+		*parent = path;
+		*name = &path[i + 1];
+	}
+}
+
+int mkfile(char *path) {
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
+
+	char *parent;
+	char *name;
+	parse_path(copy, &parent, &name);
+
+	framebuffer_puts(parent);
+	framebuffer_puts(name);
+
 	char *filename = strtok(name, '.');
 	char *extension = strtok(NULL, '.');
 	if (extension == NULL)
@@ -635,18 +665,26 @@ int mkfile(char *path, char *name) {
 	if (str_len(extension) > (3 - 1))
 		return -1;
 
-	return mkgeneral(path, filename, extension, true);
+	return mkgeneral(parent, filename, extension, true);
 }
 
-int mkdir(char *path, char *name) {
-	int i = 0;
-	while (name[i] != '\0')
-		if (name[i++] == '.') return -1;
+int mkdir(char *path) {
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
 
-	if (str_len(name) > (8 - 1))
+	char *parent;
+	char *dir;
+	parse_path(path, &parent, &dir);
+
+	int i = 0;
+	while (dir[i] != '\0')
+		if (dir[i++] == '.') return -1;
+
+	if (str_len(dir) > (8 - 1))
 		return -1;
 
-	return mkgeneral(path, name, "", false);
+	return mkgeneral(parent, dir, "", false);
 }
 
 int delete_vfs(char *path) {
