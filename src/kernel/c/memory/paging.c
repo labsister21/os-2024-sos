@@ -14,6 +14,7 @@ __attribute__((aligned(0x1000))
 								 .flag.use_pagesize_4_mb = 1,
 								 .lower_address = 0,
 						 },
+				 // Kernel program
 				 [0x300] =
 						 {
 								 .flag.present_bit = 1,
@@ -21,10 +22,21 @@ __attribute__((aligned(0x1000))
 								 .flag.use_pagesize_4_mb = 1,
 								 .lower_address = 0,
 						 },
+				 // Kernel stack
+				 [0x3FF] =
+						 {
+								 .flag.present_bit = 1,
+								 .flag.write_bit = 1,
+								 .flag.use_pagesize_4_mb = 1,
+								 .lower_address = ((1 * PAGE_FRAME_SIZE) >> 22) & 0x3FF,
+						 },
 		 }};
 
 static struct PageManagerState page_manager_state = {
-		.mapped = {[0 ... PAGE_FRAME_MAX_COUNT - 1] = 0},
+		.mapped = {
+				[0] = true,
+				[1] = true
+		},
 		.free_page_frame_count = PAGE_FRAME_MAX_COUNT
 };
 
@@ -128,6 +140,13 @@ struct PageDirectory *paging_create_new_page_directory(void) {
 			.flag.write_bit = 1,
 			.flag.use_pagesize_4_mb = 1,
 			.lower_address = 0,
+	};
+
+	page_directory_list[i].table[0x3FF] = (struct PageDirectoryEntry){
+			.flag.present_bit = 1,
+			.flag.write_bit = 1,
+			.flag.use_pagesize_4_mb = 1,
+			.lower_address = ((1 * PAGE_FRAME_SIZE) >> 22) & 0x3FF,
 	};
 
 	page_directory_manager.page_directory_used[i] = true;

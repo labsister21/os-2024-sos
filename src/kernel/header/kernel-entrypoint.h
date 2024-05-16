@@ -9,6 +9,7 @@ extern uint32_t _linker_kernel_virtual_addr_end;
 extern uint32_t _linker_kernel_physical_addr_start;
 extern uint32_t _linker_kernel_physical_addr_end;
 extern uint32_t _linker_kernel_stack_top;
+extern uint32_t _linker_kernel_break_address;
 
 /**
  * Load GDT from gdtr and complete init for protected mode. This procedure

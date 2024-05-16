@@ -206,6 +206,11 @@ void cp() {
 
 void exec() {
 	int pid = syscall_EXEC(strtok(NULL, ' '));
+	if (pid < 0) {
+		puts("Error creating process");
+		return;
+	}
+	puts("Process created with pid ");
 	syscall_PUT_CHAR('0' + pid);
 }
 

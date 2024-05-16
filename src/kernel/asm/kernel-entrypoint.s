@@ -5,18 +5,12 @@ global set_tss_register              ; set tss register to GDT entry
 global kernel_execute_user_program
 extern kernel_setup                  ; kernel C entrypoint
 extern _paging_kernel_page_directory ; kernel page directory
+extern _linker_kernel_stack_top
 
 KERNEL_VIRTUAL_BASE equ 0xC0000000    ; kernel virtual memory
-KERNEL_STACK_SIZE   equ 0x200000      ; size of stack in bytes
 MAGIC_NUMBER        equ 0x1BADB002    ; define the magic number constant
 FLAGS               equ 0x0           ; multiboot flags
 CHECKSUM            equ -MAGIC_NUMBER ; calculate the checksum (magic number + checksum + flags == 0)
-
-
-section .stack nobits
-align 4                    ; align at 4 bytes
-kernel_stack:              ; label points to beginning of memory
-    resb KERNEL_STACK_SIZE ; reserve stack for the kernel
 
 
 section .multiboot  ; GRUB multiboot header
@@ -51,7 +45,7 @@ loader_entrypoint:         ; the loader label (defined as entry point in linker 
 loader_virtual:
     mov dword [_paging_kernel_page_directory], 0
     invlpg [0]                                ; Delete identity mapping and invalidate TLB cache for first page
-    mov esp, kernel_stack + KERNEL_STACK_SIZE ; Setup stack register to proper location
+    mov esp, [_linker_kernel_stack_top] ; Setup stack register to proper location
     call kernel_setup
 .loop:
     jmp .loop                                 ; loop forever

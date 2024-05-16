@@ -39,7 +39,11 @@ int process_create(char *path) {
 	}
 
 	struct VFSEntry entry;
-	fat32_vfs.stat(path, &entry);
+	int status = fat32_vfs.stat(path, &entry);
+	if (status != 0) {
+		retcode = -1;
+		goto exit_cleanup;
+	}
 
 	// Check whether memory is enough for the executable and additional frame for user stack
 	uint32_t page_frame_count_needed = (entry.size + PAGE_FRAME_SIZE + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
