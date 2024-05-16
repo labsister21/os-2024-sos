@@ -17,6 +17,7 @@ void activate_timer_interrupt(void) {
 	out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
 }
 
+int i = 0;
 void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	pic_ack(PIC1_OFFSET + IRQ_TIMER);
 

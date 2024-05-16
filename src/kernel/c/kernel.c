@@ -36,14 +36,15 @@ void kernel_setup(void) {
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
 
-	// gdt_install_tss();
-	// set_tss_register();
-	// set_tss_kernel_current_stack();
-	// process_create("shell");
-	//
-	// /* Time setup, before starting timer */
-	// setup_time();
-	// scheduler_init();
+	gdt_install_tss();
+	set_tss_register();
+	set_tss_kernel_current_stack();
+
+	process_create("shell");
+
+	/* Time setup, before starting timer */
+	setup_time();
+	scheduler_init();
 
 	while (1) continue;
 }
