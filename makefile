@@ -135,9 +135,9 @@ $(OUTPUT_PATH)/$(INSERTER_NAME):
 		-I$(SOURCE_PATH)/kernel/header \
 		$(SHARED_INCLUDE_CFLAG) \
 		-Wno-builtin-declaration-mismatch -g \
-		$(SOURCE_PATH)/kernel/c/filesystem/fat32.c \
-		$(SOURCE_PATH)/shared/code/string.c \
+		$(SOURCE_PATH)/helper/old_fat32.c \
 		$(SOURCE_PATH)/helper/inserter.c \
+		$(SOURCE_PATH)/shared/code/string.c \
 		-o $@
 inserter:
 	@make $(OUTPUT_PATH)/$(INSERTER_NAME) CC=$(NATIVE_CC)

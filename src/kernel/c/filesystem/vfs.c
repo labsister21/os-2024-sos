@@ -1,6 +1,5 @@
 #include "filesystem/vfs.h"
 #include "memory/kmalloc.h"
-#include "text/framebuffer.h"
 #include <std/stdbool.h>
 #include <std/string.h>
 
@@ -10,8 +9,7 @@ struct MountPoint {
 	struct VFSHandler *handler;
 	bool filled;
 };
-
-struct MountPoint mount_points[MAX_MOUNT];
+static struct MountPoint mount_points[MAX_MOUNT];
 
 int mount(char *path, struct VFSHandler *handler) {
 	int idx = 0;
@@ -85,12 +83,41 @@ struct VFSHandler *get_handler_by_path(char *path) {
 	return result;
 };
 
-// struct VFSHandler *get_handler_by_file_table(int ft){
-//
-// };
+#define MAX_FT 128
+static struct VFSFileTableEntry *entries[MAX_FT];
+static bool filled[MAX_FT];
 
-// int register_file_table(struct VFSFileTableEntry *entry);
-// int unregister_file_table(struct VFSFileTableEntry *entry);
-//
-//
-//
+struct VFSHandler *get_handler_by_file_table(int ft) {
+	return entries[ft]->handler;
+};
+
+int register_file_table(struct VFSFileTableEntry *entry) {
+	int idx = 0;
+	while (idx < MAX_FT) {
+		if (!filled[idx]) break;
+		idx += 1;
+	}
+	if (idx == MAX_FT) return -1;
+
+	filled[idx] = true;
+	entries[idx] = entry;
+
+	return idx;
+};
+
+// int translate_fd_to_ft(int fd);
+struct VFSFileTableEntry *get_vfs_table_entry(int ft) {
+	return entries[ft];
+};
+
+int unregister_file_table(struct VFSFileTableEntry *entry) {
+	int idx = 0;
+	while (idx < MAX_FT) {
+		if (entries[idx] == entry) break;
+		idx += 1;
+	}
+	if (idx == MAX_FT) return -1;
+
+	filled[idx] = false;
+	return 0;
+};

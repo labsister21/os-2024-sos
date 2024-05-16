@@ -74,9 +74,9 @@ int process_create(char *path) {
 	void *program_base_address = 0;
 	paging_allocate_user_page_frame(page_directory, program_base_address);
 
-	int fd = fat32_vfs.open(path);
-	fat32_vfs.read(fd, program_base_address, entry.size);
-	fat32_vfs.close(fd);
+	int ft = fat32_vfs.open(path);
+	fat32_vfs.read(ft, program_base_address, entry.size);
+	fat32_vfs.close(ft);
 
 	paging_use_page_directory(current_page_directory);
 
