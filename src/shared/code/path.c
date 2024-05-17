@@ -67,9 +67,14 @@ int split_path(char *path, char **dirname, char **basename) {
 	if (idx == -1) return -1;
 
 	path[idx] = '\0';
-	*dirname = path;
-	*basename = &path[idx + 1];
-	if (idx == 0)
-		*dirname = "/";
+	if (dirname != NULL) {
+		*dirname = path;
+		if (idx == 0)
+			*dirname = "/";
+	}
+
+	if (basename != NULL)
+		*basename = &path[idx + 1];
+
 	return 0;
 }

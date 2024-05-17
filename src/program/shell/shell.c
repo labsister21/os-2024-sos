@@ -53,10 +53,23 @@ void ls() {
 	resolve_path(fullpath);
 
 	struct VFSEntry entry;
-	syscall_VFS_STAT(fullpath, &entry);
+	status = syscall_VFS_STAT(fullpath, &entry);
+	if (status != 0) {
+		puts("Error reading stat");
+		return;
+	}
+
+	if (entry.type == File) {
+		puts("Can't list file as directory");
+		return;
+	}
 
 	struct VFSEntry entries[entry.size];
-	syscall_VFS_DIR_STAT(fullpath, entries);
+	status = syscall_VFS_DIR_STAT(fullpath, entries);
+	if (status != 0) {
+		puts("Error reading entries");
+		return;
+	}
 
 	for (int i = 0; i < entry.size; ++i) {
 		puts(entries[i].name);
