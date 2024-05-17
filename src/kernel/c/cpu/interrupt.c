@@ -114,6 +114,7 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case EXEC: {
+		framebuffer_puts((char *)first);
 		*result = process_create((char *)first);
 	} break;
 

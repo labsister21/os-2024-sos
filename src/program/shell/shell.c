@@ -237,7 +237,12 @@ void cp() {
 }
 
 void exec() {
-	int pid = syscall_EXEC(strtok(NULL, ' '));
+	char *name = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, name);
+	resolve_path(fullpath);
+
+	int pid = syscall_EXEC(fullpath);
 	if (pid < 0) {
 		puts("Error creating process");
 		return;
