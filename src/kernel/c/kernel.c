@@ -3,6 +3,7 @@
 #include "cpu/idt.h"
 #include "cpu/interrupt.h"
 #include "driver/time.h"
+#include "filesystem/dev.h"
 #include "filesystem/fat32.h"
 #include "filesystem/proc.h"
 #include "kernel-entrypoint.h"
@@ -31,6 +32,7 @@ void kernel_setup(void) {
 	/* Mounting VFS */
 	mount("/", &fat32_vfs);
 	mount("/proc", &proc_vfs);
+	mount("/dev", &dev_vfs);
 
 	/* Framebuffer setup */
 	framebuffer_clear();

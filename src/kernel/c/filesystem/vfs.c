@@ -184,13 +184,18 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	struct VFSHandler *handler = get_handler_by_path(path);
 	if (handler == NULL)
 		return -1;
+	(void)entries;
 
 	int status;
 	struct VFSEntry entry;
+	if (handler->stat == NULL)
+		return -1;
 	status = handler->stat(path, &entry);
 	if (status != 0)
 		return status;
 
+	if (handler->dirstat == NULL)
+		return -1;
 	status = handler->dirstat(path, entries);
 	if (status != 0)
 		return status;
@@ -204,7 +209,8 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 					strcmp(path, mp->dirname) == 0 &&
 					str_len(mp->basename) != 0
 			) {
-				mp->handler->stat(mp->path, &entries[count++]);
+				if (mp->handler->stat)
+					mp->handler->stat(mp->path, &entries[count++]);
 			}
 		}
 	}

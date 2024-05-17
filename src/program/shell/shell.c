@@ -173,6 +173,11 @@ void cat() {
 		return;
 	}
 
+	if (entry.type == Directory) {
+		puts("Can't cat directory");
+		return;
+	}
+
 	int fd = syscall_VFS_OPEN(fullpath);
 	if (fd < 0) {
 		puts("Error opening file");
