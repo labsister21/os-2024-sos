@@ -2,8 +2,8 @@
 /*										OLD API											*/
 /**************************************************/
 
+#include "filesystem/old_fat32.h"
 #include "driver/disk.h"
-#include "filesystem/fat32.h"
 #include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>

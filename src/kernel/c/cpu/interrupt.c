@@ -6,6 +6,7 @@
 #include "driver/time.h"
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
+#include "filesystem/vfs.h"
 #include "process/scheduler.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
@@ -121,35 +122,35 @@ void syscall_handler(struct InterruptFrame *frame) {
 	} break;
 
 	case VFS_STAT: {
-		*result = fat32_vfs.stat((char *)first, (struct VFSEntry *)second);
+		*result = vfs.stat((char *)first, (struct VFSEntry *)second);
 	} break;
 
 	case VFS_DIR_STAT: {
-		*result = fat32_vfs.dirstat((char *)first, (struct VFSEntry *)second);
+		*result = vfs.dirstat((char *)first, (struct VFSEntry *)second);
 	} break;
 
 	case VFS_MKDIR: {
-		*result = fat32_vfs.mkdir((char *)first);
+		*result = vfs.mkdir((char *)first);
 	} break;
 
 	case VFS_MKFILE: {
-		*result = fat32_vfs.mkfile((char *)first);
+		*result = vfs.mkfile((char *)first);
 	} break;
 
 	case VFS_OPEN: {
-		*result = fat32_vfs.open((char *)first);
+		*result = vfs.open((char *)first);
 	} break;
 
 	case VFS_CLOSE: {
-		*result = fat32_vfs.close((int)first);
+		*result = vfs.close((int)first);
 	} break;
 
 	case VFS_READ: {
-		*result = fat32_vfs.read((int)first, (char *)second, (int)third);
+		*result = vfs.read((int)first, (char *)second, (int)third);
 	} break;
 
 	case VFS_WRITE: {
-		*result = fat32_vfs.write((int)first, (char *)second, (int)third);
+		*result = vfs.write((int)first, (char *)second, (int)third);
 	} break;
 
 	default: {
@@ -160,11 +161,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	// if (true) { // Debug
-	// 	int n = frame.int_number;
-	// 	framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
-	// 	framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
-	// }
+	if (true) { // Debug
+		int n = frame.int_number;
+		framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
+		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
+	}
 	switch (frame.int_number) {
 	case PIC1_OFFSET + IRQ_TIMER: // Timer
 		time_handle_timer_interrupt();

@@ -6,7 +6,6 @@
 #include <std/stdint.h>
 
 #include "cpu/interrupt.h"
-#include "filesystem/fat32.h"
 #include "memory/paging.h"
 
 #define PROCESS_NAME_LENGTH_MAX 32
@@ -74,7 +73,7 @@ enum ProcessState {
  */
 struct ProcessControlBlock {
 	struct {
-		uint32_t pid;
+		int pid;
 		enum ProcessState state;
 	} metadata;
 	struct ProcessContext context;
@@ -109,6 +108,6 @@ int process_create(char *path);
  * @param pid Process ID to delete
  * @return    True if process destruction success
  */
-int process_destroy(uint32_t pid);
+int process_destroy(int pid);
 
 #endif

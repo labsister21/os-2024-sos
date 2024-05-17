@@ -2,15 +2,10 @@
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/interrupt.h"
-#include "cpu/portio.h"
-#include "driver/keyboard.h"
 #include "driver/time.h"
-#include "driver/tty.h"
 #include "filesystem/fat32.h"
-#include "filesystem/vfs.h"
+#include "filesystem/proc.h"
 #include "kernel-entrypoint.h"
-#include "memory/kmalloc.h"
-#include "memory/paging.h"
 #include "process/process.h"
 #include "process/scheduler.h"
 #include "text/framebuffer.h"
@@ -33,19 +28,19 @@ void kernel_setup(void) {
 	/* Filesystem setup */
 	initialize_filesystem_fat32();
 
+	/* Mounting VFS */
+	mount("/", &fat32_vfs);
+	mount("/proc", &proc_vfs);
+
 	/* Framebuffer setup */
 	framebuffer_clear();
 	framebuffer_set_cursor(0, 0);
-
-	// mount("/", NULL);
-	// mount("/proc", NULL);
-	// get_handler_by_path("/proc/lmao/fjksdlfj");
 
 	gdt_install_tss();
 	set_tss_register();
 	set_tss_kernel_current_stack();
 
-	process_create("shell");
+	process_create("/shell");
 
 	/* Time setup, before starting timer */
 	setup_time();

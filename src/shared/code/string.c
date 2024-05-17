@@ -118,3 +118,15 @@ void strcat(char *dst, char *src, int max) {
 	while (i < max - 1 && src[j] != '\0') dst[i++] = src[j++];
 	dst[i] = '\0';
 }
+
+void itoa(int value, char *str) {
+	if (value < 0) {
+		*str = 0;
+		value *= -1;
+		itoa(value, str + 1);
+	}
+
+	if (9 < value) itoa(value / 10, str + 1);
+	*str = value % 10 + '0';
+	*(str + 1) = '\0';
+}

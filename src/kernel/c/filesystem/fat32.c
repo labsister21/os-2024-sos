@@ -7,6 +7,8 @@
 #include <std/stdint.h>
 #include <std/string.h>
 
+// TODO: path sanitizer
+
 // clang-format off
 const uint8_t fs_signature[BLOCK_SIZE] = {
     'C', 'o', 'u', 'r', 's', 'e', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ',
@@ -234,6 +236,8 @@ struct VFSState {
 
 static int open(char *path) {
 	struct VFSState *state = kmalloc(sizeof(struct VFSState));
+	state->entry.handler = &fat32_vfs;
+
 	struct FAT32DirectoryEntry entry;
 	int status = get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
 	if (status != 0)
@@ -428,6 +432,14 @@ int mkfile(char *path) {
 	char *parent;
 	char *name;
 	parse_path(copy, &parent, &name);
+
+	framebuffer_puts("(");
+	framebuffer_puts(parent);
+	framebuffer_puts(")");
+
+	framebuffer_puts("(");
+	framebuffer_puts(name);
+	framebuffer_puts(")");
 
 	char *filename = strtok(name, '.');
 	char *extension = strtok(NULL, '.');

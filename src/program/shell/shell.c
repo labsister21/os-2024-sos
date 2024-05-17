@@ -11,7 +11,6 @@ int status;
 struct ShellState {
 	char cwd_path[MAX_PATH];
 	struct VFSEntry cwd_entry;
-	struct VFSEntry cwd_entries[MAX_ENTRIES]; // Waiting for malloc
 	struct FAT32DirectoryTable curr_dir;
 	char prompt[MAX_PROMPT];
 	int prompt_size;
@@ -22,13 +21,14 @@ void puts(char *str) {
 	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(str);
 }
 
-int refresh_cwd() {
-	status = syscall_VFS_STAT(state.cwd_path, &state.cwd_entry);
-	if (status != 0) return status;
-	status = syscall_VFS_DIR_STAT(state.cwd_path, state.cwd_entries);
-	if (status != 0) return status;
+void put_number(int number) {
+	if (number < 0) {
+		syscall_PUT_CHAR('-');
+		number *= -1;
+	}
 
-	return 0;
+	if (number > 9) put_number(number / 10);
+	syscall_PUT_CHAR('0' + (number % 10));
 }
 
 // Botched
@@ -39,6 +39,7 @@ void resolve_path(char *result, char *base, char *next) {
 	}
 
 	strcpy(result, base, MAX_PATH);
+	if (next == NULL) return;
 	if (strcmp(base, "/") != 0)
 		strcat(result, "/", MAX_PATH);
 	strcat(result, next, MAX_PATH);
@@ -50,8 +51,19 @@ void clear() {
 }
 
 void ls() {
-	for (int i = 0; i < state.cwd_entry.size; ++i) {
-		puts(state.cwd_entries[i].name);
+	char *path = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	resolve_path(fullpath, state.cwd_path, path);
+	puts(fullpath);
+
+	struct VFSEntry entry;
+	syscall_VFS_STAT(fullpath, &entry);
+
+	struct VFSEntry entries[entry.size];
+	syscall_VFS_DIR_STAT(fullpath, entries);
+
+	for (int i = 0; i < entry.size; ++i) {
+		puts(entries[i].name);
 		puts(" ");
 	}
 }
@@ -101,6 +113,28 @@ void cd() {
 		puts("Directory changed");
 		strcpy(state.cwd_path, next_path, size);
 	}
+}
+
+void stat() {
+	char *path = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	resolve_path(fullpath, state.cwd_path, path);
+
+	struct VFSEntry entry;
+	status = syscall_VFS_STAT(fullpath, &entry);
+	if (status != 0) {
+		puts("Error reading stat");
+		return;
+	}
+
+	puts("Name: ");
+	puts(entry.name);
+	syscall_PUT_CHAR('\n');
+	puts("Type: ");
+	puts(entry.type == File ? "File" : "Directory");
+	syscall_PUT_CHAR('\n');
+	puts("Size: ");
+	put_number(entry.size);
 }
 
 void mkdir() {
@@ -265,6 +299,7 @@ void run_prompt() {
 	else if (strcmp(token, "ls") == 0) ls();
 	else if (strcmp(token, "mkdir") == 0) mkdir();
 	else if (strcmp(token, "cd") == 0) cd();
+	else if (strcmp(token, "stat") == 0) stat();
 	else if (strcmp(token, "cat") == 0) cat();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
@@ -280,18 +315,12 @@ void run_prompt() {
 
 int main(void) {
 	strcpy(state.cwd_path, "/", 2);
-	status = refresh_cwd();
-	if (status != 0) {
-		puts("Error reading root directory");
-		return status;
-	}
 
 	while (true) {
 		puts(state.cwd_path);
 		puts(" > ");
 		get_prompt();
 		run_prompt();
-		refresh_cwd();
 	}
 	return 0;
 }

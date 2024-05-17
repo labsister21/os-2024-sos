@@ -62,5 +62,6 @@ char *strtok(char *str, char delimiter);
 
 int strtoi(char *str, char **end);
 void strcat(char *dst, char *src, int max);
+void itoa(int value, char *str);
 
 #endif

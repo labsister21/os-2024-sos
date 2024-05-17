@@ -5,6 +5,7 @@
 
 #include "driver/disk.h"
 #include "filesystem/fat32.h"
+#include "filesystem/old_fat32.h"
 
 // Global variable
 uint8_t *image_storage;

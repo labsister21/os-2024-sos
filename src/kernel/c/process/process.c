@@ -8,7 +8,7 @@ struct {
 	uint32_t active_process_count;
 	uint32_t last_pid;
 } process_manager_state = {
-		.last_pid = 0,
+		.last_pid = 1,
 		.active_process_count = 0,
 };
 
@@ -39,7 +39,7 @@ int process_create(char *path) {
 	}
 
 	struct VFSEntry entry;
-	int status = fat32_vfs.stat(path, &entry);
+	int status = vfs.stat(path, &entry);
 	if (status != 0) {
 		retcode = -1;
 		goto exit_cleanup;
@@ -74,9 +74,9 @@ int process_create(char *path) {
 	void *program_base_address = 0;
 	paging_allocate_user_page_frame(page_directory, program_base_address);
 
-	int ft = fat32_vfs.open(path);
-	fat32_vfs.read(ft, program_base_address, entry.size);
-	fat32_vfs.close(ft);
+	int ft = vfs.open(path);
+	vfs.read(ft, program_base_address, entry.size);
+	vfs.close(ft);
 
 	paging_use_page_directory(current_page_directory);
 
@@ -117,7 +117,7 @@ exit_cleanup:
 	return retcode;
 }
 
-int process_destroy(uint32_t pid) {
+int process_destroy(int pid) {
 	int idx = -1;
 	int running = -1;
 
