@@ -1,13 +1,14 @@
 #include "filesystem/vfs.h"
 #include "memory/kmalloc.h"
+#include <path.h>
 #include <std/stdbool.h>
 #include <std/string.h>
 
 #define MAX_MOUNT 8
 struct MountPoint {
-	char *fullpath;
-	char *parent;
-	char *name;
+	char *path;
+	char *dirname;
+	char *basename;
 	struct VFSHandler *handler;
 	bool filled;
 };
@@ -24,34 +25,24 @@ int mount(char *path, struct VFSHandler *handler) {
 	struct MountPoint *mount_point = &mount_points[idx];
 
 	int size = str_len(path) + 1;
-	char *fullpath = kmalloc(size);
-	strcpy(fullpath, path, size);
+	char *path_copy = kmalloc(size);
+	strcpy(path_copy, path, size);
 
-	int name_size = 0;
-	int sep_idx = 0;
-	for (int i = size - 1; i >= 0; --i) {
-		if (fullpath[i] == '/') {
-			sep_idx = i;
-			break;
-		};
-		name_size += 1;
-	}
-	name_size += 1;
+	char path_tmp[size];
+	strcpy(path_tmp, path, size);
 
-	char *name = kmalloc(name_size);
-	strcpy(name, &fullpath[sep_idx + 1], name_size);
+	char *dirname;
+	char *basename;
+	split_path(path_tmp, &dirname, &basename);
 
-	int parent_size = size - name_size + 1;
-	char *parent = kmalloc(parent_size);
-	fullpath[sep_idx] = '\0';
-	strcpy(parent, fullpath, parent_size);
-	fullpath[sep_idx] = '/';
-	if (sep_idx == 0)
-		strcpy(parent, "/", 2);
+	int dirname_size = str_len(dirname) + 1;
+	int basename_size = str_len(basename) + 1;
+	mount_point->dirname = kmalloc(dirname_size);
+	mount_point->basename = kmalloc(basename_size);
+	strcpy(mount_point->dirname, dirname, dirname_size);
+	strcpy(mount_point->basename, basename, basename_size);
 
-	mount_point->fullpath = fullpath;
-	mount_point->parent = parent;
-	mount_point->name = name;
+	mount_point->path = path_copy;
 	mount_point->handler = handler;
 	mount_point->filled = true;
 
@@ -64,7 +55,7 @@ int unmount(char *path, struct VFSHandler *handler) {
 		if (!mount_points[idx].filled) goto end_loop;
 		if (
 				mount_points[idx].handler == handler &&
-				strcmp(path, mount_points[idx].fullpath) == 0
+				strcmp(path, mount_points[idx].path) == 0
 		) break;
 
 	end_loop:
@@ -73,9 +64,9 @@ int unmount(char *path, struct VFSHandler *handler) {
 	if (idx == MAX_MOUNT) return -1;
 
 	struct MountPoint *mount_point = &mount_points[idx];
-	kfree(mount_point->fullpath);
-	kfree(mount_point->parent);
-	kfree(mount_point->name);
+	kfree(mount_point->path);
+	kfree(mount_point->dirname);
+	kfree(mount_point->basename);
 	mount_point->filled = false;
 
 	return 0;
@@ -98,8 +89,8 @@ struct VFSHandler *get_handler_by_path(char *path) {
 
 		if (!mount_point->filled) goto end_loop;
 
-		int pattern_size = str_len(mount_point->fullpath);
-		int match_count = count_match(path, mount_point->fullpath);
+		int pattern_size = str_len(mount_point->path);
+		int match_count = count_match(path, mount_point->path);
 
 		if (match_count != pattern_size) goto end_loop;
 		if (!(match_count > max_match)) goto end_loop;
@@ -172,10 +163,16 @@ static int stat(char *path, struct VFSEntry *entry) {
 	if (handler == NULL)
 		return -1;
 
-	handler->stat(path, entry);
+	int status = handler->stat(path, entry);
+	if (status != 0)
+		return -1;
+
 	if (entry->type == Directory) {
 		for (int i = 0; i < MAX_MOUNT; ++i) {
-			if (strcmp(path, mount_points[i].parent) == 0 && str_len(mount_points[i].name) != 0) {
+			if (
+					strcmp(path, mount_points[i].dirname) == 0 &&
+					str_len(mount_points[i].basename) != 0
+			) {
 				entry->size += 1;
 			}
 		}
@@ -189,16 +186,26 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	if (handler == NULL)
 		return -1;
 
-	handler->dirstat(path, entries);
-
+	int status;
 	struct VFSEntry entry;
-	handler->stat(path, &entry);
+	status = handler->stat(path, &entry);
+	if (status != 0)
+		return status;
+
+	status = handler->dirstat(path, entries);
+	if (status != 0)
+		return status;
+
 	if (entry.type == Directory) {
-		int count = entry.size;
+		int original_count = entry.size;
+		int count = original_count;
 		for (int i = 0; i < MAX_MOUNT; ++i) {
 			struct MountPoint *mp = &mount_points[i];
-			if (strcmp(path, mp->parent) == 0 && str_len(mp->name) != 0) {
-				mp->handler->stat(mp->fullpath, &entries[count++]);
+			if (
+					strcmp(path, mp->dirname) == 0 &&
+					str_len(mp->basename) != 0
+			) {
+				mp->handler->stat(mp->path, &entries[count++]);
 			}
 		}
 	}

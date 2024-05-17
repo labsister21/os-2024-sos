@@ -1,7 +1,6 @@
 #include "filesystem/fat32.h"
 #include "driver/disk.h"
 #include "memory/kmalloc.h"
-#include "text/framebuffer.h"
 #include <fat32.h>
 #include <std/stdbool.h>
 #include <std/stdint.h>
@@ -119,7 +118,7 @@ int get_entry_with_parent_cluster_and_index(char *path, struct FAT32DirectoryEnt
 		*parent_cluster = get_cluster_from_dir_entry(&dir.table[0]);
 
 		bool found = false;
-		for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
+		for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
 			current_entry = &dir.table[i];
 			if (current_entry->user_attribute != UATTR_NOT_EMPTY)
 				continue;
@@ -158,7 +157,7 @@ static int get_entry_count(struct FAT32DirectoryEntry *entry) {
 	int count = 0;
 	struct FAT32DirectoryTable dir;
 	read_clusters(&dir, get_cluster_from_dir_entry(entry), 1);
-	for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
 		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
 		if (current_entry->user_attribute == UATTR_NOT_EMPTY)
 			count += 1;
@@ -196,7 +195,7 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	read_clusters(&dir, get_cluster_from_dir_entry(&fat32_entry), 1);
 
 	int count = 0;
-	for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
 		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
 		if (current_entry->user_attribute != UATTR_NOT_EMPTY)
 			continue;
@@ -346,6 +345,9 @@ static int write_vfs(int ft, char *buffer, int size) {
 };
 
 int mkgeneral(char *path, char *name, char *ext, bool aFile) {
+	if (strcmp(path, ".") == 0 || strcmp(path, "..") == 0)
+		return -1;
+
 	struct FAT32DirectoryEntry entry;
 	int status = get_entry(path, &entry);
 	if (status != 0)
@@ -359,7 +361,7 @@ int mkgeneral(char *path, char *name, char *ext, bool aFile) {
 	struct FAT32DirectoryEntry *empty_entry = NULL;
 
 	char used_name[MAX_83_FILENAME_SIZE];
-	for (int i = 0; i < MAX_DIR_TABLE_ENTRY; ++i) {
+	for (int i = RESERVED_ENTRY; i < MAX_DIR_TABLE_ENTRY; ++i) {
 		struct FAT32DirectoryEntry *current_entry = &dir.table[i];
 		if (current_entry->user_attribute == UATTR_NOT_EMPTY) {
 			extract_83_fullname(current_entry, used_name);
@@ -432,14 +434,6 @@ int mkfile(char *path) {
 	char *parent;
 	char *name;
 	parse_path(copy, &parent, &name);
-
-	framebuffer_puts("(");
-	framebuffer_puts(parent);
-	framebuffer_puts(")");
-
-	framebuffer_puts("(");
-	framebuffer_puts(name);
-	framebuffer_puts(")");
 
 	char *filename = strtok(name, '.');
 	char *extension = strtok(NULL, '.');

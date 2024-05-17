@@ -1,4 +1,5 @@
 #include <fat32.h>
+#include <path.h>
 #include <std/stdint.h>
 #include <std/string.h>
 #include <syscall.h>
@@ -10,10 +11,7 @@
 int status;
 struct ShellState {
 	char cwd_path[MAX_PATH];
-	struct VFSEntry cwd_entry;
-	struct FAT32DirectoryTable curr_dir;
 	char prompt[MAX_PROMPT];
-	int prompt_size;
 };
 struct ShellState state = {};
 
@@ -31,8 +29,7 @@ void put_number(int number) {
 	syscall_PUT_CHAR('0' + (number % 10));
 }
 
-// Botched
-void resolve_path(char *result, char *base, char *next) {
+void combine_path(char *result, char *base, char *next) {
 	if (next[0] == '/') {
 		strcpy(result, next, MAX_PATH);
 		return;
@@ -40,8 +37,7 @@ void resolve_path(char *result, char *base, char *next) {
 
 	strcpy(result, base, MAX_PATH);
 	if (next == NULL) return;
-	if (strcmp(base, "/") != 0)
-		strcat(result, "/", MAX_PATH);
+	strcat(result, "/", MAX_PATH);
 	strcat(result, next, MAX_PATH);
 }
 
@@ -53,8 +49,8 @@ void clear() {
 void ls() {
 	char *path = strtok(NULL, ' ');
 	char fullpath[MAX_PATH];
-	resolve_path(fullpath, state.cwd_path, path);
-	puts(fullpath);
+	combine_path(fullpath, state.cwd_path, path);
+	resolve_path(fullpath);
 
 	struct VFSEntry entry;
 	syscall_VFS_STAT(fullpath, &entry);
@@ -70,55 +66,33 @@ void ls() {
 
 void cd() {
 	char *next = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	if (next == NULL)
+		next = "/";
+	combine_path(fullpath, state.cwd_path, next);
+	resolve_path(fullpath);
 
-	if (strcmp(next, ".") == 0) {
+	struct VFSEntry next_entry;
+	status = syscall_VFS_STAT(fullpath, &next_entry);
+	if (status != 0) {
+		puts("Error reading directory");
 		return;
-	} else if (strcmp(next, "..") == 0) {
-		int size = str_len(state.cwd_path);
-
-		int i = size - 1;
-		while (i >= 0) {
-			if (state.cwd_path[i] == '/') break;
-			i -= 1;
-		}
-
-		if (i == 0)
-			i += 1;
-		state.cwd_path[i] = '\0';
-		puts("Directory changed");
-	} else {
-		int cwd_size = str_len(state.cwd_path);
-		int size = cwd_size + str_len(next) + 2;
-		if (size > MAX_PATH) size = MAX_PATH;
-
-		char next_path[size];
-		next_path[0] = '\0';
-		strcpy(next_path, state.cwd_path, size);
-		if (cwd_size > 1) // Non root directory
-			strcat(next_path, "/", size);
-		strcat(next_path, next, size);
-
-		struct VFSEntry next_entry;
-		status = syscall_VFS_STAT(next_path, &next_entry);
-		if (status != 0) {
-			puts("Error reading directory");
-			return;
-		}
-
-		if (next_entry.type == File) {
-			puts("Can't move to file as directory");
-			return;
-		}
-
-		puts("Directory changed");
-		strcpy(state.cwd_path, next_path, size);
 	}
+
+	if (next_entry.type == File) {
+		puts("Can't move to file as directory");
+		return;
+	}
+
+	puts("Directory changed");
+	strcpy(state.cwd_path, fullpath, MAX_PATH);
 }
 
 void stat() {
 	char *path = strtok(NULL, ' ');
 	char fullpath[MAX_PATH];
-	resolve_path(fullpath, state.cwd_path, path);
+	combine_path(fullpath, state.cwd_path, path);
+	resolve_path(fullpath);
 
 	struct VFSEntry entry;
 	status = syscall_VFS_STAT(fullpath, &entry);
@@ -140,7 +114,8 @@ void stat() {
 void mkdir() {
 	char *dir = strtok(NULL, ' ');
 	char fullpath[MAX_PATH];
-	resolve_path(fullpath, state.cwd_path, dir);
+	combine_path(fullpath, state.cwd_path, dir);
+	resolve_path(fullpath);
 
 	status = syscall_VFS_MKDIR(fullpath);
 	if (status != 0)
@@ -152,15 +127,14 @@ void mkdir() {
 void tac() {
 	char *filename = strtok(NULL, ' ');
 	char fullpath[MAX_PATH];
-	resolve_path(fullpath, state.cwd_path, filename);
+	combine_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath);
 
 	status = syscall_VFS_MKFILE(fullpath);
 	if (status != 0) {
 		puts("Error creating file");
 		return;
 	}
-
-	resolve_path(fullpath, state.cwd_path, filename);
 
 	int fd = syscall_VFS_OPEN(fullpath);
 	if (fd < 0) {
@@ -175,9 +149,9 @@ void tac() {
 
 void cat() {
 	char *filename = strtok(NULL, ' ');
-
 	char fullpath[MAX_PATH];
-	resolve_path(fullpath, state.cwd_path, filename);
+	combine_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath);
 
 	struct VFSEntry entry;
 	status = syscall_VFS_STAT(fullpath, &entry);
@@ -208,7 +182,8 @@ void cp() {
 	char *to = strtok(NULL, ' ');
 
 	char fullpath_from[MAX_PATH];
-	resolve_path(fullpath_from, state.cwd_path, from);
+	combine_path(fullpath_from, state.cwd_path, from);
+	resolve_path(fullpath_from);
 
 	struct VFSEntry from_entry;
 	syscall_VFS_STAT(fullpath_from, &from_entry);
@@ -224,7 +199,8 @@ void cp() {
 	}
 
 	char fullpath_to[MAX_PATH];
-	resolve_path(fullpath_to, state.cwd_path, to);
+	combine_path(fullpath_to, state.cwd_path, to);
+	resolve_path(fullpath_to);
 
 	int status = syscall_VFS_MKFILE(fullpath_to);
 	if (status != 0) {
@@ -275,19 +251,18 @@ void kill() {
 }
 
 void get_prompt() {
-	state.prompt_size = 0;
-
+	int count = 0;
 	while (1) {
 		char c = '\0';
 		while (c == '\0')
 			syscall_GET_CHAR_NON_BLOCKING(&c);
 
 		syscall_PUT_CHAR(c);
-		if (c == '\n' || state.prompt_size + 1 >= MAX_PROMPT)
+		if (c == '\n' || count + 1 >= MAX_PROMPT)
 			break;
-		state.prompt[state.prompt_size++] = c;
+		state.prompt[count++] = c;
 	}
-	state.prompt[state.prompt_size] = '\0';
+	state.prompt[count] = '\0';
 }
 
 void run_prompt() {
@@ -311,6 +286,10 @@ void run_prompt() {
 	}
 
 	if (!isClear) syscall_PUT_CHAR('\n');
+}
+
+int get_max_combined_path_length(char *base, char *next) {
+	return str_len(base) + str_len(next) + 1;
 }
 
 int main(void) {
