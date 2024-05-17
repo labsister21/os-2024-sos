@@ -139,6 +139,7 @@ void mkdir() {
 
 void tac() {
 	char *filename = strtok(NULL, ' ');
+	char *content = strtok(NULL, '\0');
 	char fullpath[MAX_PATH];
 	combine_path(fullpath, state.cwd_path, filename);
 	resolve_path(fullpath);
@@ -155,7 +156,6 @@ void tac() {
 		return;
 	}
 
-	char *content = strtok(NULL, '\0');
 	syscall_VFS_WRITE(fd, content, str_len(content));
 	syscall_VFS_WRITE(fd, "\0", 1);
 }
