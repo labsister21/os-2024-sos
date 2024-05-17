@@ -2,7 +2,10 @@
 #include "cpu/gdt.h"
 #include "filesystem/vfs.h"
 #include "memory/paging.h"
+#include "text/framebuffer.h"
+#include <path.h>
 #include <std/string.h>
+#include <vfs.h>
 
 struct {
 	uint32_t active_process_count;
@@ -40,7 +43,7 @@ int process_create(char *path) {
 
 	struct VFSEntry entry;
 	int status = vfs.stat(path, &entry);
-	if (status != 0) {
+	if (status != 0 || entry.type != File) {
 		retcode = -1;
 		goto exit_cleanup;
 	}
@@ -75,6 +78,10 @@ int process_create(char *path) {
 	paging_allocate_user_page_frame(page_directory, program_base_address);
 
 	int ft = vfs.open(path);
+	if (ft < 0) {
+		retcode = -1;
+		goto exit_cleanup;
+	}
 	vfs.read(ft, program_base_address, entry.size);
 	vfs.close(ft);
 
@@ -113,6 +120,10 @@ int process_create(char *path) {
 
 	process_manager_state.active_process_count += 1;
 	retcode = pid;
+
+	char *basename;
+	split_path(copy, NULL, &basename);
+	strcpy(pcb->metadata.name, basename, MAX_VFS_NAME);
 exit_cleanup:
 	return retcode;
 }

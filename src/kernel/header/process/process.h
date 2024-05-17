@@ -4,6 +4,7 @@
 #include <std/stdbool.h>
 #include <std/stddef.h>
 #include <std/stdint.h>
+#include <vfs.h>
 
 #include "cpu/interrupt.h"
 #include "memory/paging.h"
@@ -75,6 +76,7 @@ struct ProcessControlBlock {
 	struct {
 		int pid;
 		enum ProcessState state;
+		char name[MAX_VFS_NAME];
 	} metadata;
 	struct ProcessContext context;
 	struct {

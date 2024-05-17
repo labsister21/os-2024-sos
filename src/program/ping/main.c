@@ -1,15 +1,9 @@
 #include <syscall.h>
+#include <vfs.h>
 int main() {
-	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("Start");
-
-	int flip = 0;
-	while (1) {
-		syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(flip ? "ping" : "pong");
-		syscall_PUT_CHAR('\n');
-
-		for (int i = 0; i < 100000000; ++i)
-			;
-		flip = !flip;
-	}
+	struct VFSEntry entry;
+	syscall_VFS_STAT("/proc", &entry);
+	if (entry.size < 15)
+		syscall_EXEC("/ping");
 	return 0;
 }

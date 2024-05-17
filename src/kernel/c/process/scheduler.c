@@ -66,6 +66,13 @@ void scheduler_init(void) {
 	kernel_start_user_mode(&_process_list[i].context.frame);
 };
 
-int lmao(struct InterruptFrame *frame) {
-	return frame->cpu.segment.fs;
-}
+int get_current_running_pid() {
+	int i = 0;
+	while (i < PROCESS_COUNT_MAX) {
+		struct ProcessControlBlock *pcb = &_process_list[i];
+		if (pcb->metadata.state == Running) return pcb->metadata.pid;
+		i += 1;
+	}
+
+	return -1;
+};

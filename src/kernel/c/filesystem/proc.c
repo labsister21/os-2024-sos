@@ -1,5 +1,8 @@
 #include "filesystem/proc.h"
+#include "filesystem/vfs.h"
+#include "memory/kmalloc.h"
 #include "process/process.h"
+#include "text/framebuffer.h"
 #include <std/string.h>
 
 static int status;
@@ -39,7 +42,7 @@ static int process_stat(int pid, struct VFSEntry *entry) {
 	if (pcb == NULL)
 		return -1;
 
-	itoa(pid, entry->name);
+	itoa(pid, entry->name, 10);
 	entry->size = 0;
 	entry->type = File;
 
@@ -56,8 +59,12 @@ static int count_running_process() {
 }
 
 static int stat(char *path, struct VFSEntry *entry) {
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
+
 	bool is_root;
-	int pid = parse_path(path, &is_root);
+	int pid = parse_path(copy, &is_root);
 	if (pid < 0)
 		return pid;
 
@@ -73,8 +80,12 @@ static int stat(char *path, struct VFSEntry *entry) {
 };
 
 static int dirstat(char *path, struct VFSEntry *entries) {
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
+
 	bool is_root;
-	int pid = parse_path(path, &is_root);
+	int pid = parse_path(copy, &is_root);
 	if (pid < 0)
 		return pid;
 
@@ -91,9 +102,50 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	return 0;
 };
 
+struct VFSState {
+	struct VFSFileTableEntry entry;
+	struct ProcessControlBlock *pcb;
+	int current_pointer;
+	int max_pointer;
+};
+
 static int open(char *path) {
-	(void)path;
-	return -1;
+	int size = str_len(path) + 1;
+	char copy[size];
+	strcpy(copy, path, size);
+
+	bool is_root;
+	int pid = parse_path(copy, &is_root);
+	if (pid < 0)
+		return pid;
+
+	if (is_root)
+		return -1;
+
+	struct VFSState *state = kmalloc(sizeof(struct VFSState));
+	state->entry.handler = &proc_vfs;
+
+	int ft = register_file_table((void *)state);
+	if (ft < 0) {
+		kfree(state);
+		return -1;
+	}
+
+#define MAX_DIGIT 16
+
+	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
+
+	state->pcb = pcb;
+	state->current_pointer = 0;
+	state->max_pointer = str_len(pcb->metadata.name);
+
+	// char digits[MAX_DIGIT];
+	// strcat(state->buffer, "EIP: 0x", 1000);
+	// itoa(pcb->context.frame.int_stack.eip, digits, 16);
+	// strcat(state->buffer, digits, 1000);
+	// state->max_pointer = 100;
+
+	return ft;
 };
 
 static int close(int ft) {
@@ -102,32 +154,19 @@ static int close(int ft) {
 };
 
 static int read(int ft, char *buffer, int size) {
-	(void)ft;
-	(void)buffer;
-	(void)size;
-	return -1;
-};
+	struct VFSState *state = (void *)get_vfs_table_entry(ft);
 
-static int write(int ft, char *buffer, int size) {
-	(void)ft;
-	(void)buffer;
-	(void)size;
-	return -1;
-};
+	if (state->current_pointer == state->max_pointer)
+		return -1;
 
-static int mkfile(char *path) {
-	(void)path;
-	return -1;
-};
+	int read_count = 0;
+	while (true) {
+		if (read_count >= size) break;
+		if (state->current_pointer == state->max_pointer) break;
+		buffer[read_count++] = state->pcb->metadata.name[state->current_pointer++];
+	}
 
-static int mkdir(char *path) {
-	(void)path;
-	return -1;
-};
-
-static int delete(char *path) {
-	(void)path;
-	return -1;
+	return read_count;
 };
 
 struct VFSHandler proc_vfs = {
@@ -138,10 +177,10 @@ struct VFSHandler proc_vfs = {
 		.close = close,
 
 		.read = read,
-		.write = write,
+		.write = NULL,
 
-		.mkfile = mkfile,
-		.mkdir = mkdir,
+		.mkfile = NULL,
+		.mkdir = NULL,
 
-		.delete = delete,
+		.delete = NULL,
 };

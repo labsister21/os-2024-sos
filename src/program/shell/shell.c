@@ -179,15 +179,10 @@ void cat() {
 		return;
 	}
 
-	int i = 0;
 	int block = 512;
-	while (i < entry.size) {
-		char buff[block];
-		syscall_VFS_READ(fd, buff, block);
-		puts(buff);
-
-		i += block;
-	}
+	char buff[block];
+	syscall_VFS_READ(fd, buff, block);
+	puts(buff);
 }
 
 void cp() {

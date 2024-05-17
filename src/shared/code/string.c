@@ -119,14 +119,40 @@ void strcat(char *dst, char *src, int max) {
 	dst[i] = '\0';
 }
 
-void itoa(int value, char *str) {
-	if (value < 0) {
-		*str = 0;
-		value *= -1;
-		itoa(value, str + 1);
-	}
+static char to_digit(int digit) {
+	if (0 <= digit && digit <= 9) return digit + '0';
+	else if (10 <= digit && digit <= 15) return (digit - 10) + 'A';
+	return ' ';
+}
 
-	if (9 < value) itoa(value / 10, str + 1);
-	*str = value % 10 + '0';
-	*(str + 1) = '\0';
+void strrev(char *str) {
+	int size = str_len(str);
+	for (int i = 0; i < (size / 2); ++i) {
+		int left = i;
+		int right = (size - 1) - left;
+
+		char t = str[left];
+		str[left] = str[right];
+		str[right] = t;
+	}
+};
+
+void itoa(int value, char *str, int base) {
+	bool neg = value < 0;
+	char *start = str;
+
+	if (neg) value *= -1;
+
+	do {
+		*str = to_digit(value % base);
+		value /= base;
+		str += 1;
+	} while (value > 0);
+	if (neg) {
+		*str = '-';
+		str += 1;
+	}
+	*str = '\0';
+
+	strrev(start);
 }

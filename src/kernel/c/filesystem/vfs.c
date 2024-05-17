@@ -146,25 +146,24 @@ int unregister_file_table(struct VFSFileTableEntry *entry) {
 
 /* Main API */
 
-#define GET_HANDLER_BY_FT(ft)                                 \
-	struct VFSHandler *handler = get_handler_by_file_table(ft); \
-	if (handler == NULL)                                        \
-		return -1;                                                \
-	return handler
+#define RUN_HANDLER(result, name, get_handler, param_handler, ...) \
+	struct                                                           \
+			VFSHandler *handler = get_handler(param_handler);            \
+	if (handler == NULL)                                             \
+		return -1;                                                     \
+	if (handler->name == NULL)                                       \
+		return -1;                                                     \
+	result = handler->name(__VA_ARGS__);
 
-#define GET_HANDLER_BY_PATH(path)                         \
-	struct VFSHandler *handler = get_handler_by_path(path); \
-	if (handler == NULL)                                    \
-		return -1;                                            \
-	return handler
+#define DIRECT_RUN_HANDLER(name, get_handler, param_handler, ...)    \
+	int result;                                                        \
+	RUN_HANDLER(result, name, get_handler, param_handler, __VA_ARGS__) \
+	return result;
 
 static int stat(char *path, struct VFSEntry *entry) {
-	struct VFSHandler *handler = get_handler_by_path(path);
-	if (handler == NULL)
-		return -1;
-
-	int status = handler->stat(path, entry);
-	if (status != 0)
+	int result;
+	RUN_HANDLER(result, stat, get_handler_by_path, path, path, entry);
+	if (result != 0)
 		return -1;
 
 	if (entry->type == Directory) {
@@ -213,16 +212,16 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	return 0;
 };
 
-static int open(char *path) { GET_HANDLER_BY_PATH(path)->open(path); };
-static int close(int ft) { GET_HANDLER_BY_FT(ft)->close(ft); };
+static int open(char *path){DIRECT_RUN_HANDLER(open, get_handler_by_path, path, path)};
+static int close(int ft){DIRECT_RUN_HANDLER(close, get_handler_by_file_table, ft, ft)};
 
-static int read(int ft, char *buffer, int size) { GET_HANDLER_BY_FT(ft)->read(ft, buffer, size); };
-static int write(int ft, char *buffer, int size) { GET_HANDLER_BY_FT(ft)->write(ft, buffer, size); };
+static int read(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(read, get_handler_by_file_table, ft, ft, buffer, size)};
+static int write(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(write, get_handler_by_file_table, ft, ft, buffer, size)};
 
-static int mkfile(char *path) { GET_HANDLER_BY_PATH(path)->mkfile(path); };
-static int mkdir(char *path) { GET_HANDLER_BY_PATH(path)->mkdir(path); };
+static int mkfile(char *path) { DIRECT_RUN_HANDLER(mkfile, get_handler_by_path, path, path); };
+static int mkdir(char *path) { DIRECT_RUN_HANDLER(mkdir, get_handler_by_path, path, path); };
 
-static int delete(char *path) { GET_HANDLER_BY_PATH(path)->delete (path); };
+static int delete(char *path) { DIRECT_RUN_HANDLER(delete, get_handler_by_path, path, path); };
 
 struct VFSHandler vfs = {
 		.stat = stat,

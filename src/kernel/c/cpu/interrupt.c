@@ -114,7 +114,6 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case EXEC: {
-		framebuffer_puts((char *)first);
 		*result = process_create((char *)first);
 	} break;
 
@@ -162,12 +161,12 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	if (true) { // Debug
-		int n = frame.int_number;
-		framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
-		framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
-	}
 	switch (frame.int_number) {
+	case 14: { // Page fault
+		int pid = get_current_running_pid();
+		scheduler_handle_timer_interrupt(&frame);
+		process_destroy(pid);
+	} break;
 	case PIC1_OFFSET + IRQ_TIMER: // Timer
 		time_handle_timer_interrupt();
 		scheduler_handle_timer_interrupt(&frame);
@@ -181,6 +180,12 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 	case SYSCALL_INT:
 		syscall_handler(&frame);
 		break;
+	default:
+		if (true) { // Debug
+			int n = frame.int_number;
+			framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
+			framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
+		}
 	}
 };
 

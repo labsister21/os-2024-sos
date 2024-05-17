@@ -48,4 +48,6 @@ void activate_timer_interrupt(void);
 
 void scheduler_handle_timer_interrupt(struct InterruptFrame *);
 
+int get_current_running_pid();
+
 #endif
