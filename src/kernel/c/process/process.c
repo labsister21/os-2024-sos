@@ -9,17 +9,35 @@
 
 struct {
 	uint32_t active_process_count;
-	uint32_t last_pid;
 } process_manager_state = {
-		.last_pid = 1,
 		.active_process_count = 0,
 };
 
 struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
-int process_generate_new_pid() {
-	return process_manager_state.last_pid++;
-};
+#define START_PID 1
+struct ProcessControlBlock *process_pids[PROCESS_COUNT_MAX];
+static int get_free_pid() {
+	int idx = 0;
+	while (idx < PROCESS_COUNT_MAX) {
+		if (process_pids[idx] == NULL) break;
+		idx += 1;
+	}
+	if (idx == PROCESS_COUNT_MAX)
+		return -1;
+	return idx + START_PID;
+}
+
+static void set_free_pid(int pid) {
+	int idx = pid - START_PID;
+	process_pids[idx] = NULL;
+}
+
+static void reserve_pid(int pid, struct ProcessControlBlock *pcb) {
+	int idx = pid - START_PID;
+	process_pids[idx] = pcb;
+	pcb->metadata.pid = pid;
+}
 
 int process_list_get_inactive_index() {
 	for (int i = 0; i < PROCESS_COUNT_MAX; ++i) {
@@ -63,7 +81,7 @@ int process_create(char *path) {
 	}
 
 	struct ProcessControlBlock *pcb = &(_process_list[p_index]);
-	int pid = process_generate_new_pid();
+	int pid = get_free_pid();
 	pcb->metadata.pid = pid;
 	pcb->metadata.state = Waiting;
 
@@ -124,6 +142,8 @@ int process_create(char *path) {
 	char *basename;
 	split_path(copy, NULL, &basename);
 	strcpy(pcb->metadata.name, basename, MAX_VFS_NAME);
+	reserve_pid(pid, pcb);
+
 exit_cleanup:
 	return retcode;
 }
@@ -149,6 +169,7 @@ int process_destroy(int pid) {
 
 	struct ProcessControlBlock *pcb = &_process_list[idx];
 	paging_free_page_directory(pcb->context.page_directory_virtual_addr);
+	set_free_pid(pid);
 	pcb->metadata.state = Inactive;
 	process_manager_state.active_process_count -= 1;
 
