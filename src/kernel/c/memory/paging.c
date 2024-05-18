@@ -71,6 +71,7 @@ bool paging_allocate_user_page_frame(
 		if (page_manager_state.mapped[i] == false) break;
 		++i;
 	}
+	if (i == PAGE_FRAME_MAX_COUNT) return false;
 
 	update_page_directory_entry(
 			page_dir, (void *)(i * PAGE_FRAME_SIZE), virtual_addr,
@@ -108,15 +109,16 @@ bool paging_free_user_page_frame(
 
 struct PageDirectory *paging_create_new_page_directory(void) {
 	struct PageDirectory *dir = kmalloc_aligned(sizeof(struct PageDirectory), 0x1000);
-	memset(dir, 0, sizeof(struct PageDirectory));
+	if (dir == NULL)
+		return NULL;
 
+	memset(dir, 0, sizeof(struct PageDirectory));
 	dir->table[0x300] = (struct PageDirectoryEntry){
 			.flag.present_bit = 1,
 			.flag.write_bit = 1,
 			.flag.use_pagesize_4_mb = 1,
 			.lower_address = 0,
 	};
-
 	dir->table[0x3FF] = (struct PageDirectoryEntry){
 			.flag.present_bit = 1,
 			.flag.write_bit = 1,

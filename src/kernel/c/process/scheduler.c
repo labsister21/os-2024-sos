@@ -90,7 +90,6 @@ bool context_switch() {
 	return true;
 }
 
-int i = 0;
 void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	pic_ack(PIC1_OFFSET + IRQ_TIMER);
 
@@ -126,12 +125,6 @@ void scheduler_init(void) {
 };
 
 int get_current_running_pid() {
-	int i = 0;
-	while (i < PROCESS_COUNT_MAX) {
-		struct ProcessControlBlock *pcb = &_process_list[i];
-		if (pcb->metadata.state == Running) return pcb->metadata.pid;
-		i += 1;
-	}
-
-	return -1;
+	if (current_running == NULL) return -1;
+	return current_running->pcb->metadata.pid;
 };
