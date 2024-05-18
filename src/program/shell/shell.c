@@ -268,17 +268,82 @@ void kill() {
 	puts("Process killed");
 }
 
+void find() {
+	char *search = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, search);
+	resolve_path(fullpath);
+
+	char file_list[100][8];
+	char temp[MAX_PATH];
+	strcpy(file_list[0], "/", 8);
+
+	int i = 0;
+	while (i < len(file_list)) {
+		strcpy(temp, file_list[i], 8);
+		struct VFSEntry entry;
+		status = syscall_VFS_STAT(file_list[i], &entry);
+		if (status != 0) {
+			puts("Error reading stat");
+			puts(file_list[i]);
+			return;
+		}
+
+		struct VFSEntry entries[entry.size];
+		status = syscall_VFS_DIR_STAT(file_list[i], entries);
+		if (status != 0) {
+			puts("Error reading entries");
+			return;
+		}
+
+		for (int j = 0; j < entry.size; ++j) {
+			char temp_path[MAX_PATH];
+			strcpy(temp_path, temp, MAX_PATH);
+			if (strcmp(entries[j].name, search) == 0) {
+				if (i != 0) {
+					strcat(temp_path, "/", MAX_PATH);
+				}
+				strcat(temp_path, entries[j].name, MAX_PATH);
+				puts(temp_path);
+				return;
+			}
+			if (entries[j].type == Directory) {
+				if (i != 0) {
+					strcat(temp_path, "/", MAX_PATH);
+				}
+				strcat(temp_path, entries[j].name, 8);
+				push(file_list, temp_path);
+			}
+		}
+		i++;
+	}
+	puts("No files or directory found");
+}
+
+
+
 void get_prompt() {
 	int count = 0;
 	while (1) {
 		char c = '\0';
 		while (c == '\0')
 			syscall_GET_CHAR_NON_BLOCKING(&c);
-
-		syscall_PUT_CHAR(c);
+		if (c != '\b' || (c == '\b' && str_len(state.prompt) != 0))
+		{
+			syscall_PUT_CHAR(c);
+		}
+		
 		if (c == '\n' || count + 1 >= MAX_PROMPT)
 			break;
-		state.prompt[count++] = c;
+		if (c == '\b'){
+			if (str_len(state.prompt) != 0)
+			{
+				state.prompt[--count] = '\0';
+			}
+		}
+		else {
+			state.prompt[count++] = c;
+		}
 	}
 	state.prompt[count] = '\0';
 }
@@ -298,12 +363,19 @@ void run_prompt() {
 	else if (strcmp(token, "cp") == 0) cp();
 	else if (strcmp(token, "exec") == 0) exec();
 	else if (strcmp(token, "kill") == 0) kill();
+	else if (strcmp(token, "find") == 0) find();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);
 	}
 
 	if (!isClear) syscall_PUT_CHAR('\n');
+	if (str_len(state.prompt) != 0) {
+		for (int i = 0; i < str_len(state.prompt); i++)
+		{
+			state.prompt[i] = '\0';
+		}
+	}
 }
 
 int get_max_combined_path_length(char *base, char *next) {

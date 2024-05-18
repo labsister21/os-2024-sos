@@ -92,10 +92,19 @@ void framebuffer_next_line(void) {
 };
 
 void framebuffer_put(char c) {
-	framebuffer_write(
-			framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,
-			framebuffer_state.bg
-	);
+	if (c == '\b') {
+		framebuffer_write(
+				framebuffer_state.row, framebuffer_state.col-1, '\0', framebuffer_state.fg,
+				framebuffer_state.bg
+		);
+		framebuffer_state.col -= 2;
+	}
+	else {
+		framebuffer_write(
+				framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,
+				framebuffer_state.bg
+		);
+	}
 
 	int next_col = framebuffer_state.col;
 	int next_row = framebuffer_state.row;

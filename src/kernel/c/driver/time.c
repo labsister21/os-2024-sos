@@ -58,14 +58,14 @@ void time_handle_timer_interrupt() {
 
 		interrupt_counter = 0;
 	}
-	// framebuffer_write(0, 79, current_time.second % 10 + '0', WHITE, BLACK);
-	// framebuffer_write(0, 78, current_time.second / 10 + '0', WHITE, BLACK);
-	//
-	// framebuffer_write(0, 76, current_time.minute % 10 + '0', WHITE, BLACK);
-	// framebuffer_write(0, 75, current_time.minute / 10 + '0', WHITE, BLACK);
-	//
-	// framebuffer_write(0, 73, current_time.hour / 10 + '0', WHITE, BLACK);
-	// framebuffer_write(0, 72, current_time.hour / 10 + '0', WHITE, BLACK);
+	framebuffer_write(0, 79, current_time.second % 10 + '0', WHITE, BLACK);
+	framebuffer_write(0, 78, current_time.second / 10 + '0', WHITE, BLACK);
+	
+	framebuffer_write(0, 76, current_time.minute % 10 + '0', WHITE, BLACK);
+	framebuffer_write(0, 75, current_time.minute / 10 + '0', WHITE, BLACK);
+	
+	framebuffer_write(0, 73, current_time.hour % 10 + '0', WHITE, BLACK);
+	framebuffer_write(0, 72, current_time.hour / 10 + '0', WHITE, BLACK);
 
 	interrupt_counter += 1;
 };
