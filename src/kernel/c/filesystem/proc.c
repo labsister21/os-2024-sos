@@ -19,30 +19,15 @@ static int parse_path(char *path, bool *is_root) {
 
 	if (trail != NULL)
 		return -1;
-
 	int result = strtoi(pid, NULL);
 	return result;
 }
 
-static struct ProcessControlBlock *get_pcb_from_pid(int pid) {
-	int idx = 0;
-	while (idx < PROCESS_COUNT_MAX) {
-		struct ProcessControlBlock *current = &_process_list[idx];
-		if (current->metadata.state == Inactive) goto end_loop;
-		if (current->metadata.pid == pid) return current;
-
-	end_loop:
-		idx += 1;
-	}
-	return NULL;
-}
-
-static int process_stat(int pid, struct VFSEntry *entry) {
-	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
+static int process_stat(struct ProcessControlBlock *pcb, struct VFSEntry *entry) {
 	if (pcb == NULL)
 		return -1;
 
-	itoa(pid, entry->name, 10);
+	itoa(pcb->metadata.pid, entry->name, 10);
 	entry->size = 0;
 	entry->type = File;
 
@@ -51,8 +36,9 @@ static int process_stat(int pid, struct VFSEntry *entry) {
 
 static int count_running_process() {
 	int count = 0;
-	for (int i = 0; i < PROCESS_COUNT_MAX; ++i) {
-		if (_process_list[i].metadata.state == Inactive) continue;
+	for (int pid = PROCESS_START_PID; pid < PROCESS_END_PID; ++pid) {
+		struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
+		if (pcb == NULL || pcb->metadata.state == Inactive) continue;
 		count += 1;
 	}
 	return count;
@@ -75,7 +61,7 @@ static int stat(char *path, struct VFSEntry *entry) {
 		return 0;
 	}
 
-	status = process_stat(pid, entry);
+	status = process_stat(get_pcb_from_pid(pid), entry);
 	return status;
 };
 
@@ -93,10 +79,10 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 		return -1;
 
 	int count = 0;
-	for (int i = 0; i < PROCESS_COUNT_MAX; ++i) {
-		struct ProcessControlBlock *current = &_process_list[i];
-		if (current->metadata.state == Inactive) continue;
-		process_stat(current->metadata.pid, &entries[count++]);
+	for (int pid = PROCESS_START_PID; pid < PROCESS_END_PID; ++pid) {
+		struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
+		if (pcb == NULL || pcb->metadata.state == Inactive) continue;
+		process_stat(pcb, &entries[count++]);
 	}
 
 	return 0;
@@ -131,19 +117,11 @@ static int open(char *path) {
 		return -1;
 	}
 
-#define MAX_DIGIT 16
-
 	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
 
 	state->pcb = pcb;
 	state->current_pointer = 0;
-	state->max_pointer = str_len(pcb->metadata.name);
-
-	// char digits[MAX_DIGIT];
-	// strcat(state->buffer, "EIP: 0x", 1000);
-	// itoa(pcb->context.frame.int_stack.eip, digits, 16);
-	// strcat(state->buffer, digits, 1000);
-	// state->max_pointer = 100;
+	state->max_pointer = str_len(pcb->metadata.name) + 1;
 
 	return ft;
 };

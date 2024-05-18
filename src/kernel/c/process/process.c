@@ -1,9 +1,7 @@
 #include "process/process.h"
-#include "cpu/gdt.h"
 #include "filesystem/vfs.h"
 #include "memory/paging.h"
 #include "process/scheduler.h"
-#include "text/framebuffer.h"
 #include <path.h>
 #include <std/string.h>
 #include <vfs.h>
@@ -16,8 +14,8 @@ struct {
 
 struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
-#define START_PID 1
 struct ProcessControlBlock *process_pids[PROCESS_COUNT_MAX];
+
 static int get_free_pid() {
 	int idx = 0;
 	while (idx < PROCESS_COUNT_MAX) {
@@ -26,18 +24,22 @@ static int get_free_pid() {
 	}
 	if (idx == PROCESS_COUNT_MAX)
 		return -1;
-	return idx + START_PID;
+	return idx + PROCESS_START_PID;
 }
 
 static void set_free_pid(int pid) {
-	int idx = pid - START_PID;
+	int idx = pid - PROCESS_START_PID;
 	process_pids[idx] = NULL;
 }
 
 static void reserve_pid(int pid, struct ProcessControlBlock *pcb) {
-	int idx = pid - START_PID;
+	int idx = pid - PROCESS_START_PID;
 	process_pids[idx] = pcb;
 	pcb->metadata.pid = pid;
+}
+
+struct ProcessControlBlock *get_pcb_from_pid(int pid) {
+	return process_pids[pid - PROCESS_START_PID];
 }
 
 int process_list_get_inactive_index() {

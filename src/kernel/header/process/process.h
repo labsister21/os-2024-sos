@@ -11,7 +11,10 @@
 
 #define PROCESS_NAME_LENGTH_MAX 32
 #define PROCESS_PAGE_FRAME_COUNT_MAX 8
+
 #define PROCESS_COUNT_MAX 16
+#define PROCESS_START_PID 1
+#define PROCESS_END_PID (PROCESS_COUNT_MAX + PROCESS_START_PID)
 
 #define KERNEL_RESERVED_PAGE_FRAME_COUNT 4
 #define KERNEL_VIRTUAL_ADDRESS_BASE 0xC0000000
@@ -85,8 +88,6 @@ struct ProcessControlBlock {
 	} memory;
 };
 
-extern struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
-
 /**
  * Get currently running process PCB pointer
  *
@@ -112,5 +113,7 @@ int process_create(char *path);
  * @return    True if process destruction success
  */
 int process_destroy(int pid);
+
+struct ProcessControlBlock *get_pcb_from_pid(int pid);
 
 #endif
