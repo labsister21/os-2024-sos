@@ -277,7 +277,7 @@ void find() {
 	char file_list[100][8];
 	char temp[MAX_PATH];
 	strcpy(file_list[0], "/", 8);
-
+//
 	int i = 0;
 	while (len(file_list) != 0) {
 		int lastIdx = len(file_list)-1;
