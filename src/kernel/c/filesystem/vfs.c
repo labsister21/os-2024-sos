@@ -3,7 +3,6 @@
 #include <path.h>
 #include <std/stdbool.h>
 #include <std/string.h>
-
 #define MAX_MOUNT 8
 struct MountPoint {
 	char *path;
@@ -106,43 +105,36 @@ struct VFSHandler *get_handler_by_path(char *path) {
 };
 
 #define MAX_FT 128
-static struct VFSFileTableEntry *entries[MAX_FT];
-static bool filled[MAX_FT];
 
-struct VFSFileTableEntry *get_vfs_table_entry(int ft) {
-	return entries[ft];
-};
+static struct VFSHandler *last_handler;
+static void *file_table_context[MAX_FT];
+static struct VFSHandler *file_table_handler[MAX_FT];
 
-struct VFSHandler *get_handler_by_file_table(int ft) {
-	if (ft < 0 || MAX_FT <= ft) return NULL;
-	return entries[ft]->handler;
-};
-
-int register_file_table(struct VFSFileTableEntry *entry) {
-	int idx = 0;
-	while (idx < MAX_FT) {
-		if (!filled[idx]) break;
-		idx += 1;
+int register_file_table_context(void *context) {
+	int ft = 0;
+	while (ft < MAX_FT) {
+		if (file_table_context[ft] == NULL) break;
+		ft += 1;
 	}
-	if (idx == MAX_FT) return -1;
 
-	filled[idx] = true;
-	entries[idx] = entry;
+	file_table_context[ft] = context;
+	file_table_handler[ft] = last_handler;
+	return ft;
+}
 
-	return idx;
-};
+void *get_file_table_context(int ft) {
+	return file_table_context[ft];
+}
 
-int unregister_file_table(struct VFSFileTableEntry *entry) {
-	int idx = 0;
-	while (idx < MAX_FT) {
-		if (entries[idx] == entry) break;
-		idx += 1;
-	}
-	if (idx == MAX_FT) return -1;
+struct VFSHandler *get_file_table_handler(int ft) {
+	return file_table_handler[ft];
+}
 
-	filled[idx] = false;
+int unregister_file_table_context(int ft) {
+	file_table_context[ft] = NULL;
+	file_table_handler[ft] = NULL;
 	return 0;
-};
+}
 
 /* Main API */
 
@@ -218,11 +210,20 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 	return 0;
 };
 
-static int open(char *path){DIRECT_RUN_HANDLER(open, get_handler_by_path, path, path)};
-static int close(int ft){DIRECT_RUN_HANDLER(close, get_handler_by_file_table, ft, ft)};
+static int open(char *path) {
+	last_handler = get_handler_by_path(path);
+	if (last_handler == NULL || last_handler->open == NULL)
+		return -1;
 
-static int read(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(read, get_handler_by_file_table, ft, ft, buffer, size)};
-static int write(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(write, get_handler_by_file_table, ft, ft, buffer, size)};
+	int result = last_handler->open(path);
+	last_handler = NULL;
+	return result;
+};
+
+static int close(int ft){DIRECT_RUN_HANDLER(close, get_file_table_handler, ft, ft)};
+
+static int read(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(read, get_file_table_handler, ft, ft, buffer, size)};
+static int write(int ft, char *buffer, int size){DIRECT_RUN_HANDLER(write, get_file_table_handler, ft, ft, buffer, size)};
 
 static int mkfile(char *path) { DIRECT_RUN_HANDLER(mkfile, get_handler_by_path, path, path); };
 static int mkdir(char *path) { DIRECT_RUN_HANDLER(mkdir, get_handler_by_path, path, path); };

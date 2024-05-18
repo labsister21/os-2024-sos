@@ -1,16 +1,12 @@
 #include "filesystem/dev.h"
-#include "memory/kmalloc.h"
 #include "memory/memory.h"
 #include <path.h>
 #include <std/stddef.h>
 
 static int open(char *p) {
 	COPY_STRING_TO_LOCAL(path, p);
-	struct VFSFileTableEntry *entry = kmalloc(sizeof(struct VFSFileTableEntry));
-	entry->handler = &dev_vfs;
-	register_file_table(entry);
-
-	return 0;
+	int ft = register_file_table_context(NULL);
+	return ft;
 }
 
 static int stat(char *p, struct VFSEntry *entry) {
