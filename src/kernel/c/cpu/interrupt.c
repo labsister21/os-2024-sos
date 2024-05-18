@@ -169,6 +169,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 		*result = vfs.write(ft, (char *)second, (int)third);
 	} break;
 
+	case VFS_DELETE: {
+		*result = vfs.delete((char *)first);
+	} break;
+
 	default: {
 		framebuffer_puts("System call not implemented");
 		*result = -1;
