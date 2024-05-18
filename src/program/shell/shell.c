@@ -137,9 +137,8 @@ void mkdir() {
 		puts("Directory created");
 }
 
-void tac() {
+void touch() {
 	char *filename = strtok(NULL, ' ');
-	char *content = strtok(NULL, '\0');
 	char fullpath[MAX_PATH];
 	combine_path(fullpath, state.cwd_path, filename);
 	resolve_path(fullpath);
@@ -150,14 +149,39 @@ void tac() {
 		return;
 	}
 
+	puts("File created");
+}
+
+void tac() {
+	char *filename = strtok(NULL, ' ');
+	char *content = strtok(NULL, '\0');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath);
+
+	struct VFSEntry entry;
+	syscall_VFS_STAT(fullpath, &entry);
+	if (entry.type == Directory) {
+		puts("Can't write to directory");
+		return;
+	}
+
 	int fd = syscall_VFS_OPEN(fullpath);
 	if (fd < 0) {
 		puts("Error opening file");
 		return;
 	}
 
-	syscall_VFS_WRITE(fd, content, str_len(content));
+	status = syscall_VFS_WRITE(fd, content, str_len(content));
+	if (status == -1) {
+		puts("Error writing to file");
+		return;
+	}
 	syscall_VFS_WRITE(fd, "\0", 1);
+	syscall_VFS_CLOSE(fd);
+
+	put_number(status + 1);
+	puts(" bytes written");
 }
 
 void cat() {
@@ -294,14 +318,20 @@ void kill() {
 	puts("Process killed");
 }
 
+int stdin = -1;
 void get_prompt() {
+	if (stdin == -1) {
+		stdin = syscall_VFS_OPEN("/dev/stdin");
+	}
+
 	int count = 0;
 	while (1) {
-		char c = '\0';
-		while (c == '\0')
-			syscall_GET_CHAR_NON_BLOCKING(&c);
+		char c;
+		while (true) {
+			int read_count = syscall_VFS_READ(stdin, &c, 1);
+			if (read_count > 0) break;
+		}
 
-		syscall_PUT_CHAR(c);
 		if (c == '\n' || count + 1 >= MAX_PROMPT)
 			break;
 		state.prompt[count++] = c;
@@ -320,6 +350,7 @@ void run_prompt() {
 	else if (strcmp(token, "cd") == 0) cd();
 	else if (strcmp(token, "stat") == 0) stat();
 	else if (strcmp(token, "cat") == 0) cat();
+	else if (strcmp(token, "touch") == 0) touch();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
 	else if (strcmp(token, "exec") == 0) exec();

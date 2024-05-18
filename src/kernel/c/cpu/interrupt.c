@@ -141,10 +141,14 @@ void syscall_handler(struct InterruptFrame *frame) {
 	case VFS_OPEN: {
 		int fd = get_free_fd_of_current_process();
 		if (fd < 0) {
-			*result = -1;
+			*result = fd;
 			break;
 		}
 		int ft = vfs.open((char *)first);
+		if (ft < 0) {
+			*result = ft;
+			break;
+		}
 		set_ft_of_current_process(fd, ft);
 		*result = fd;
 	} break;
