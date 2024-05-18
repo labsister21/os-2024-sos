@@ -170,5 +170,5 @@ void push(char arr[100][8], char val[8]) {
 }
 
 void pop(char arr[100][8]) {
-	strcpy(arr[len(arr)-1], '\0', 1024);
+	strcpy(arr[len(arr)-1], "\0", 1024);
 }

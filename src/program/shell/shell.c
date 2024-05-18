@@ -279,28 +279,30 @@ void find() {
 	strcpy(file_list[0], "/", 8);
 
 	int i = 0;
-	while (i < len(file_list)) {
-		strcpy(temp, file_list[i], 8);
+	while (len(file_list) != 0) {
+		int lastIdx = len(file_list)-1;
+		strcpy(temp, file_list[lastIdx], MAX_PATH);
 		struct VFSEntry entry;
-		status = syscall_VFS_STAT(file_list[i], &entry);
+		status = syscall_VFS_STAT(file_list[lastIdx], &entry);
 		if (status != 0) {
 			puts("Error reading stat");
-			puts(file_list[i]);
 			return;
 		}
 
 		struct VFSEntry entries[entry.size];
-		status = syscall_VFS_DIR_STAT(file_list[i], entries);
+		status = syscall_VFS_DIR_STAT(file_list[lastIdx], entries);
 		if (status != 0) {
 			puts("Error reading entries");
 			return;
 		}
 
+		pop(file_list);
 		for (int j = 0; j < entry.size; ++j) {
+
 			char temp_path[MAX_PATH];
 			strcpy(temp_path, temp, MAX_PATH);
 			if (strcmp(entries[j].name, search) == 0) {
-				if (i != 0) {
+				if (strcmp(temp, "/") != 0) {
 					strcat(temp_path, "/", MAX_PATH);
 				}
 				strcat(temp_path, entries[j].name, MAX_PATH);
@@ -308,7 +310,7 @@ void find() {
 				return;
 			}
 			if (entries[j].type == Directory) {
-				if (i != 0) {
+				if (strcmp(temp, "/") != 0) {
 					strcat(temp_path, "/", MAX_PATH);
 				}
 				strcat(temp_path, entries[j].name, 8);
@@ -319,8 +321,6 @@ void find() {
 	}
 	puts("No files or directory found");
 }
-
-
 
 void get_prompt() {
 	int count = 0;
