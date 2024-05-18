@@ -100,7 +100,7 @@ void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	context_switch();
 
 	struct ProcessControlBlock *next_pcb = current_running->pcb;
-	paging_use_page_directory(next_pcb->context.page_directory_virtual_addr);
+	paging_use_page_directory(next_pcb->context.memory.page_directory_virtual_addr);
 	memcpy(frame, &next_pcb->context.frame, sizeof(struct InterruptFrame));
 	next_pcb->metadata.state = Running;
 
@@ -120,7 +120,7 @@ void scheduler_init(void) {
 		queue_back = NULL;
 	current_running->next = NULL;
 
-	paging_use_page_directory(current_running->pcb->context.page_directory_virtual_addr);
+	paging_use_page_directory(current_running->pcb->context.memory.page_directory_virtual_addr);
 	kernel_start_user_mode(&current_running->pcb->context.frame);
 };
 

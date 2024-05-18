@@ -3,6 +3,7 @@
 #include "memory/kmalloc.h"
 #include "memory/memory.h"
 #include "memory/paging.h"
+#include "process/file_descriptor.h"
 #include "process/scheduler.h"
 #include <path.h>
 #include <std/string.h>
@@ -96,6 +97,9 @@ int process_create(char *p) {
 	pcb->metadata.pid = pid;
 	pcb->metadata.state = Waiting;
 
+	for (int i = 0; i < PROCESS_MAX_FD; ++i)
+		pcb->fd[i] = -1;
+
 	struct PageDirectory *current_page_directory = paging_get_current_page_directory_addr();
 	void *program_base_address = 0;
 	status = paging_allocate_user_page_frame(page_directory, program_base_address);
@@ -110,10 +114,9 @@ int process_create(char *p) {
 	paging_use_page_directory(current_page_directory);
 
 	setup_register(pcb);
-	pcb->context.page_directory_virtual_addr = page_directory;
-
-	pcb->memory.virtual_addr_used[0] = program_base_address;
-	pcb->memory.page_frame_used_count += 1;
+	pcb->context.memory.page_directory_virtual_addr = page_directory;
+	pcb->context.memory.virtual_addr_used[0] = program_base_address;
+	pcb->context.memory.page_frame_used_count += 1;
 
 	process_manager_state.active_process_count += 1;
 
@@ -136,8 +139,9 @@ int process_destroy(int pid) {
 
 	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
 	pcb->metadata.state = Inactive;
+	cleanup_fd(pcb);
 	scheduler_remove(pcb);
-	paging_free_page_directory(pcb->context.page_directory_virtual_addr);
+	paging_free_page_directory(pcb->context.memory.page_directory_virtual_addr);
 	kfree(pcb);
 	set_free_pid(pid);
 

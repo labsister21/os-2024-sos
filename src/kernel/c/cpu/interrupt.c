@@ -7,6 +7,7 @@
 #include "driver/tty.h"
 #include "filesystem/fat32.h"
 #include "filesystem/vfs.h"
+#include "process/file_descriptor.h"
 #include "process/scheduler.h"
 #include "text/buffercolor.h"
 #include "text/framebuffer.h"
@@ -138,19 +139,34 @@ void syscall_handler(struct InterruptFrame *frame) {
 	} break;
 
 	case VFS_OPEN: {
-		*result = vfs.open((char *)first);
+		int fd = get_free_fd_of_current_process();
+		if (fd < 0) {
+			*result = -1;
+			break;
+		}
+		int ft = vfs.open((char *)first);
+		set_ft_of_current_process(fd, ft);
+		*result = fd;
 	} break;
 
 	case VFS_CLOSE: {
-		*result = vfs.close((int)first);
+		int fd = (int)first;
+		int ft = get_ft_of_current_process(fd);
+		*result = vfs.close(ft);
+		if (*result == 0)
+			clear_fd_of_current_process(fd);
 	} break;
 
 	case VFS_READ: {
-		*result = vfs.read((int)first, (char *)second, (int)third);
+		int fd = (int)first;
+		int ft = get_ft_of_current_process(fd);
+		*result = vfs.read(ft, (char *)second, (int)third);
 	} break;
 
 	case VFS_WRITE: {
-		*result = vfs.write((int)first, (char *)second, (int)third);
+		int fd = (int)first;
+		int ft = get_ft_of_current_process(fd);
+		*result = vfs.write(ft, (char *)second, (int)third);
 	} break;
 
 	default: {

@@ -12,7 +12,7 @@
 #define PROCESS_NAME_LENGTH_MAX 32
 #define PROCESS_PAGE_FRAME_COUNT_MAX 8
 
-#define PROCESS_COUNT_MAX 128
+#define PROCESS_COUNT_MAX 32
 #define PROCESS_START_PID 1
 #define PROCESS_END_PID (PROCESS_COUNT_MAX + PROCESS_START_PID)
 
@@ -48,6 +48,14 @@
 #define PROCESS_CREATE_FAIL_NOT_ENOUGH_MEMORY 3
 #define PROCESS_CREATE_FAIL_FS_READ_FAILURE 4
 
+#define PROCESS_MAX_FD 16
+
+enum ProcessState {
+	Inactive,
+	Running,
+	Waiting
+};
+
 /**
  * Contain information needed for task to be able to get interrupted and resumed later
  *
@@ -58,14 +66,11 @@
  */
 struct ProcessContext {
 	struct InterruptFrame frame;
-	struct PageDirectory *page_directory_virtual_addr;
-};
-
-enum ProcessState {
-	// TODO: Implement
-	Inactive,
-	Running,
-	Waiting
+	struct {
+		uint32_t page_frame_used_count;
+		struct PageDirectory *page_directory_virtual_addr;
+		void *virtual_addr_used[PROCESS_PAGE_FRAME_COUNT_MAX];
+	} memory;
 };
 
 /**
@@ -76,24 +81,15 @@ enum ProcessState {
  * @param memory   Memory used for the process
  */
 struct ProcessControlBlock {
-	struct {
+	struct ProcessMetadata {
 		int pid;
 		enum ProcessState state;
 		char name[MAX_VFS_NAME];
 	} metadata;
-	struct ProcessContext context;
-	struct {
-		void *virtual_addr_used[PROCESS_PAGE_FRAME_COUNT_MAX];
-		uint32_t page_frame_used_count;
-	} memory;
-};
 
-/**
- * Get currently running process PCB pointer
- *
- * @return Will return NULL if there's no running process
- */
-struct ProcessControlBlock *process_get_current_running_pcb_pointer(void);
+	struct ProcessContext context;
+	int fd[PROCESS_MAX_FD]; // File descriptor table
+};
 
 /**
  * Create new user process and setup the virtual address space.

@@ -109,7 +109,12 @@ struct VFSHandler *get_handler_by_path(char *path) {
 static struct VFSFileTableEntry *entries[MAX_FT];
 static bool filled[MAX_FT];
 
+struct VFSFileTableEntry *get_vfs_table_entry(int ft) {
+	return entries[ft];
+};
+
 struct VFSHandler *get_handler_by_file_table(int ft) {
+	if (ft < 0 || MAX_FT <= ft) return NULL;
 	return entries[ft]->handler;
 };
 
@@ -125,11 +130,6 @@ int register_file_table(struct VFSFileTableEntry *entry) {
 	entries[idx] = entry;
 
 	return idx;
-};
-
-// int translate_fd_to_ft(int fd);
-struct VFSFileTableEntry *get_vfs_table_entry(int ft) {
-	return entries[ft];
 };
 
 int unregister_file_table(struct VFSFileTableEntry *entry) {

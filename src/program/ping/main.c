@@ -2,11 +2,15 @@
 #include <syscall.h>
 #include <vfs.h>
 int main() {
-	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("ping");
-	syscall_PUT_CHAR('\n');
-	struct VFSEntry entry;
-	syscall_VFS_STAT("/proc", &entry);
-	syscall_EXEC("/ping");
+	// syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS("ping");
+	// syscall_PUT_CHAR('\n');
+	// struct VFSEntry entry;
+	// syscall_VFS_STAT("/proc", &entry);
+	// syscall_EXEC("/ping");
+
+	syscall_VFS_OPEN("/hello");
+	syscall_VFS_OPEN("/shell");
+	syscall_VFS_OPEN("/ping");
 
 	// bool flip = true;
 	// for (int i = 0; i < 10; ++i) {

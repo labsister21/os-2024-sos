@@ -43,7 +43,7 @@ void kernel_setup(void) {
 	set_tss_kernel_current_stack();
 
 	process_create("/shell");
-	// process_create("/ping");
+	process_create("/ping");
 	// process_create("/ping");
 	// process_create("/ping");
 	// process_create("/ping");
