@@ -1,9 +1,61 @@
 #include "process/scheduler.h"
 #include "cpu/portio.h"
+#include "memory/kmalloc.h"
+#include "process/process.h"
+#include "text/framebuffer.h"
 #include <std/stdint.h>
 #include <std/string.h>
 
 extern void kernel_start_user_mode(void *);
+
+struct LinkedPCB {
+	struct ProcessControlBlock *pcb;
+	struct LinkedPCB *next;
+	struct LinkedPCB *prev;
+};
+
+struct LinkedPCB *current_running = NULL;
+struct LinkedPCB *queue_front = NULL;
+struct LinkedPCB *queue_back = NULL;
+
+void scheduler_add(struct ProcessControlBlock *pcb) {
+	struct LinkedPCB *node = kmalloc(sizeof(struct LinkedPCB));
+	node->pcb = pcb;
+	node->prev = queue_back;
+	node->next = NULL;
+
+	if (queue_back != NULL)
+		queue_back->next = node;
+	queue_back = node;
+
+	if (queue_front == NULL)
+		queue_front = node;
+}
+
+void scheduler_remove(struct ProcessControlBlock *pcb) {
+	if (current_running->pcb == pcb) return;
+
+	struct LinkedPCB *current = queue_front;
+	while (current != NULL) {
+		if (current->pcb == pcb) {
+			if (current->prev)
+				current->prev->next = current->next;
+
+			if (current->next)
+				current->next->prev = current->prev;
+
+			if (current == queue_front)
+				queue_front = current->next;
+			if (current == queue_back)
+				queue_back = current->prev;
+
+			kfree(current);
+			break;
+		}
+
+		current = current->next;
+	}
+}
 
 void activate_timer_interrupt(void) {
 	__asm__ volatile("cli");
@@ -17,53 +69,60 @@ void activate_timer_interrupt(void) {
 	out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
 }
 
+bool context_switch() {
+	if (queue_front == NULL && queue_back == NULL) return false;
+
+	// Put current running to queue_back
+	current_running->prev = queue_back;
+	current_running->next = NULL;
+	queue_back->next = current_running;
+	queue_back = current_running;
+
+	// Change current running to queue_front
+	current_running = queue_front;
+	queue_front = current_running->next;
+	if (queue_front)
+		queue_front->prev = NULL;
+	if (current_running == queue_back)
+		queue_back = current_running->next;
+	current_running->next = NULL;
+
+	return true;
+}
+
 int i = 0;
 void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	pic_ack(PIC1_OFFSET + IRQ_TIMER);
 
-	int current = 0;
-	while (current < PROCESS_COUNT_MAX) {
-		if (_process_list[current].metadata.state == Running) break;
-		++current;
-	}
+	struct ProcessControlBlock *prev_pcb = current_running->pcb;
+	memcpy(&prev_pcb->context.frame, frame, sizeof(struct InterruptFrame));
+	prev_pcb->metadata.state = Waiting;
 
-	memcpy(&_process_list[current].context.frame, frame, sizeof(struct InterruptFrame));
+	context_switch();
 
-	int next = current + 1;
-	while (true) {
-		if (next == current) break;
-		if (_process_list[next].metadata.state == Waiting) break;
-		next = (next + 1) % PROCESS_COUNT_MAX;
-	}
-
-	// Only one process active, no need to switch
-	if (current == next) return;
-
-	_process_list[current].metadata.state = Waiting;
-	_process_list[next].metadata.state = Running;
-	paging_use_page_directory(_process_list[next].context.page_directory_virtual_addr);
-	memcpy(frame, &_process_list[next].context.frame, sizeof(struct InterruptFrame));
+	struct ProcessControlBlock *next_pcb = current_running->pcb;
+	paging_use_page_directory(next_pcb->context.page_directory_virtual_addr);
+	memcpy(frame, &next_pcb->context.frame, sizeof(struct InterruptFrame));
+	next_pcb->metadata.state = Running;
 
 	return;
 };
 
 void scheduler_init(void) {
+	if (current_running != NULL) return;
+
 	activate_timer_interrupt();
 
-	int i = 0;
-	while (i < PROCESS_COUNT_MAX) {
-		if (_process_list[i].metadata.state == Waiting) break;
-		++i;
-	}
+	current_running = queue_front;
+	queue_front = queue_front->next;
+	if (queue_front)
+		queue_front->prev = NULL;
+	if (queue_back == current_running)
+		queue_back = NULL;
+	current_running->next = NULL;
 
-	// Error, no init process
-	if (i == PROCESS_COUNT_MAX)
-		return;
-
-	_process_list[i].metadata.state = Running;
-
-	paging_use_page_directory(_process_list[i].context.page_directory_virtual_addr);
-	kernel_start_user_mode(&_process_list[i].context.frame);
+	paging_use_page_directory(current_running->pcb->context.page_directory_virtual_addr);
+	kernel_start_user_mode(&current_running->pcb->context.frame);
 };
 
 int get_current_running_pid() {

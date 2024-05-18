@@ -161,6 +161,12 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
+	if (true) { // Debug
+		int n = frame.int_number;
+		framebuffer_write(24, 68, (n / 10) + '0', WHITE, BLACK);
+		framebuffer_write(24, 69, (n % 10) + '0', WHITE, BLACK);
+	}
+
 	switch (frame.int_number) {
 	case 14: { // Page fault
 		int pid = get_current_running_pid();
@@ -181,11 +187,7 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		syscall_handler(&frame);
 		break;
 	default:
-		if (true) { // Debug
-			int n = frame.int_number;
-			framebuffer_write(24, 0, (n / 10) + '0', WHITE, BLACK);
-			framebuffer_write(24, 1, (n % 10) + '0', WHITE, BLACK);
-		}
+		break;
 	}
 };
 

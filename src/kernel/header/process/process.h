@@ -84,6 +84,7 @@ struct ProcessControlBlock {
 		uint32_t page_frame_used_count;
 	} memory;
 };
+
 extern struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX];
 
 /**

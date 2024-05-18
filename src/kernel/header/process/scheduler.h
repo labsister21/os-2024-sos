@@ -50,4 +50,7 @@ void scheduler_handle_timer_interrupt(struct InterruptFrame *);
 
 int get_current_running_pid();
 
+void scheduler_add(struct ProcessControlBlock *pcb);
+void scheduler_remove(struct ProcessControlBlock *pcb);
+
 #endif

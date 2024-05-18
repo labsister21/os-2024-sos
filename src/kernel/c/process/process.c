@@ -2,6 +2,7 @@
 #include "cpu/gdt.h"
 #include "filesystem/vfs.h"
 #include "memory/paging.h"
+#include "process/scheduler.h"
 #include "text/framebuffer.h"
 #include <path.h>
 #include <std/string.h>
@@ -143,6 +144,7 @@ int process_create(char *path) {
 	split_path(copy, NULL, &basename);
 	strcpy(pcb->metadata.name, basename, MAX_VFS_NAME);
 	reserve_pid(pid, pcb);
+	scheduler_add(pcb);
 
 exit_cleanup:
 	return retcode;
@@ -168,6 +170,7 @@ int process_destroy(int pid) {
 	if (idx == running) return -1;
 
 	struct ProcessControlBlock *pcb = &_process_list[idx];
+	scheduler_remove(pcb);
 	paging_free_page_directory(pcb->context.page_directory_virtual_addr);
 	set_free_pid(pid);
 	pcb->metadata.state = Inactive;
