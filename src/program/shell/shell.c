@@ -251,6 +251,32 @@ void exec() {
 	syscall_PUT_CHAR('0' + pid);
 }
 
+void ps() {
+	struct VFSEntry entry;
+	syscall_VFS_STAT("/proc", &entry);
+
+	struct VFSEntry entries[entry.size];
+	syscall_VFS_DIR_STAT("/proc", entries);
+	for (int i = 0; i < entry.size; ++i) {
+		char path[MAX_PATH];
+		strcpy(path, "/proc/", MAX_PATH);
+		strcat(path, entries[i].name, MAX_PATH);
+
+		int fd = syscall_VFS_OPEN(path);
+		if (fd < 0)
+			continue;
+
+		char buff[100];
+		syscall_VFS_READ(fd, buff, 100);
+		puts(entries[i].name);
+		puts(" ");
+		puts(buff);
+		if (i != entry.size - 1) syscall_PUT_CHAR('\n');
+
+		syscall_VFS_CLOSE(fd);
+	}
+}
+
 void kill() {
 	char *token = strtok(NULL, ' ');
 	int pid = strtoi(token, NULL);
@@ -297,6 +323,7 @@ void run_prompt() {
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
 	else if (strcmp(token, "exec") == 0) exec();
+	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
 	else {
 		char *not_found = "command not found!";
