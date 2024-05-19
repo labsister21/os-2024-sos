@@ -67,7 +67,7 @@ void *stdin_open() {
 	while (current != NULL) {
 		if (current->pid == pid)
 			return (void *)-1;
-		current = top_foreground->prev;
+		current = current->prev;
 	}
 
 	struct ForegroundList *new = kmalloc(sizeof(struct ForegroundList));
@@ -94,7 +94,7 @@ int stdin_close(void *c) {
 			return 0;
 		}
 		next = current;
-		current = top_foreground->prev;
+		current = current->prev;
 	}
 
 	return -1;
@@ -168,9 +168,12 @@ static int open(char *p) {
 }
 
 static int close(int ft) {
+	struct VFSState *state = get_file_table_context(ft);
 	kfree(get_file_table_context(ft));
 	unregister_file_table_context(ft);
-	return 0;
+	if (state->handler->close == NULL)
+		return -1;
+	return state->handler->close(state->context);
 }
 
 static int read(int ft, char *buff, int size) {
