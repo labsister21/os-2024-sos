@@ -79,6 +79,7 @@ int process_create(char *p) {
 	struct PageDirectory *page_directory = paging_create_new_page_directory();
 	if (pcb == NULL || page_directory == NULL)
 		goto error;
+	memset(pcb, 0, sizeof(struct ProcessControlBlock));
 
 	if (process_manager_state.active_process_count >= PROCESS_COUNT_MAX)
 		goto error;
