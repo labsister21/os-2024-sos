@@ -78,6 +78,7 @@ struct PageDirectory {
 struct PageManagerState {
 	bool mapped[PAGE_FRAME_MAX_COUNT];
 	void *mapped_address[PAGE_FRAME_MAX_COUNT];
+	struct PageDirectory *mapped_dir[PAGE_FRAME_MAX_COUNT];
 	uint32_t free_page_frame_count;
 } __attribute__((packed));
 
