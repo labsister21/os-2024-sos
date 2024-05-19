@@ -331,19 +331,12 @@ void get_prompt() {
 		stdin = syscall_VFS_OPEN("/dev/stdin");
 	}
 
-	int count = 0;
-	while (1) {
-		char c;
-		while (true) {
-			int read_count = syscall_VFS_READ(stdin, &c, 1);
-			if (read_count > 0) break;
-		}
-
-		if (c == '\n' || count + 1 >= MAX_PROMPT)
-			break;
-		state.prompt[count++] = c;
+	int read_count = 0;
+	while (true) {
+		read_count = syscall_VFS_READ(stdin, state.prompt, MAX_PROMPT);
+		if (read_count > 0) break;
 	}
-	state.prompt[count] = '\0';
+	state.prompt[read_count] = '\0';
 }
 
 void run_prompt() {

@@ -43,19 +43,39 @@ struct ForegroundList {
 };
 struct ForegroundList *top_foreground = NULL;
 
-#define STDIN_BUFFER_SIZE 2
+#define STDIN_BUFFER_SIZE 1024
 static char stdin_buffer[STDIN_BUFFER_SIZE];
 static int stdin_buffer_current = 0;
 static int stdin_buffer_last = 0;
 
+#define LINE_BUFFER_SIZE STDIN_BUFFER_SIZE
+static char line_buffer[LINE_BUFFER_SIZE];
+static int line_buffer_current = 0;
+static int line_buffer_size = 0;
+
 void fill_stdin_buffer(char c) {
-	stdin_buffer[stdin_buffer_last] = c;
-	stdin_buffer_last = (stdin_buffer_last + 1) % STDIN_BUFFER_SIZE;
+	if (c == '\n') {
+		fputc(c);
 
-	if (stdin_buffer_current == stdin_buffer_last)
-		stdin_buffer_current = (stdin_buffer_current + 1) % STDIN_BUFFER_SIZE;
+		int index = 0;
+		while (true) {
+			if (stdin_buffer_current == stdin_buffer_last) break;
+			if (index == LINE_BUFFER_SIZE) break;
 
-	fputc(c);
+			line_buffer[index++] = stdin_buffer[stdin_buffer_current];
+			stdin_buffer_current = (stdin_buffer_current + 1) % STDIN_BUFFER_SIZE;
+		}
+		line_buffer_current = 0;
+		line_buffer_size = index;
+	} else if (0x20 <= c && c <= 0x7e) {
+		fputc(c);
+
+		stdin_buffer[stdin_buffer_last] = c;
+		stdin_buffer_last = (stdin_buffer_last + 1) % STDIN_BUFFER_SIZE;
+
+		if (stdin_buffer_current == stdin_buffer_last)
+			stdin_buffer_current = (stdin_buffer_current + 1) % STDIN_BUFFER_SIZE;
+	}
 }
 
 void *stdin_open() {
@@ -106,11 +126,11 @@ int stdin_read(void *c, char *buffer, int size) {
 
 	int read_count = 0;
 	while (true) {
-		if (stdin_buffer_current == stdin_buffer_last) break;
+		if (line_buffer_current == line_buffer_size) break;
 		if (read_count >= size) break;
 
-		buffer[read_count++] = stdin_buffer[stdin_buffer_current];
-		stdin_buffer_current = (stdin_buffer_current + 1) % STDIN_BUFFER_SIZE;
+		buffer[read_count++] = line_buffer[line_buffer_current];
+		line_buffer_current += 1;
 	}
 	return read_count;
 }
