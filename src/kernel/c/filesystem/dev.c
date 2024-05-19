@@ -2,7 +2,6 @@
 #include "driver/tty.h"
 #include "memory/kmalloc.h"
 #include "memory/memory.h"
-#include "process/process.h"
 #include "process/scheduler.h"
 #include "text/framebuffer.h"
 #include <path.h>
@@ -68,6 +67,9 @@ void fill_stdin_buffer(char c) {
 		}
 		line_buffer_current = 0;
 		line_buffer_size = index;
+	} else if (c == '\b') {
+		// framebuffer_move_cursor(LEFT, 1);
+		// fputc(' ');
 	} else if (0x20 <= c && c <= 0x7e) {
 		fputc(c);
 
@@ -121,17 +123,14 @@ int stdin_close(void *c) {
 	return -1;
 }
 
-bool line_buffer_predicate(void *closure) {
-	(void)closure;
-	return line_buffer_current < line_buffer_size;
+bool line_buffer_predicate(void *context) {
+	return context == top_foreground && line_buffer_current < line_buffer_size;
 };
 
 int stdin_read(void *c, char *buffer, int size) {
 	struct ForegroundList *context = c;
-	if (context != top_foreground) return 0;
-
-	if (line_buffer_current >= line_buffer_size) {
-		scheduler_halt_current_process(line_buffer_predicate, NULL);
+	if (!line_buffer_predicate(context)) {
+		scheduler_halt_current_process(line_buffer_predicate, context);
 		return 0;
 	}
 
