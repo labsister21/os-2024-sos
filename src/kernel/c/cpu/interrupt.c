@@ -122,6 +122,19 @@ void syscall_handler(struct InterruptFrame *frame) {
 		*result = process_destroy((int)first);
 	} break;
 
+	case EXIT: {
+		int pid = get_current_running_pid();
+		scheduler_handle_timer_interrupt(frame);
+		int new_pid = get_current_running_pid();
+
+		if (pid == new_pid) {
+			*result = -1;
+			break;
+		}
+
+		*result = process_destroy(pid);
+	} break;
+
 	case VFS_STAT: {
 		*result = vfs.stat((char *)first, (struct VFSEntry *)second);
 	} break;

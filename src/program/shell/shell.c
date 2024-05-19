@@ -272,8 +272,6 @@ void exec() {
 		puts("Error creating process");
 		return;
 	}
-	puts("Process created with pid ");
-	syscall_PUT_CHAR('0' + pid);
 }
 
 void ps() {
@@ -319,6 +317,14 @@ void kill() {
 	puts("Process killed");
 }
 
+void exit() {
+	status = syscall_EXIT();
+	if (status != 0) {
+		puts("Botched suicide");
+		return;
+	}
+}
+
 int stdin = -1;
 void get_prompt() {
 	if (stdin == -1) {
@@ -357,6 +363,7 @@ void run_prompt() {
 	else if (strcmp(token, "exec") == 0) exec();
 	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
+	else if (strcmp(token, "exit") == 0) exit();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);

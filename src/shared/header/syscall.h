@@ -79,6 +79,9 @@ SYSCALL_1(EXEC, char *, path);
 #define KILL 122
 SYSCALL_1(KILL, int, pid);
 
+#define EXIT 123
+SYSCALL_0(EXIT);
+
 // VFS
 #define VFS_STAT 131
 SYSCALL_2(VFS_STAT, char *, path, struct VFSEntry *, entry)
