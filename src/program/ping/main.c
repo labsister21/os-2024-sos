@@ -10,7 +10,7 @@ int main() {
 	// syscall_EXEC("/ping");
 
 	int stdout = syscall_VFS_OPEN("/dev/stdout");
-	syscall_VFS_WRITE(stdout, "Hello, world!", 14);
+	syscall_VFS_WRITE(stdout, "Hello, world!\n", 15);
 
 	// char buff[10];
 	// while (true) {

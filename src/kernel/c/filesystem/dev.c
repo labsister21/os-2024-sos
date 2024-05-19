@@ -31,7 +31,7 @@ int stdout_close(void *context) {
 int stdout_write(void *context, char *buffer, int size) {
 	(void)context;
 	for (int i = 0; i < size; ++i) {
-		framebuffer_put(buffer[i]);
+		fputc(buffer[i]);
 	}
 	return size;
 }
@@ -68,8 +68,12 @@ void fill_stdin_buffer(char c) {
 		line_buffer_current = 0;
 		line_buffer_size = index;
 	} else if (c == '\b') {
-		// framebuffer_move_cursor(LEFT, 1);
-		// fputc(' ');
+		if (stdin_buffer_last != stdin_buffer_current) {
+			framebuffer_move_cursor(LEFT, 1);
+			fputc(' ');
+			framebuffer_move_cursor(LEFT, 1);
+			stdin_buffer_last -= 1;
+		}
 	} else if (0x20 <= c && c <= 0x7e) {
 		fputc(c);
 
