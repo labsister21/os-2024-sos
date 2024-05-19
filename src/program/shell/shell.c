@@ -212,6 +212,7 @@ void cat() {
 	char buff[block];
 	syscall_VFS_READ(fd, buff, block);
 	puts(buff);
+	syscall_VFS_CLOSE(fd);
 }
 
 void cp() {
