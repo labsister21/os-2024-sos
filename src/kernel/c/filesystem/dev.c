@@ -2,6 +2,7 @@
 #include "driver/tty.h"
 #include "memory/kmalloc.h"
 #include "memory/memory.h"
+#include "process/process.h"
 #include "process/scheduler.h"
 #include "text/framebuffer.h"
 #include <path.h>
@@ -120,9 +121,19 @@ int stdin_close(void *c) {
 	return -1;
 }
 
+bool line_buffer_predicate(void *closure) {
+	(void)closure;
+	return line_buffer_current < line_buffer_size;
+};
+
 int stdin_read(void *c, char *buffer, int size) {
 	struct ForegroundList *context = c;
 	if (context != top_foreground) return 0;
+
+	if (line_buffer_current >= line_buffer_size) {
+		scheduler_halt_current_process(line_buffer_predicate, NULL);
+		return 0;
+	}
 
 	int read_count = 0;
 	while (true) {

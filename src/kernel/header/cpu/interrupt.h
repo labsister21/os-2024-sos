@@ -174,4 +174,8 @@ struct TSSEntry {
 // Set kernel stack in TSS
 void set_tss_kernel_current_stack(void);
 
+void syscall_handler(struct InterruptFrame *frame);
+extern struct InterruptFrame *current_interrupt_frame;
+extern bool syscall_return_value_flag;
+
 #endif

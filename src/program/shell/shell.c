@@ -332,10 +332,7 @@ void get_prompt() {
 	}
 
 	int read_count = 0;
-	while (true) {
-		read_count = syscall_VFS_READ(stdin, state.prompt, MAX_PROMPT);
-		if (read_count > 0) break;
-	}
+	read_count = syscall_VFS_READ(stdin, state.prompt, MAX_PROMPT);
 	state.prompt[read_count] = '\0';
 }
 

@@ -96,7 +96,7 @@ int process_create(char *p) {
 	int pid = get_free_pid();
 	if (pid < 0) goto error;
 	pcb->metadata.pid = pid;
-	pcb->metadata.state = Waiting;
+	pcb->metadata.state = Ready;
 
 	for (int i = 0; i < PROCESS_MAX_FD; ++i)
 		pcb->fd[i] = -1;
