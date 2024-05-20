@@ -59,6 +59,11 @@ void framebuffer_set_cursor(int row, int col);
  */
 void framebuffer_clear(void);
 
+void framebuffer_initialize_base_layer();
+struct FramebufferLayer *framebuffer_create_layer();
+void framebuffer_remove_layer(struct FramebufferLayer *layer);
+void framebuffer_write_to_layer(struct FramebufferLayer *layer, int row, int col, char c);
+
 enum FramebufferCursorMove {
 	UP,
 	RIGHT,

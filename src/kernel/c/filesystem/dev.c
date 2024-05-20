@@ -150,26 +150,32 @@ int stdin_read(void *c, char *buffer, int size) {
 }
 
 /* stdout_layered */
+struct FramebufferLayer;
 void *stdout_layered_open() {
-	return NULL;
+	struct FramebufferLayer *layer = framebuffer_create_layer();
+	if (layer == NULL)
+		return (void *)-1;
+
+	return layer;
 };
 
 int stdout_layered_close(void *context) {
-	(void)context;
+	struct FramebufferLayer *layer = context;
+	framebuffer_remove_layer(layer);
 	return 0;
 }
 
 int stdout_layered_write(void *context, char *buffer, int size) {
-	(void)context;
+	struct FramebufferLayer *layer = context;
 
 	int idx = 0;
 	while ((idx + 2) < size) {
-		char x = buffer[idx];
-		char y = buffer[idx + 1];
-		char c = buffer[idx + 2];
+		char col = buffer[idx];
+		char row = buffer[idx + 1];
+		char val = buffer[idx + 2];
 
-		if (0x20 <= c && c <= 0x7e) {
-			framebuffer_write(y, x, c, WHITE, BLACK);
+		if (0x20 <= val && val <= 0x7e) {
+			framebuffer_write_to_layer(layer, row, col, val);
 		}
 
 		idx += 3;

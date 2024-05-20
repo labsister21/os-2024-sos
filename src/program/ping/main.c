@@ -10,7 +10,9 @@ int main() {
 	// syscall_EXEC("/ping");
 
 	int stdout = syscall_VFS_OPEN("/dev/stdout_layered");
-	syscall_VFS_WRITE(stdout, "\0\0f", 3);
+	while (true) {
+		syscall_VFS_WRITE(stdout, "\0\0p", 3);
+	}
 
 	// char buff[10];
 	// while (true) {

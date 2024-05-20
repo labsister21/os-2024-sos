@@ -36,7 +36,7 @@ void kernel_setup(void) {
 
 	/* Framebuffer setup */
 	framebuffer_clear();
-	framebuffer_set_cursor(0, 0);
+	framebuffer_initialize_base_layer();
 
 	gdt_install_tss();
 	set_tss_register();
