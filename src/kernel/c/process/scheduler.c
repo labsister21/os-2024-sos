@@ -91,6 +91,7 @@ void switch_next() {
 
 void switch_next_with_notifier(struct InterruptFrame *frame) {
 	bool notified = false;
+	bool recall = false;
 
 	struct ProcessControlBlock *prev_pcb = current_running->pcb;
 	struct ProcessControlBlock *next_pcb;
@@ -105,8 +106,10 @@ void switch_next_with_notifier(struct InterruptFrame *frame) {
 					notifier->predicate(notifier->closure)
 			) {
 				notified = true;
+				recall = notifier->recall;
 				notifier->predicate = NULL;
 				notifier->closure = NULL;
+				notifier->recall = false;
 				next_pcb->metadata.state = Ready;
 			}
 		}
@@ -124,19 +127,20 @@ void switch_next_with_notifier(struct InterruptFrame *frame) {
 	paging_use_page_directory(next_pcb->context.memory.page_directory_virtual_addr);
 	memcpy(frame, &next_pcb->context.frame, sizeof(struct InterruptFrame));
 	next_pcb->metadata.state = Running;
-	if (notified) { // Since halting process always happend on syscall, we must continue interrupt process
+	if (notified && recall) { // Since halting process always happend on syscall, we must continue interrupt process
 		syscall_handler(frame);
 		syscall_return_value_flag = false;
 	}
 }
 
-void scheduler_halt_current_process(bool (*predicate)(), void *closure) {
+void scheduler_halt_current_process(bool (*predicate)(), void *closure, bool recall) {
 	if (current_interrupt_frame->int_number != SYSCALL_INT) return;
 
 	int pid = get_current_running_pid();
 	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
 	pcb->notifier.predicate = predicate;
 	pcb->notifier.closure = closure;
+	pcb->notifier.recall = recall;
 	pcb->metadata.state = Waiting;
 
 	memcpy(&pcb->context.frame, current_interrupt_frame, sizeof(struct InterruptFrame));

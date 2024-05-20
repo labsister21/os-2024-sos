@@ -46,6 +46,6 @@ int get_current_running_pid();
 void scheduler_add(struct ProcessControlBlock *pcb);
 void scheduler_remove(struct ProcessControlBlock *pcb);
 
-void scheduler_halt_current_process(bool (*predicate)(), void *closure);
+void scheduler_halt_current_process(bool (*predicate)(), void *closure, bool recall);
 
 #endif

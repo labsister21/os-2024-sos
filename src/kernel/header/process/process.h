@@ -77,6 +77,7 @@ struct ProcessContext {
 struct ProcessNotifier {
 	void *closure;
 	bool (*predicate)(void *closure);
+	bool recall;
 };
 
 /**
