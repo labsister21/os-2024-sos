@@ -64,5 +64,8 @@ int strtoi(char *str, char **end);
 void strrev(char *str);
 void strcat(char *dst, char *src, int max);
 void itoa(int value, char *str, int base);
+int len(char arr[100][8]);
+void push(char arr[100][8], char val[8]);
+void pop(char arr[100][8]);
 
 #endif

@@ -317,6 +317,60 @@ void kill() {
 	puts("Process killed");
 }
 
+void find() {
+	char *search = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, search);
+	resolve_path(fullpath);
+
+	char file_list[100][8];
+	char temp[MAX_PATH];
+	strcpy(file_list[0], "/", 8);
+
+	int i = 0;
+	while (len(file_list) != 0) {
+		int lastIdx = len(file_list)-1;
+		strcpy(temp, file_list[lastIdx], MAX_PATH);
+		struct VFSEntry entry;
+		status = syscall_VFS_STAT(file_list[lastIdx], &entry);
+		if (status != 0) {
+			puts("Error reading stat");
+			return;
+		}
+
+		struct VFSEntry entries[entry.size];
+		status = syscall_VFS_DIR_STAT(file_list[lastIdx], entries);
+		if (status != 0) {
+			puts("Error reading entries");
+			return;
+		}
+
+		pop(file_list);
+		for (int j = 0; j < entry.size; ++j) {
+
+			char temp_path[MAX_PATH];
+			strcpy(temp_path, temp, MAX_PATH);
+			if (strcmp(entries[j].name, search) == 0) {
+				if (strcmp(temp, "/") != 0) {
+					strcat(temp_path, "/", MAX_PATH);
+				}
+				strcat(temp_path, entries[j].name, MAX_PATH);
+				puts(temp_path);
+				return;
+			}
+			if (entries[j].type == Directory) {
+				if (strcmp(temp, "/") != 0) {
+					strcat(temp_path, "/", MAX_PATH);
+				}
+				strcat(temp_path, entries[j].name, 8);
+				push(file_list, temp_path);
+			}
+		}
+		i++;
+	}
+	puts("No files or directory found");
+}
+
 void exit() {
 	status = syscall_EXIT();
 	if (status != 0) {
@@ -354,6 +408,7 @@ void run_prompt() {
 	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
 	else if (strcmp(token, "exit") == 0) exit();
+	else if (strcmp(token, "find") == 0) find();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);
