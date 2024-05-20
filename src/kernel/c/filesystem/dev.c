@@ -170,8 +170,8 @@ int stdout_layered_write(void *context, char *buffer, int size) {
 
 	int idx = 0;
 	while ((idx + 2) < size) {
-		char col = buffer[idx];
-		char row = buffer[idx + 1];
+		char row = buffer[idx];
+		char col = buffer[idx + 1];
 		char val = buffer[idx + 2];
 
 		if (0x20 <= val && val <= 0x7e) {
