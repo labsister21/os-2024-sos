@@ -15,7 +15,7 @@
 | 13522052 | Haikal Assyauqi            | 
 | 13522054 | Benjamin Sihombing         | 
 | 13522086 | Muhammad Atpur Rafif       | 
-| 13522088 | Muhammda Rafli Rasyiidin   |
+| 13522088 | Muhammad Rafli Rasyiidin   |
 
 ## Deskripsi Singkat
 Tugas ini akan membuat sebuah program sistem operasi. Sistem operasi yang akan dibuat akan berjalan pada arsitektur x86 32-bit yang nanti akan dijalankan dengan emulator QEMU. Tugas ini akan dibagi menjadi beberapa milestone.
@@ -102,9 +102,10 @@ Waktu implementasi : Minggu, 28 April 2024 - Senin, 20 Mei 2024
 ## Cara Mengkompilasi dan Menjalankan Program
 1. Lakukan *clone repository* melalui terminal dengan *command* berikut
     ``` bash
-    $ git clone https://github.com/Sister20/if2230-2023-apagakeos.git
+    $ git clone https://github.com/labsister21/os-2024-sos.git
     ```
-2. Lakukan eksekusi pada makefile dengan memasukkan *command* `make all` pada terminal. Jika berhasil maka akan tercipta beberapa file pada folder `bin`
-3. Jalan sistem oprerasi dengan membuka Visual Studio Code dan jalankan `Shift + F5`. Pastikan QEMU yang digunakan sudah aktif sebelumnya. Jika proses aktivasi tidak berhasil, maka gunakan [Panduan Debugger dan WSL](https://docs.google.com/document/d/1Zt3yzP_OEiFz8g2lHlpBNNr9qUyXghFNeQlAeQpAaII/edit#). 
+2. Lakukan eksekusi pada makefile dengan memasukkan *command* `make clean` pada terminal.`
+3. Ketik ` make insert-all-program `.
+4. Jalankan ` make run `
 
 Jika berhasil, maka sistem operasi akan muncul pada layar.
