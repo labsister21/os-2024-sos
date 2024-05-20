@@ -158,13 +158,12 @@ void framebuffer_scroll_up() {
 	for (int row = 0; row < BUFFER_HEIGHT - 1; ++row) {
 		for (int col = 0; col < BUFFER_WIDTH; ++col) {
 			uint16_t value = base_layer->buffer[row + 1][col];
-			framebuffer_base[row * BUFFER_WIDTH + col] = value;
-			base_layer->buffer[row][col] = value;
+			framebuffer_write_to_layer(base_layer, row, col, value);
 		}
 	}
 
 	for (int col = 0; col < BUFFER_WIDTH; ++col) {
-		framebuffer_write(BUFFER_HEIGHT - 1, col, ' ', WHITE, BLACK);
+		framebuffer_write_to_layer(base_layer, BUFFER_HEIGHT - 1, col, ' ');
 	}
 }
 
