@@ -195,10 +195,13 @@ void syscall_handler(struct InterruptFrame *frame) {
 		result = vfs.write(ft, (char *)second, (int)third);
 	} break;
 
+<<<<<<< HEAD
 	case VFS_DELETE: {
 		result = vfs.delete((char *)first);
 	} break;
 
+=======
+>>>>>>> origin/clock2
 	default: {
 		framebuffer_puts("System call not implemented");
 		result = -1;
