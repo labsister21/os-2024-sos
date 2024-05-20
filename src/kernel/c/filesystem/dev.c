@@ -149,19 +149,56 @@ int stdin_read(void *c, char *buffer, int size) {
 	return read_count;
 }
 
-#define FILE_COUNT 2
+/* stdout_layered */
+void *stdout_layered_open() {
+	return NULL;
+};
+
+int stdout_layered_close(void *context) {
+	(void)context;
+	return 0;
+}
+
+int stdout_layered_write(void *context, char *buffer, int size) {
+	(void)context;
+
+	int idx = 0;
+	while ((idx + 2) < size) {
+		char x = buffer[idx];
+		char y = buffer[idx + 1];
+		char c = buffer[idx + 2];
+
+		if (0x20 <= c && c <= 0x7e) {
+			framebuffer_write(y, x, c, WHITE, BLACK);
+		}
+
+		idx += 3;
+	}
+	return size;
+}
+
+#define FILE_COUNT 3
 struct DevFileHandler dev_file_handlers[FILE_COUNT] = {
-		{.name = "stdin",
-		 .open = stdin_open,
-		 .close = stdin_close,
-		 .read = stdin_read,
-		 .write = NULL
+		{
+				.name = "stdin",
+				.open = stdin_open,
+				.close = stdin_close,
+				.read = stdin_read,
+				.write = NULL,
 		},
-		{.name = "stdout",
-		 .open = stdout_open,
-		 .close = stdout_close,
-		 .read = NULL,
-		 .write = stdout_write
+		{
+				.name = "stdout",
+				.open = stdout_open,
+				.close = stdout_close,
+				.read = NULL,
+				.write = stdout_write,
+		},
+		{
+				.name = "stdout_layered",
+				.open = stdout_layered_open,
+				.close = stdout_layered_close,
+				.read = NULL,
+				.write = stdout_layered_write,
 		}
 };
 
@@ -236,7 +273,7 @@ static int stat(char *p, struct VFSEntry *entry) {
 	if (strcmp(path, "/dev") == 0) {
 		strcpy(entry->name, "dev", MAX_VFS_NAME);
 		entry->type = Directory;
-		entry->size = 2;
+		entry->size = FILE_COUNT;
 		return 0;
 	}
 
