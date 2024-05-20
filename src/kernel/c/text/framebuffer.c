@@ -6,6 +6,7 @@
 #include <std/stdint.h>
 #include <std/string.h>
 
+uint16_t *framebuffer_base = (void *)(0xC0000000 + BUFFER_BASE);
 struct FramebufferState framebuffer_state = {
 		.row = 0, .col = 0, .fg = WHITE, .bg = BLACK
 };
@@ -154,30 +155,17 @@ void framebuffer_move_cursor(enum FramebufferCursorMove direction, int count) {
 };
 
 void framebuffer_scroll_up() {
-	static bool scrolling = false;
-
-	if (scrolling)
-		return;
-
-	scrolling = true;
 	for (int row = 0; row < BUFFER_HEIGHT - 1; ++row) {
 		for (int col = 0; col < BUFFER_WIDTH; ++col) {
-
-			uint16_t flatten;
-
-			flatten = ((row + 1) * BUFFER_WIDTH) + col;
-			uint16_t value = *(uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
-
-			flatten = (row * BUFFER_WIDTH) + col;
-			uint16_t *address = (uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
-			*address = value;
+			uint16_t value = base_layer->buffer[row + 1][col];
+			framebuffer_base[row * BUFFER_WIDTH + col] = value;
+			base_layer->buffer[row][col] = value;
 		}
 	}
 
 	for (int col = 0; col < BUFFER_WIDTH; ++col) {
 		framebuffer_write(BUFFER_HEIGHT - 1, col, ' ', WHITE, BLACK);
 	}
-	scrolling = false;
 }
 
 void framebuffer_next_line(void) {
@@ -217,11 +205,8 @@ void framebuffer_put(char c) {
 void framebuffer_write(
 		int row, int col, char c, int fg, int bg
 ) {
-	uint16_t flatten = (row * BUFFER_WIDTH) + col;
-	uint16_t *target =
-			(uint16_t *)(0xC0000000 + BUFFER_BASE + flatten * CHAR_PRINTER_SIZE);
 	uint16_t attrib = (bg << 4) | (fg & 0x0F);
-	*target = c | (attrib << 8);
+	framebuffer_base[row * BUFFER_WIDTH + col] = c | (attrib << 8);
 }
 
 void framebuffer_clear(void) {

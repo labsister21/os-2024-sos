@@ -202,11 +202,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	if (true) { // Debug
-		int n = frame.int_number;
-		framebuffer_write(24, 68, (n / 10) + '0', WHITE, BLACK);
-		framebuffer_write(24, 69, (n % 10) + '0', WHITE, BLACK);
-	}
+	// if (true) { // Debug
+	// 	int n = frame.int_number;
+	// 	framebuffer_write(24, 68, (n / 10) + '0', WHITE, BLACK);
+	// 	framebuffer_write(24, 69, (n % 10) + '0', WHITE, BLACK);
+	// }
 
 	switch (frame.int_number) {
 	case 14: { // Page fault
