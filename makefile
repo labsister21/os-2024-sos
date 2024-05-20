@@ -22,12 +22,15 @@ WARNING_CFLAG = -Wall -Wextra -Werror
 DEBUG_CFLAG = -fshort-wchar -g
 TARGET_CFLAG = -m32
 SHARED_INCLUDE_CFLAG = -isystem $(SOURCE_PATH)/shared/header
-INCLUDE_CFLAG = -I $(SOURCE_PATH)/kernel/header
 STRIP_CFLAG = -nostdlib -nostdinc -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding -fno-pie
 
 # Flags
 ASM_FLAGS = -f elf32 -g -F dwarf
-C_FLAGS = $(WARNING_CFLAG) $(DEBUG_CFLAG) $(STRIP_CFLAG) $(INCLUDE_CFLAG) $(SHARED_INCLUDE_CFLAG) $(TARGET_CFLAG) -c
+C_FLAGS = $(WARNING_CFLAG) $(DEBUG_CFLAG) $(STRIP_CFLAG) $(SHARED_INCLUDE_CFLAG) $(TARGET_CFLAG) -c
+KERNEL_C_FLAGS = $(C_FLAGS) -I $(SOURCE_PATH)/kernel/header
+PROGRAM_C_FLAGS = $(C_FLAGS)
+SHARED_C_FLAGS = $(C_FLAGS)
+
 LINKER_FLAGS = -T $(SOURCE_PATH)/kernel/linker.ld -melf_i386
 
 .SECONDARY:
@@ -53,15 +56,24 @@ RECUR_WILDCARD=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call RECUR_WILDCAR
 PROGRAM_CODE = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/program/$1,*.c))
 
 # Object file recipe
+$(OBJECT_PATH)/shared/%.o: $(SOURCE_PATH)/shared/%.c
+	@mkdir -p $(@D)
+	$(CC) $(SHARED_C_FLAGS) -c -o $@ $<
 $(OBJECT_PATH)/program/%.o: $(SOURCE_PATH)/program/%.c
 	@mkdir -p $(@D)
-	$(CC) $(filter-out $(INCLUDE_CFLAG),$(C_FLAGS)) -c -o $@ $<
-$(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.s
+	$(CC) $(PROGRAM_C_FLAGS) -I $(dir $<) -c -o $@ $<
+$(OBJECT_PATH)/kernel/%.o: $(SOURCE_PATH)/kernel/%.c
 	@mkdir -p $(@D)
-	$(ASM) $(ASM_FLAGS) $< -o $@
+	$(CC) $(KERNEL_C_FLAGS) -c -o $@ $<
+
 $(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(C_FLAGS) -c -o $@ $<
+
+
+$(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.s
+	@mkdir -p $(@D)
+	$(ASM) $(ASM_FLAGS) $< -o $@
 
 SHARED_C = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/shared/code,*.c))
 KERNEL_C = $(call C_TO_O,$(call RECUR_WILDCARD,$(SOURCE_PATH)/kernel/c,*.c))
@@ -137,7 +149,6 @@ $(OUTPUT_PATH)/$(INSERTER_NAME):
 		-Wno-builtin-declaration-mismatch -g \
 		$(SOURCE_PATH)/helper/old_fat32.c \
 		$(SOURCE_PATH)/helper/inserter.c \
-		$(SOURCE_PATH)/shared/code/string.c \
 		-o $@
 inserter:
 	@make $(OUTPUT_PATH)/$(INSERTER_NAME) CC=$(NATIVE_CC)

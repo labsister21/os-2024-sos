@@ -1,23 +1,26 @@
+#include "delete.h"
+#include "util.h"
 #include <fat32.h>
 #include <path.h>
 #include <std/stdint.h>
 #include <std/string.h>
 #include <syscall.h>
+#include <vfs.h>
 
 #define MAX_PROMPT 512
 #define MAX_PATH 1024
 #define MAX_ENTRIES 128
 
-int status;
+static int status;
 struct ShellState {
 	char cwd_path[MAX_PATH];
 	char prompt[MAX_PROMPT];
 };
 struct ShellState state = {};
 
-void puts(char *str) {
-	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(str);
-}
+// void puts(char *str) {
+// 	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(str);
+// }
 
 void put_number(int number) {
 	if (number < 0) {
@@ -135,6 +138,57 @@ void mkdir() {
 		puts("Error creating directory");
 	else
 		puts("Directory created");
+}
+
+void delete() {
+	char *dir = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	if (strcmp(dir, "-r") == 0) {
+		char *dir = strtok(NULL, ' ');
+		combine_path(fullpath, state.cwd_path, dir);
+		resolve_path(fullpath);
+
+		struct VFSEntry next_entry;
+		status = syscall_VFS_STAT(fullpath, &next_entry);
+		if (status != 0) {
+			puts("Error reading stat");
+			return;
+		}
+
+		if (next_entry.type == Directory && next_entry.size != 0) {
+			delete_recursive(fullpath);
+			return;
+		}
+
+		status = syscall_VFS_DELETE(fullpath);
+		if (status != 0) {
+			puts("Error deleting");
+			return;
+		}
+		puts("File or directory deleted");
+		return;
+	}
+	combine_path(fullpath, state.cwd_path, dir);
+	resolve_path(fullpath);
+
+	struct VFSEntry next_entry;
+	status = syscall_VFS_STAT(fullpath, &next_entry);
+	if (status != 0) {
+		puts("Error reading stat");
+		return;
+	}
+
+	if (next_entry.type == Directory && next_entry.size != 0) {
+		puts("Can't delete not empty Directory. Use 'del -r <directory>'");
+		return;
+	}
+
+	status = syscall_VFS_DELETE(fullpath);
+	if (status != 0) {
+		puts("Error deleting");
+		return;
+	}
+	puts("File or directory deleted");
 }
 
 void tac() {
@@ -344,6 +398,7 @@ void run_prompt() {
 	else if (strcmp(token, "cat") == 0) cat();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
+	else if (strcmp(token, "del") == 0) delete ();
 	else if (strcmp(token, "exec") == 0) exec();
 	else if (strcmp(token, "kill") == 0) kill();
 	else if (strcmp(token, "mv") == 0) mv();
