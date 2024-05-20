@@ -9,6 +9,7 @@ int main() {
 	// syscall_VFS_STAT("/proc", &entry);
 	// syscall_EXEC("/ping");
 
+	syscall_SLEEP(3);
 	int stdout = syscall_VFS_OPEN("/dev/stdout_layered");
 	while (true) {
 		syscall_VFS_WRITE(stdout, "\0\0p", 3);

@@ -123,6 +123,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 		result = process_create((char *)first);
 	} break;
 
+	case SLEEP: {
+		process_current_sleep((uint32_t)first);
+	} break;
+
 	case KILL: {
 		result = process_destroy((int)first);
 	} break;
