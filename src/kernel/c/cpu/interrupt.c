@@ -116,7 +116,7 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case GET_TIME:
-		memcpy((void *)first, &startup_time, sizeof(struct TimeRTC));
+		memcpy((void *)first, &current_time, sizeof(struct TimeRTC));
 		break;
 
 	case EXEC: {
