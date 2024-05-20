@@ -77,6 +77,7 @@ struct ProcessContext {
 struct ProcessNotifier {
 	void *closure;
 	bool (*predicate)(void *closure);
+	bool recall;
 };
 
 /**
@@ -119,5 +120,7 @@ int process_create(char *path);
 int process_destroy(int pid);
 
 struct ProcessControlBlock *get_pcb_from_pid(int pid);
+
+void process_current_sleep(uint32_t seconds);
 
 #endif

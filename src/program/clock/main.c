@@ -6,7 +6,7 @@ int main() {
 		char payload[3];
 		payload[0] = 24;
 		payload[1] = 79;
-		payload[2] = 'a';
+		payload[2] = 'v';
 		syscall_VFS_WRITE(stdout, payload, 3);
 	}
 

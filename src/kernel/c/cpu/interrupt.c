@@ -123,6 +123,10 @@ void syscall_handler(struct InterruptFrame *frame) {
 		result = process_create((char *)first);
 	} break;
 
+	case SLEEP: {
+		process_current_sleep((uint32_t)first);
+	} break;
+
 	case KILL: {
 		result = process_destroy((int)first);
 	} break;
@@ -206,11 +210,11 @@ void syscall_handler(struct InterruptFrame *frame) {
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-	if (true) { // Debug
-		int n = frame.int_number;
-		framebuffer_write(24, 68, (n / 10) + '0', WHITE, BLACK);
-		framebuffer_write(24, 69, (n % 10) + '0', WHITE, BLACK);
-	}
+	// if (true) { // Debug
+	// 	int n = frame.int_number;
+	// 	framebuffer_write(24, 68, (n / 10) + '0', WHITE, BLACK);
+	// 	framebuffer_write(24, 69, (n % 10) + '0', WHITE, BLACK);
+	// }
 
 	switch (frame.int_number) {
 	case 14: { // Page fault

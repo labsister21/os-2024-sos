@@ -134,7 +134,7 @@ bool line_buffer_predicate(void *context) {
 int stdin_read(void *c, char *buffer, int size) {
 	struct ForegroundList *context = c;
 	if (!line_buffer_predicate(context)) {
-		scheduler_halt_current_process(line_buffer_predicate, context);
+		scheduler_halt_current_process(line_buffer_predicate, context, true);
 		return 0;
 	}
 

@@ -9,6 +9,7 @@
 static bool handled = false;
 struct TimeRTC startup_time;
 struct TimeRTC current_time;
+uint32_t second_elapsed = 0;
 
 int day_in_month[] = {31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 void time_handle_timer_interrupt() {
@@ -16,6 +17,7 @@ void time_handle_timer_interrupt() {
 
 	if (interrupt_counter == PIT_TIMER_FREQUENCY) {
 		// Add one second
+		second_elapsed += 1;
 		current_time.second += 1;
 
 		if (current_time.second == 60) {

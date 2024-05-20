@@ -1,4 +1,5 @@
 #include "process/process.h"
+#include "driver/time.h"
 #include "filesystem/vfs.h"
 #include "memory/kmalloc.h"
 #include "memory/memory.h"
@@ -149,3 +150,14 @@ int process_destroy(int pid) {
 	process_manager_state.active_process_count -= 1;
 	return 0;
 };
+
+bool process_sleep_predicate(void *closure) {
+	uint32_t target_second = (uint32_t)closure;
+	return second_elapsed >= target_second;
+}
+
+void process_current_sleep(uint32_t seconds) {
+	uint32_t target_second = second_elapsed + seconds;
+	scheduler_halt_current_process(process_sleep_predicate, (void *)target_second, false);
+	syscall_return_value_flag = false;
+}
