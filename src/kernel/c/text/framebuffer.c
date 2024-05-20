@@ -1,12 +1,111 @@
 #include "text/framebuffer.h"
 #include "cpu/portio.h"
+#include "memory/kmalloc.h"
 #include "text/buffercolor.h"
 #include <std/stdbool.h>
 #include <std/stdint.h>
+#include <std/string.h>
 
 struct FramebufferState framebuffer_state = {
 		.row = 0, .col = 0, .fg = WHITE, .bg = BLACK
 };
+
+typedef uint16_t Buffer[BUFFER_HEIGHT][BUFFER_WIDTH];
+
+struct FramebufferLayer {
+	Buffer buffer;
+	struct FramebufferLayer *next;
+	struct FramebufferLayer *prev;
+};
+
+struct FramebufferLayer *base_layer;
+
+void framebuffer_initialize_base_layer() {
+	struct FramebufferLayer *layer = kmalloc(sizeof(struct FramebufferLayer));
+	layer->next = NULL;
+	layer->prev = NULL;
+	memset(layer->buffer, ' ', sizeof(Buffer));
+	base_layer = layer;
+
+	framebuffer_set_cursor(0, 0);
+}
+
+struct FramebufferLayer *framebuffer_create_layer() {
+	struct FramebufferLayer *layer = kmalloc(sizeof(struct FramebufferLayer));
+	if (layer == NULL)
+		return NULL;
+
+	layer->next = NULL;
+	memset(layer->buffer, 0, sizeof(Buffer));
+
+	struct FramebufferLayer *current = base_layer;
+	while (current->next != NULL)
+		current = current->next;
+	current->next = layer;
+	layer->prev = current;
+
+	return layer;
+}
+
+void framebuffer_remove_layer(struct FramebufferLayer *layer) {
+	struct FramebufferLayer *current = base_layer;
+	while (current != NULL) {
+		if (current == layer) break;
+		current = current->next;
+	}
+
+	if (current == NULL) return;
+
+	for (int row = 0; row < BUFFER_HEIGHT; ++row) {
+		for (int col = 0; col < BUFFER_WIDTH; ++col) {
+			if (layer->buffer[row][col] == '\0') continue;
+			framebuffer_write_to_layer(layer, row, col, '\0');
+		}
+	}
+
+	if (current->prev)
+		current->prev->next = current->next;
+
+	if (current->next)
+		current->next->prev = current->prev;
+
+	kfree(layer);
+}
+
+void framebuffer_write_to_layer(struct FramebufferLayer *layer, int row, int col, char c) {
+	if (c == '\0') {
+		// Search upward layer
+		struct FramebufferLayer *current = layer->next;
+		bool overided = false;
+		while (current != NULL) {
+			if (current->buffer[row][col] != '\0') {
+				overided = true;
+				break;
+			};
+			current = current->next;
+		};
+
+		if (!overided) {
+			current = layer->prev;
+			while (current != NULL) {
+				if (current->buffer[row][col] != '\0') break;
+				current = current->prev;
+			}
+			framebuffer_write(row, col, current->buffer[row][col], framebuffer_state.fg, framebuffer_state.bg);
+		}
+
+		layer->buffer[row][col] = '\0';
+	} else {
+		struct FramebufferLayer *current = layer;
+		while (current != NULL) {
+			if (current->buffer[row][col] != '\0') break;
+			current = current->next;
+		}
+		if (current == NULL)
+			framebuffer_write(row, col, c, framebuffer_state.fg, framebuffer_state.bg);
+		layer->buffer[row][col] = c;
+	}
+}
 
 void framebuffer_set_cursor(int row, int col) {
 	uint16_t pos = row * BUFFER_WIDTH + col;
@@ -92,6 +191,7 @@ void framebuffer_next_line(void) {
 };
 
 void framebuffer_put(char c) {
+	base_layer->buffer[framebuffer_state.row][framebuffer_state.col] = c;
 	framebuffer_write(
 			framebuffer_state.row, framebuffer_state.col, c, framebuffer_state.fg,
 			framebuffer_state.bg
@@ -127,7 +227,7 @@ void framebuffer_write(
 void framebuffer_clear(void) {
 	for (int i = 0; i < BUFFER_HEIGHT; ++i) {
 		for (int j = 0; j < BUFFER_WIDTH; ++j) {
-			framebuffer_write(i, j, '\0', WHITE, BLACK);
+			framebuffer_write(i, j, ' ', WHITE, BLACK);
 		}
 	}
 	framebuffer_set_cursor(0, 0);
