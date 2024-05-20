@@ -156,3 +156,19 @@ void itoa(int value, char *str, int base) {
 
 	strrev(start);
 }
+
+int len(char arr[100][1024]) {
+	int i = 0;
+	while (*arr[i] != '\0') {
+		i++;
+	}
+	return i;
+}
+
+void push(char arr[100][1024], char val[1024]) {
+	strcpy(arr[len(arr)], val, 1024);
+}
+
+void pop(char arr[100][1024]) {
+	strcpy(arr[len(arr)-1], "\0", 1024);
+}

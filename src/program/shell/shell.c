@@ -1,23 +1,26 @@
+#include "delete.h"
+#include "util.h"
 #include <fat32.h>
 #include <path.h>
 #include <std/stdint.h>
 #include <std/string.h>
 #include <syscall.h>
+#include <vfs.h>
 
 #define MAX_PROMPT 512
 #define MAX_PATH 1024
 #define MAX_ENTRIES 128
 
-int status;
+static int status;
 struct ShellState {
 	char cwd_path[MAX_PATH];
 	char prompt[MAX_PROMPT];
 };
 struct ShellState state = {};
 
-void puts(char *str) {
-	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(str);
-}
+// void puts(char *str) {
+// 	syscall_FRAMEBUFFER_PUT_NULL_TERMINATED_CHARS(str);
+// }
 
 void put_number(int number) {
 	if (number < 0) {
@@ -135,6 +138,52 @@ void mkdir() {
 		puts("Error creating directory");
 	else
 		puts("Directory created");
+}
+
+void delete() {
+	char *dir = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	if (strcmp(dir, "-r") == 0) {
+		char *dir = strtok(NULL, ' ');
+		combine_path(fullpath, state.cwd_path, dir);
+		resolve_path(fullpath);
+
+		struct VFSEntry next_entry;
+		status = syscall_VFS_STAT(fullpath, &next_entry);
+		if (status != 0) {
+			puts("Error reading stat");
+			return;
+		}
+
+		if (next_entry.type == Directory && next_entry.size != 0) {
+			delete_recursive(fullpath);
+			puts("File or directory deleted");
+			return;
+		}
+		return;
+
+	}
+	combine_path(fullpath, state.cwd_path, dir);
+	resolve_path(fullpath);
+
+	struct VFSEntry next_entry;
+	status = syscall_VFS_STAT(fullpath, &next_entry);
+	if (status != 0) {
+		puts("Error reading stat");
+		return;
+	}
+
+	if (next_entry.type == Directory && next_entry.size != 0) {
+		puts("Can't delete not empty Directory. Use 'del -r <directory>'");
+		return;
+	}
+
+	status = syscall_VFS_DELETE(fullpath);
+	if (status != 0) {
+		puts("Error deleting");
+		return;
+	}
+	puts("File or directory deleted");
 }
 
 void touch() {
@@ -300,6 +349,54 @@ void ps() {
 	}
 }
 
+void mv() {
+	char *from = strtok(NULL, ' ');
+	char *to = strtok(NULL, ' ');
+
+	char fullpath_from[MAX_PATH];
+	combine_path(fullpath_from, state.cwd_path, from);
+	resolve_path(fullpath_from);
+
+	struct VFSEntry from_entry;
+	syscall_VFS_STAT(fullpath_from, &from_entry);
+	if (from_entry.type == Directory) {
+		puts("Can't move directory");
+		return;
+	}
+
+	int from_fd = syscall_VFS_OPEN(fullpath_from);
+	if (from_fd < 0) {
+		puts("Error opening source");
+		return;
+	}
+
+	char fullpath_to[MAX_PATH];
+	combine_path(fullpath_to, state.cwd_path, to);
+	resolve_path(fullpath_to);
+
+	int is_there_file = syscall_VFS_MKFILE(fullpath_to);
+	if (is_there_file != 0) {
+		puts("Error make file");
+		return;
+	}
+
+	int to_fd = syscall_VFS_OPEN(fullpath_to);
+	if (to_fd < 0) {
+		puts("Error opening new created file");
+		return;
+	}
+
+	int block = 512;
+	char buffer[block];
+	while (syscall_VFS_READ(from_fd, buffer, block) > 0) {
+		syscall_VFS_WRITE(to_fd, buffer, block);
+	}
+
+	syscall_VFS_DELETE(fullpath_from);
+
+	puts("File moved");
+}
+
 void kill() {
 	char *token = strtok(NULL, ' ');
 	int pid = strtoi(token, NULL);
@@ -315,6 +412,66 @@ void kill() {
 	}
 
 	puts("Process killed");
+}
+
+void find() {
+	char *search = strtok(NULL, ' ');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, search);
+	resolve_path(fullpath);
+
+	char file_list[100][1024];
+	char temp[MAX_PATH];
+	strcpy(file_list[0], "/", 8);
+
+
+	int i = 0;
+	bool found = false;
+	while (len(file_list) != 0) {
+		int lastIdx = len(file_list)-1;
+		strcpy(temp, file_list[lastIdx], MAX_PATH);
+		
+		struct VFSEntry entry;
+		status = syscall_VFS_STAT(file_list[lastIdx], &entry);
+		if (status != 0) {
+			puts("Error reading stat");
+			puts(file_list[lastIdx]);
+			puts(" ");
+			return;
+		}
+
+		struct VFSEntry entries[entry.size];
+		status = syscall_VFS_DIR_STAT(file_list[lastIdx], entries);
+		if (status != 0) {
+			puts("Error reading entries");
+			return;
+		}
+
+		pop(file_list);
+		for (int j = 0; j < entry.size; ++j) {
+
+			char temp_path[MAX_PATH];
+			strcpy(temp_path, temp, MAX_PATH);
+			if (strcmp(temp, "/") != 0) {
+					strcat(temp_path, "/", MAX_PATH);
+				}
+				strcat(temp_path, entries[j].name, MAX_PATH);
+			if (strcmp(entries[j].name, search) == 0) {
+				if (found) {
+					syscall_PUT_CHAR('\n');
+				}
+				puts(temp_path);
+				found = true;
+			}
+			if (entries[j].type == Directory) {
+				push(file_list, temp_path);
+			}
+		}
+		i++;
+	}
+	if (!found){
+		puts("No files or directory found");
+	}
 }
 
 void exit() {
@@ -350,10 +507,13 @@ void run_prompt() {
 	else if (strcmp(token, "touch") == 0) touch();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
+	else if (strcmp(token, "del") == 0) delete ();
 	else if (strcmp(token, "exec") == 0) exec();
 	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
+	else if (strcmp(token, "mv") == 0) mv();
 	else if (strcmp(token, "exit") == 0) exit();
+	else if (strcmp(token, "find") == 0) find();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);
@@ -377,3 +537,4 @@ int main(void) {
 	}
 	return 0;
 }
+
