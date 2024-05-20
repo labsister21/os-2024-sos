@@ -35,8 +35,8 @@ void kernel_setup(void) {
 	mount("/dev", &dev_vfs);
 
 	/* Framebuffer setup */
-	framebuffer_clear();
 	framebuffer_initialize_base_layer();
+	framebuffer_clear();
 
 	gdt_install_tss();
 	set_tss_register();

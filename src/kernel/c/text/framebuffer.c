@@ -27,7 +27,7 @@ void framebuffer_initialize_base_layer() {
 	memset(layer->buffer, ' ', sizeof(Buffer));
 	base_layer = layer;
 
-	framebuffer_set_cursor(0, 0);
+	framebuffer_clear();
 }
 
 struct FramebufferLayer *framebuffer_create_layer() {
@@ -96,7 +96,7 @@ void framebuffer_write_to_layer(struct FramebufferLayer *layer, int row, int col
 
 		layer->buffer[row][col] = '\0';
 	} else {
-		struct FramebufferLayer *current = layer;
+		struct FramebufferLayer *current = layer->next;
 		while (current != NULL) {
 			if (current->buffer[row][col] != '\0') break;
 			current = current->next;
@@ -225,9 +225,9 @@ void framebuffer_write(
 }
 
 void framebuffer_clear(void) {
-	for (int i = 0; i < BUFFER_HEIGHT; ++i) {
-		for (int j = 0; j < BUFFER_WIDTH; ++j) {
-			framebuffer_write(i, j, ' ', WHITE, BLACK);
+	for (int row = 0; row < BUFFER_HEIGHT; ++row) {
+		for (int col = 0; col < BUFFER_WIDTH; ++col) {
+			framebuffer_write_to_layer(base_layer, row, col, ' ');
 		}
 	}
 	framebuffer_set_cursor(0, 0);
