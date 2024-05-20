@@ -1,6 +1,7 @@
 #include "driver/keyboard.h"
 #include "cpu/interrupt.h"
 #include "cpu/portio.h"
+#include "filesystem/dev.h"
 #include "text/framebuffer.h"
 #include <std/stdint.h>
 
@@ -115,6 +116,7 @@ void keyboard_isr() {
 		if (scancode & BREAK_OFFSET) return;
 		keyboard_state.buffer_filled = true;
 		keyboard_state.keyboard_buffer = c;
+		fill_stdin_buffer(c);
 	}
 	}
 }

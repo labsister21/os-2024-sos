@@ -1,4 +1,5 @@
 #include "process/scheduler.h"
+#include "cpu/interrupt.h"
 #include "cpu/portio.h"
 #include "memory/kmalloc.h"
 #include "process/process.h"
@@ -69,8 +70,8 @@ void activate_timer_interrupt(void) {
 	out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
 }
 
-bool context_switch() {
-	if (queue_front == NULL && queue_back == NULL) return false;
+void switch_next() {
+	if (queue_front == NULL && queue_back == NULL) return;
 
 	// Put current running to queue_back
 	current_running->prev = queue_back;
@@ -86,25 +87,74 @@ bool context_switch() {
 	if (current_running == queue_back)
 		queue_back = current_running->next;
 	current_running->next = NULL;
+}
 
-	return true;
+void switch_next_with_notifier(struct InterruptFrame *frame) {
+	bool notified = false;
+
+	struct ProcessControlBlock *prev_pcb = current_running->pcb;
+	struct ProcessControlBlock *next_pcb;
+	do {
+		switch_next();
+		next_pcb = current_running->pcb;
+
+		if (next_pcb->metadata.state == Waiting) {
+			struct ProcessNotifier *notifier = &next_pcb->notifier;
+			if (
+					notifier->predicate == NULL ||
+					notifier->predicate(notifier->closure)
+			) {
+				notified = true;
+				notifier->predicate = NULL;
+				notifier->closure = NULL;
+				next_pcb->metadata.state = Ready;
+			}
+		}
+
+		if (next_pcb->metadata.state == Ready) break;
+
+		// Halt till next interrupt
+		if (next_pcb == prev_pcb) {
+			__asm__ volatile("sti");
+			__asm__ volatile("hlt");
+			__asm__ volatile("cli");
+		}
+	} while (true);
+
+	paging_use_page_directory(next_pcb->context.memory.page_directory_virtual_addr);
+	memcpy(frame, &next_pcb->context.frame, sizeof(struct InterruptFrame));
+	next_pcb->metadata.state = Running;
+	if (notified) { // Since halting process always happend on syscall, we must continue interrupt process
+		syscall_handler(frame);
+		syscall_return_value_flag = false;
+	}
+}
+
+void scheduler_halt_current_process(bool (*predicate)(), void *closure) {
+	if (current_interrupt_frame->int_number != SYSCALL_INT) return;
+
+	int pid = get_current_running_pid();
+	struct ProcessControlBlock *pcb = get_pcb_from_pid(pid);
+	pcb->notifier.predicate = predicate;
+	pcb->notifier.closure = closure;
+	pcb->metadata.state = Waiting;
+
+	memcpy(&pcb->context.frame, current_interrupt_frame, sizeof(struct InterruptFrame));
+	switch_next_with_notifier(current_interrupt_frame);
 }
 
 void scheduler_handle_timer_interrupt(struct InterruptFrame *frame) {
 	pic_ack(PIC1_OFFSET + IRQ_TIMER);
 
+	if (current_running == NULL)
+		return;
+
 	struct ProcessControlBlock *prev_pcb = current_running->pcb;
+	if (prev_pcb->metadata.state == Waiting) return;
+
 	memcpy(&prev_pcb->context.frame, frame, sizeof(struct InterruptFrame));
-	prev_pcb->metadata.state = Waiting;
-
-	context_switch();
-
-	struct ProcessControlBlock *next_pcb = current_running->pcb;
-	paging_use_page_directory(next_pcb->context.memory.page_directory_virtual_addr);
-	memcpy(frame, &next_pcb->context.frame, sizeof(struct InterruptFrame));
-	next_pcb->metadata.state = Running;
-
-	return;
+	prev_pcb->metadata.state = Ready;
+	switch_next_with_notifier(frame);
 };
 
 void scheduler_init(void) {

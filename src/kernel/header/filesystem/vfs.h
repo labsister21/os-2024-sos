@@ -3,7 +3,6 @@
 
 #include <vfs.h>
 
-struct VFSFileTableEntry;
 /*
  * Parameter `int ft` will be translated
  * from local file descriptor for each process
@@ -26,14 +25,12 @@ struct VFSHandler {
 
 int mount(char *path, struct VFSHandler *handler);
 
-struct VFSFileTableEntry {
-	struct VFSHandler *handler;
-};
+// int translate_fd_to_ft(int fd);
 
-int register_file_table(struct VFSFileTableEntry *entry);
-int translate_fd_to_ft(int fd);
-struct VFSFileTableEntry *get_vfs_table_entry(int ft);
-int unregister_file_table(struct VFSFileTableEntry *entry);
+int register_file_table_context(void *context);
+void *get_file_table_context(int ft);
+struct VFSHandler *get_file_table_handler(int ft);
+int unregister_file_table_context(int ft);
 
 extern struct VFSHandler vfs;
 

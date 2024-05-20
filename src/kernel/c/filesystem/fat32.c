@@ -222,8 +222,6 @@ struct VFSStateOld { // Local struct to track opened file
 
 // Local struct to track opened file
 struct VFSState {
-	struct VFSFileTableEntry entry;
-
 	char buffer[CLUSTER_SIZE];
 	uint32_t progress_pointer;
 	uint32_t progress_end;
@@ -236,7 +234,6 @@ struct VFSState {
 
 static int open(char *path) {
 	struct VFSState *state = kmalloc(sizeof(struct VFSState));
-	state->entry.handler = &fat32_vfs;
 
 	struct FAT32DirectoryEntry entry;
 	int status = get_entry_with_parent_cluster_and_index(path, &entry, &state->directory_cluster, &state->directory_index);
@@ -250,7 +247,7 @@ static int open(char *path) {
 	state->progress_pointer = 0;
 	state->progress_end = entry.filesize;
 
-	status = register_file_table((void *)state);
+	status = register_file_table_context((void *)state);
 	if (status < 0) {
 		kfree(state);
 		return status;
@@ -260,14 +257,14 @@ static int open(char *path) {
 };
 
 static int close(int ft) {
-	struct VFSFileTableEntry *entry = get_vfs_table_entry(ft);
-	unregister_file_table(entry);
+	struct VFSFileTableEntry *entry = get_file_table_context(ft);
+	unregister_file_table_context(ft);
 	kfree(entry);
 	return 0;
 };
 
 static int read_vfs(int ft, char *buffer, int size) {
-	struct VFSState *state = (void *)get_vfs_table_entry(ft);
+	struct VFSState *state = (void *)get_file_table_context(ft);
 
 	int read_count = 0;
 	while (true) {
@@ -292,7 +289,7 @@ static int read_vfs(int ft, char *buffer, int size) {
 };
 
 static int write_vfs(int ft, char *buffer, int size) {
-	struct VFSState *state = (void *)get_vfs_table_entry(ft);
+	struct VFSState *state = (void *)get_file_table_context(ft);
 
 	int write_count = 0;
 	while (true) {

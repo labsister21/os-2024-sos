@@ -2,7 +2,6 @@
 #include "filesystem/vfs.h"
 #include "memory/kmalloc.h"
 #include "process/process.h"
-#include "text/framebuffer.h"
 #include <std/string.h>
 
 static int status;
@@ -89,7 +88,6 @@ static int dirstat(char *path, struct VFSEntry *entries) {
 };
 
 struct VFSState {
-	struct VFSFileTableEntry entry;
 	struct ProcessControlBlock *pcb;
 	int current_pointer;
 	int max_pointer;
@@ -109,9 +107,8 @@ static int open(char *path) {
 		return -1;
 
 	struct VFSState *state = kmalloc(sizeof(struct VFSState));
-	state->entry.handler = &proc_vfs;
 
-	int ft = register_file_table((void *)state);
+	int ft = register_file_table_context((void *)state);
 	if (ft < 0) {
 		kfree(state);
 		return -1;
@@ -132,7 +129,7 @@ static int close(int ft) {
 };
 
 static int read(int ft, char *buffer, int size) {
-	struct VFSState *state = (void *)get_vfs_table_entry(ft);
+	struct VFSState *state = (void *)get_file_table_context(ft);
 
 	if (state->current_pointer == state->max_pointer)
 		return -1;

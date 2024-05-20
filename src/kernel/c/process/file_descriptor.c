@@ -53,7 +53,6 @@ void cleanup_fd(struct ProcessControlBlock *pcb) {
 	for (int i = 0; i < PROCESS_MAX_FD; ++i) {
 		int ft = pcb->fd[i];
 		if (ft == -1) continue;
-		get_vfs_table_entry(ft);
 		vfs.close(ft);
 	}
 }

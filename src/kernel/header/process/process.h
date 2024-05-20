@@ -53,6 +53,7 @@
 enum ProcessState {
 	Inactive,
 	Running,
+	Ready,
 	Waiting
 };
 
@@ -73,6 +74,11 @@ struct ProcessContext {
 	} memory;
 };
 
+struct ProcessNotifier {
+	void *closure;
+	bool (*predicate)(void *closure);
+};
+
 /**
  * Structure data containing information about a process
  *
@@ -88,6 +94,8 @@ struct ProcessControlBlock {
 	} metadata;
 
 	struct ProcessContext context;
+	struct ProcessNotifier notifier;
+
 	int fd[PROCESS_MAX_FD]; // File descriptor table
 };
 

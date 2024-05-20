@@ -157,16 +157,11 @@ void delete() {
 
 		if (next_entry.type == Directory && next_entry.size != 0) {
 			delete_recursive(fullpath);
+			puts("File or directory deleted");
 			return;
 		}
-
-		status = syscall_VFS_DELETE(fullpath);
-		if (status != 0) {
-			puts("Error deleting");
-			return;
-		}
-		puts("File or directory deleted");
 		return;
+
 	}
 	combine_path(fullpath, state.cwd_path, dir);
 	resolve_path(fullpath);
@@ -191,9 +186,8 @@ void delete() {
 	puts("File or directory deleted");
 }
 
-void tac() {
+void touch() {
 	char *filename = strtok(NULL, ' ');
-	char *content = strtok(NULL, '\0');
 	char fullpath[MAX_PATH];
 	combine_path(fullpath, state.cwd_path, filename);
 	resolve_path(fullpath);
@@ -204,14 +198,39 @@ void tac() {
 		return;
 	}
 
+	puts("File created");
+}
+
+void tac() {
+	char *filename = strtok(NULL, ' ');
+	char *content = strtok(NULL, '\0');
+	char fullpath[MAX_PATH];
+	combine_path(fullpath, state.cwd_path, filename);
+	resolve_path(fullpath);
+
+	struct VFSEntry entry;
+	syscall_VFS_STAT(fullpath, &entry);
+	if (entry.type == Directory) {
+		puts("Can't write to directory");
+		return;
+	}
+
 	int fd = syscall_VFS_OPEN(fullpath);
 	if (fd < 0) {
 		puts("Error opening file");
 		return;
 	}
 
-	syscall_VFS_WRITE(fd, content, str_len(content));
+	status = syscall_VFS_WRITE(fd, content, str_len(content));
+	if (status == -1) {
+		puts("Error writing to file");
+		return;
+	}
 	syscall_VFS_WRITE(fd, "\0", 1);
+	syscall_VFS_CLOSE(fd);
+
+	put_number(status + 1);
+	puts(" bytes written");
 }
 
 void cat() {
@@ -242,6 +261,7 @@ void cat() {
 	char buff[block];
 	syscall_VFS_READ(fd, buff, block);
 	puts(buff);
+	syscall_VFS_CLOSE(fd);
 }
 
 void cp() {
@@ -301,8 +321,32 @@ void exec() {
 		puts("Error creating process");
 		return;
 	}
-	puts("Process created with pid ");
-	syscall_PUT_CHAR('0' + pid);
+}
+
+void ps() {
+	struct VFSEntry entry;
+	syscall_VFS_STAT("/proc", &entry);
+
+	struct VFSEntry entries[entry.size];
+	syscall_VFS_DIR_STAT("/proc", entries);
+	for (int i = 0; i < entry.size; ++i) {
+		char path[MAX_PATH];
+		strcpy(path, "/proc/", MAX_PATH);
+		strcat(path, entries[i].name, MAX_PATH);
+
+		int fd = syscall_VFS_OPEN(path);
+		if (fd < 0)
+			continue;
+
+		char buff[100];
+		syscall_VFS_READ(fd, buff, 100);
+		puts(entries[i].name);
+		puts(" ");
+		puts(buff);
+		if (i != entry.size - 1) syscall_PUT_CHAR('\n');
+
+		syscall_VFS_CLOSE(fd);
+	}
 }
 
 void mv() {
@@ -370,19 +414,23 @@ void kill() {
 	puts("Process killed");
 }
 
-void get_prompt() {
-	int count = 0;
-	while (1) {
-		char c = '\0';
-		while (c == '\0')
-			syscall_GET_CHAR_NON_BLOCKING(&c);
-
-		syscall_PUT_CHAR(c);
-		if (c == '\n' || count + 1 >= MAX_PROMPT)
-			break;
-		state.prompt[count++] = c;
+void exit() {
+	status = syscall_EXIT();
+	if (status != 0) {
+		puts("Botched suicide");
+		return;
 	}
-	state.prompt[count] = '\0';
+}
+
+int stdin = -1;
+void get_prompt() {
+	if (stdin == -1) {
+		stdin = syscall_VFS_OPEN("/dev/stdin");
+	}
+
+	int read_count = 0;
+	read_count = syscall_VFS_READ(stdin, state.prompt, MAX_PROMPT);
+	state.prompt[read_count] = '\0';
 }
 
 void run_prompt() {
@@ -396,12 +444,15 @@ void run_prompt() {
 	else if (strcmp(token, "cd") == 0) cd();
 	else if (strcmp(token, "stat") == 0) stat();
 	else if (strcmp(token, "cat") == 0) cat();
+	else if (strcmp(token, "touch") == 0) touch();
 	else if (strcmp(token, "tac") == 0) tac();
 	else if (strcmp(token, "cp") == 0) cp();
 	else if (strcmp(token, "del") == 0) delete ();
 	else if (strcmp(token, "exec") == 0) exec();
+	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
 	else if (strcmp(token, "mv") == 0) mv();
+	else if (strcmp(token, "exit") == 0) exit();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);

@@ -31,5 +31,4 @@ void delete_recursive(char *init_path) {
 		puts("Error deleting");
 		return;
 	}
-	puts("File or directory deleted");
 }

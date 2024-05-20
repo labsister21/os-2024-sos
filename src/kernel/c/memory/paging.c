@@ -80,6 +80,7 @@ bool paging_allocate_user_page_frame(
 	);
 
 	page_manager_state.mapped_address[i] = virtual_addr;
+	page_manager_state.mapped_dir[i] = page_dir;
 	page_manager_state.mapped[i] = true;
 	page_manager_state.free_page_frame_count -= 1;
 	return true;
@@ -90,7 +91,10 @@ bool paging_free_user_page_frame(
 ) {
 	int i = 0;
 	while (i < PAGE_FRAME_MAX_COUNT) {
-		if (page_manager_state.mapped_address[i] == virtual_addr) break;
+		if (
+				page_manager_state.mapped_address[i] == virtual_addr &&
+				page_manager_state.mapped_dir[i] == page_dir
+		) break;
 		++i;
 	}
 
@@ -104,6 +108,8 @@ bool paging_free_user_page_frame(
 
 	page_manager_state.mapped[i] = false;
 	page_manager_state.free_page_frame_count += 1;
+	page_manager_state.mapped_address[i] = NULL;
+	page_manager_state.mapped_dir[i] = NULL;
 	return true;
 }
 

@@ -33,13 +33,6 @@ __attribute__((noreturn)) extern void process_context_switch(struct ProcessConte
 void scheduler_init(void);
 
 /**
- * Save context to current running process
- *
- * @param ctx Context to save to current running process control block
- */
-void scheduler_save_context_to_current_running_pcb(struct ProcessContext ctx);
-
-/**
  * Trigger the scheduler algorithm and context switch to new process
  */
 __attribute__((noreturn)) void scheduler_switch_to_next_process(void);
@@ -52,5 +45,7 @@ int get_current_running_pid();
 
 void scheduler_add(struct ProcessControlBlock *pcb);
 void scheduler_remove(struct ProcessControlBlock *pcb);
+
+void scheduler_halt_current_process(bool (*predicate)(), void *closure);
 
 #endif

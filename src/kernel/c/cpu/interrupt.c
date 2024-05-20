@@ -58,13 +58,18 @@ void pic_remap(void) {
 	out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
+struct InterruptFrame *current_interrupt_frame;
+
+bool syscall_return_value_flag = false;
 void syscall_handler(struct InterruptFrame *frame) {
+	current_interrupt_frame = frame;
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-	int *result = (void *)(&frame->cpu.general.eax);
+	int *return_value = (void *)(&frame->cpu.general.eax);
 	uint32_t first = frame->cpu.general.ebx;
 	uint32_t second = frame->cpu.general.ecx;
 	uint32_t third = frame->cpu.general.edx;
 
+	uint32_t result;
 	switch (frame->cpu.general.eax) {
 	case GET_CHAR: {
 		char *ptr = (char *)first;
@@ -115,69 +120,89 @@ void syscall_handler(struct InterruptFrame *frame) {
 		break;
 
 	case EXEC: {
-		*result = process_create((char *)first);
+		result = process_create((char *)first);
 	} break;
 
 	case KILL: {
-		*result = process_destroy((int)first);
+		result = process_destroy((int)first);
+	} break;
+
+	case EXIT: {
+		int pid = get_current_running_pid();
+		scheduler_handle_timer_interrupt(frame);
+		int new_pid = get_current_running_pid();
+
+		if (pid == new_pid) {
+			result = -1;
+			break;
+		}
+
+		result = process_destroy(pid);
 	} break;
 
 	case VFS_STAT: {
-		*result = vfs.stat((char *)first, (struct VFSEntry *)second);
+		result = vfs.stat((char *)first, (struct VFSEntry *)second);
 	} break;
 
 	case VFS_DIR_STAT: {
-		*result = vfs.dirstat((char *)first, (struct VFSEntry *)second);
+		result = vfs.dirstat((char *)first, (struct VFSEntry *)second);
 	} break;
 
 	case VFS_MKDIR: {
-		*result = vfs.mkdir((char *)first);
+		result = vfs.mkdir((char *)first);
 	} break;
 
 	case VFS_MKFILE: {
-		*result = vfs.mkfile((char *)first);
+		result = vfs.mkfile((char *)first);
 	} break;
 
 	case VFS_OPEN: {
 		int fd = get_free_fd_of_current_process();
 		if (fd < 0) {
-			*result = -1;
+			result = fd;
 			break;
 		}
 		int ft = vfs.open((char *)first);
+		if (ft < 0) {
+			result = ft;
+			break;
+		}
 		set_ft_of_current_process(fd, ft);
-		*result = fd;
+		result = fd;
 	} break;
 
 	case VFS_CLOSE: {
 		int fd = (int)first;
 		int ft = get_ft_of_current_process(fd);
-		*result = vfs.close(ft);
-		if (*result == 0)
+		result = vfs.close(ft);
+		if (result == 0)
 			clear_fd_of_current_process(fd);
 	} break;
 
 	case VFS_READ: {
 		int fd = (int)first;
 		int ft = get_ft_of_current_process(fd);
-		*result = vfs.read(ft, (char *)second, (int)third);
+		result = vfs.read(ft, (char *)second, (int)third);
 	} break;
 
 	case VFS_WRITE: {
 		int fd = (int)first;
 		int ft = get_ft_of_current_process(fd);
-		*result = vfs.write(ft, (char *)second, (int)third);
+		result = vfs.write(ft, (char *)second, (int)third);
 	} break;
 
 	case VFS_DELETE: {
-		*result = vfs.delete((char *)first);
+		result = vfs.delete((char *)first);
 	} break;
 
 	default: {
 		framebuffer_puts("System call not implemented");
-		*result = -1;
+		result = -1;
 	} break;
 	}
+
+	if (syscall_return_value_flag)
+		*return_value = result;
 }
 
 void main_interrupt_handler(struct InterruptFrame frame) {
@@ -204,6 +229,7 @@ void main_interrupt_handler(struct InterruptFrame frame) {
 		handle_rtc_interrupt();
 		break;
 	case SYSCALL_INT:
+		syscall_return_value_flag = true;
 		syscall_handler(&frame);
 		break;
 	default:

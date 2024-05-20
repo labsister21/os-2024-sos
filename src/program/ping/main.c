@@ -1,4 +1,5 @@
 #include <std/stdbool.h>
+#include <std/string.h>
 #include <syscall.h>
 #include <vfs.h>
 int main() {
@@ -8,9 +9,21 @@ int main() {
 	// syscall_VFS_STAT("/proc", &entry);
 	// syscall_EXEC("/ping");
 
-	syscall_VFS_OPEN("/hello");
-	syscall_VFS_OPEN("/shell");
-	syscall_VFS_OPEN("/ping");
+	int stdout = syscall_VFS_OPEN("/dev/stdout");
+	syscall_VFS_WRITE(stdout, "Hello, world!\n", 15);
+
+	// char buff[10];
+	// while (true) {
+	// 	int count = syscall_VFS_READ(stdout, buff, 10);
+	// 	if (count > 0) {
+	// 		for (int i = 0; i < count; ++i) {
+	// 			syscall_PUT_CHAR(buff[i]);
+	// 		}
+	// 	}
+	// }
+
+	// char *text = "TULISAN";
+	// syscall_VFS_WRITE(stdout, text, str_len(text) + 1);
 
 	// bool flip = true;
 	// for (int i = 0; i < 10; ++i) {
