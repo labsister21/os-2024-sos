@@ -300,6 +300,54 @@ void ps() {
 	}
 }
 
+void mv() {
+	char *from = strtok(NULL, ' ');
+	char *to = strtok(NULL, ' ');
+
+	char fullpath_from[MAX_PATH];
+	combine_path(fullpath_from, state.cwd_path, from);
+	resolve_path(fullpath_from);
+
+	struct VFSEntry from_entry;
+	syscall_VFS_STAT(fullpath_from, &from_entry);
+	if (from_entry.type == Directory) {
+		puts("Can't move directory");
+		return;
+	}
+
+	int from_fd = syscall_VFS_OPEN(fullpath_from);
+	if (from_fd < 0) {
+		puts("Error opening source");
+		return;
+	}
+
+	char fullpath_to[MAX_PATH];
+	combine_path(fullpath_to, state.cwd_path, to);
+	resolve_path(fullpath_to);
+
+	int is_there_file = syscall_VFS_MKFILE(fullpath_to);
+	if (is_there_file != 0) {
+		puts("Error make file");
+		return;
+	}
+
+	int to_fd = syscall_VFS_OPEN(fullpath_to);
+	if (to_fd < 0) {
+		puts("Error opening new created file");
+		return;
+	}
+
+	int block = 512;
+	char buffer[block];
+	while (syscall_VFS_READ(from_fd, buffer, block) > 0) {
+		syscall_VFS_WRITE(to_fd, buffer, block);
+	}
+
+	syscall_VFS_DELETE(fullpath_from);
+
+	puts("File moved");
+}
+
 void kill() {
 	char *token = strtok(NULL, ' ');
 	int pid = strtoi(token, NULL);
@@ -354,6 +402,7 @@ void run_prompt() {
 	else if (strcmp(token, "ps") == 0) ps();
 	else if (strcmp(token, "kill") == 0) kill();
 	else if (strcmp(token, "exit") == 0) exit();
+	else if (strcmp(token, "mv") == 0) mv();
 	else {
 		char *not_found = "command not found!";
 		puts(not_found);
